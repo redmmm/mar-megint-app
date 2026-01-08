@@ -1,6 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import marmegintLogo from '/marmegint-logo.jpg';
+import jatszunkLogo from '/jatszunk-logo.png';
 
 interface ChannelCardProps {
   name: string;
@@ -30,7 +32,7 @@ export const ChannelCard = ({ name, slug, variant, description }: ChannelCardPro
       <div className="relative z-10 flex flex-col items-center justify-center text-center">
         {/* Profile Image */}
         <img
-          src={variant === 'a' ? '/marmegint-logo.jpg' : '/jatszunk-logo.png'}
+          src={variant === 'a' ? marmegintLogo : jatszunkLogo}
           alt={variant === 'a' ? 'Már megint Logo' : 'Már megint játszunk Logo'}
           className="w-20 h-20 rounded-full border-2 border-white/20 shadow-lg object-cover mb-4"
         />
