@@ -125,14 +125,15 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-black text-foreground font-sans antialiased;
   }
 }
 
 @layer components {
-  /* Premium Glass Material */
+  /* True Liquid Glass Material */
   .premium-glass {
-    @apply bg-card/40 backdrop-blur-2xl border border-border/10 rounded-3xl;
+    @apply bg-gradient-to-b from-white/10 via-white/5 to-transparent backdrop-blur-lg border border-white/10 rounded-[2rem];
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.25);
   }
 
   .premium-glass-hover {
@@ -140,23 +141,36 @@
   }
 
   .premium-glass-hover:hover {
-    @apply bg-accent/5 border-border/20 scale-[1.02];
+    @apply bg-white/10 border-white/30;
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.5);
   }
 
-  /* Glass with channel tints */
+  /* True Liquid Glass with subtle channel tints */
   .premium-glass-green {
     @apply premium-glass;
-    background: linear-gradient(135deg, hsl(142 70% 45% / 0.05), hsl(0 0% 0% / 0.4));
+    background: linear-gradient(135deg, hsl(142 70% 45% / 0.03), transparent);
+  }
+
+  .premium-glass-green:hover {
+    @apply bg-white/10 border-white/30;
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.5), inset 0 0 20px hsl(142 70% 45% / 0.1);
   }
 
   .premium-glass-red {
     @apply premium-glass;
-    background: linear-gradient(135deg, hsl(0 85% 60% / 0.05), hsl(0 0% 0% / 0.4));
+    background: linear-gradient(135deg, hsl(0 85% 60% / 0.03), transparent);
   }
 
-  /* Floating Island Nav */
+  .premium-glass-red:hover {
+    @apply bg-white/10 border-white/30;
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.5), inset 0 0 20px hsl(0 85% 60% / 0.1);
+  }
+
+  /* Floating Water Droplet Nav */
   .floating-nav {
-    @apply fixed z-50 left-1/2 -translate-x-1/2 px-2 py-2 premium-glass rounded-full;
+    @apply fixed z-50 left-1/2 -translate-x-1/2 px-2 py-2;
+    @apply bg-white/10 backdrop-blur-md rounded-full border border-white/20;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   }
 
   /* Bento Grid */
@@ -180,8 +194,8 @@
 
 @layer utilities {
   .text-gradient {
-    @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(to bottom right, hsl(0 0% 100%), hsl(0 0% 60%));
+    @apply bg-clip-text text-transparent drop-shadow-sm;
+    background-image: linear-gradient(to bottom, hsl(0 0% 100%), hsl(0 0% 60%));
   }
 
   .text-gradient-green {
