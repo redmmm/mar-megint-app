@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import ChannelDashboard from "./pages/ChannelDashboard";
 import NewsPage from "./pages/NewsPage";
 import WeatherPage from "./pages/WeatherPage";
+import SkateMapPage from "./pages/SkateMapPage";
 import Login from "./pages/Login";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
@@ -25,6 +26,7 @@ const App = () => (
             <Route path="/channel/:slug" element={<ChannelDashboard />} />
             <Route path="/news" element={<NewsPage />} />
             <Route path="/weather" element={<WeatherPage />} />
+            <Route path="/skate-map" element={<SkateMapPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/admin" element={<Admin />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
