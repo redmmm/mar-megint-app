@@ -11,7 +11,21 @@ export interface LocationData {
   longitude: number;
 }
 
-// Get user's current location with optimized settings
+// Helper utility to perform fetch requests with a timeout
+const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeoutMs = 3000): Promise<Response> => {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    clearTimeout(id);
+    return response;
+  } catch (error) {
+    clearTimeout(id);
+    throw error;
+  }
+};
+
+// Get user's current location with optimized settings and a 6-second timeout
 export const getPositionWithTimeout = (): Promise<GeolocationPosition> => {
   return new Promise((resolve, reject) => {
     console.log('Checking geolocation support...');
@@ -35,18 +49,20 @@ export const getPositionWithTimeout = (): Promise<GeolocationPosition> => {
       },
       {
         enableHighAccuracy: false, // Use Wi-Fi/IP location for speed
-        timeout: 30000, // Wait 30 seconds for user decision
+        timeout: 6000, // Wait 6 seconds for user decision/hardware response
         maximumAge: 1800000, // 30 minutes - use cached location if recent
       }
     );
   });
 };
 
-// Get city name from coordinates using Nominatim (OpenStreetMap)
+// Get city name from coordinates using Nominatim (OpenStreetMap) with a timeout fallback
 export const getCityFromCoordinates = async (lat: number, lon: number): Promise<string> => {
   try {
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&addressdetails=1`
+    const response = await fetchWithTimeout(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&addressdetails=1`,
+      {},
+      3000
     );
 
     if (!response.ok) {
@@ -73,28 +89,62 @@ export const getCityFromCoordinates = async (lat: number, lon: number): Promise<
 // Helper function for city name (alias for backward compatibility)
 export const getCityName = getCityFromCoordinates;
 
-// Get location via IP address using geojs.io
+// Get location via IP address using a multi-service fallback chain
 export const getLocationFromIP = async (): Promise<{ latitude: number; longitude: number; city: string }> => {
   console.log('Fetching location via IP address...');
 
-  const response = await fetch('https://get.geojs.io/v1/ip/geo.json');
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch IP location data');
+  // Try GeoJS first
+  try {
+    const response = await fetchWithTimeout('https://get.geojs.io/v1/ip/geo.json', {}, 3000);
+    if (response.ok) {
+      const data = await response.json();
+      const latitude = parseFloat(data.latitude);
+      const longitude = parseFloat(data.longitude);
+      const city = data.city || 'Unknown Location';
+      if (!isNaN(latitude) && !isNaN(longitude)) {
+        console.log('GeoJS IP location success:', { latitude, longitude, city });
+        return { latitude, longitude, city };
+      }
+    }
+  } catch (err) {
+    console.warn('GeoJS IP location failed, trying secondary...', err);
   }
 
-  const data = await response.json();
-
-  const latitude = parseFloat(data.latitude);
-  const longitude = parseFloat(data.longitude);
-  const city = data.city || 'Unknown Location';
-
-  if (isNaN(latitude) || isNaN(longitude)) {
-    throw new Error('Invalid coordinates from IP location');
+  // Try FreeIPAPI second
+  try {
+    const response = await fetchWithTimeout('https://freeipapi.com/api/json', {}, 3000);
+    if (response.ok) {
+      const data = await response.json();
+      const latitude = parseFloat(data.latitude);
+      const longitude = parseFloat(data.longitude);
+      const city = data.cityName || 'Unknown Location';
+      if (!isNaN(latitude) && !isNaN(longitude)) {
+        console.log('FreeIPAPI IP location success:', { latitude, longitude, city });
+        return { latitude, longitude, city };
+      }
+    }
+  } catch (err) {
+    console.warn('FreeIPAPI IP location failed, trying tertiary...', err);
   }
 
-  console.log('IP location data:', { latitude, longitude, city });
-  return { latitude, longitude, city };
+  // Try ipapi.co third
+  try {
+    const response = await fetchWithTimeout('https://ipapi.co/json/', {}, 3000);
+    if (response.ok) {
+      const data = await response.json();
+      const latitude = parseFloat(data.latitude);
+      const longitude = parseFloat(data.longitude);
+      const city = data.city || 'Unknown Location';
+      if (!isNaN(latitude) && !isNaN(longitude)) {
+        console.log('ipapi.co IP location success:', { latitude, longitude, city });
+        return { latitude, longitude, city };
+      }
+    }
+  } catch (err) {
+    console.warn('ipapi.co IP location failed.', err);
+  }
+
+  throw new Error('All IP location services failed');
 };
 
 // Fetch weather data and return complete result
@@ -124,8 +174,10 @@ export const fetchWeatherFromOpenMeteo = async (lat: number, lon: number, city: 
 
 // Fetch weather data from Open-Meteo API
 export const getWeatherData = async (lat: number, lon: number): Promise<{ temperature: number; weatherCode: number }> => {
-  const response = await fetch(
-    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code`
+  const response = await fetchWithTimeout(
+    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code`,
+    {},
+    4000
   );
 
   if (!response.ok) {
@@ -221,12 +273,13 @@ export const checkSkateConditions = (temperature: number, weatherCode: number): 
   };
 };
 
-// Main function to get complete weather check
+// Main function to get complete weather check with smart fallbacks
 export const getSkateWeatherCheck = async (): Promise<WeatherData> => {
   // Initialize with Győr fallback by default
   let lat = 47.6875;
   let lon = 17.6504;
   let city = "Győr (Alapértelmezett)";
+  let permissionDenied = false;
 
   try {
     // Layer 1: Try Browser Geolocation
@@ -234,49 +287,43 @@ export const getSkateWeatherCheck = async (): Promise<WeatherData> => {
     const pos = await getPositionWithTimeout();
     lat = pos.coords.latitude;
     lon = pos.coords.longitude;
-    city = await getCityName(lat, lon) || "Ismeretlen helyszín";
+    
+    // Attempt city name reverse geocoding
+    try {
+      city = await getCityName(lat, lon) || "Ismeretlen helyszín";
+    } catch (e) {
+      console.warn("City name lookup failed, continuing with coordinates:", e);
+      city = `${lat.toFixed(2)}, ${lon.toFixed(2)}`;
+    }
     console.log("Browser location found:", city);
 
   } catch (browserError) {
-    console.warn("Browser geolocation failed:", browserError);
+    console.warn("Browser geolocation failed or timed out:", browserError);
+    permissionDenied = true;
 
-    // Check error codes for strict handling
-    if (browserError instanceof GeolocationPositionError) {
-      // Error code 1: PERMISSION_DENIED - User clicked "Block"
-      // Error code 3: TIMEOUT - User left popup open too long
-      // For both cases: Fall back to Győr immediately without IP fallback
-      if (browserError.code === 1 || browserError.code === 3) {
-        console.log(`User ${browserError.code === 1 ? 'denied permission' : 'timed out'}. Using Győr fallback without IP fallback.`);
-        const weatherResult = await fetchWeatherFromOpenMeteo(lat, lon, city);
-        return {
-          ...weatherResult,
-          permissionDenied: true
-        };
-      }
-
-      // Error code 2: POSITION_UNAVAILABLE - User allowed but hardware failed
-      // Only in this case, try IP fallback
-      if (browserError.code === 2) {
-        try {
-          console.log("Layer 2: Attempting IP geolocation fallback (hardware failure)...");
-          const ipLocation = await getLocationFromIP();
-          lat = ipLocation.latitude;
-          lon = ipLocation.longitude;
-          city = ipLocation.city;
-          console.log("IP Location found:", city);
-        } catch (ipError) {
-          console.warn("IP geolocation failed. Using Győr fallback.", ipError);
-        }
-      }
-    } else {
-      // Non-GeolocationPositionError (e.g., network issues, etc.)
-      // Fall back to Győr without IP fallback
-      console.warn("Non-geolocation error. Using Győr fallback.", browserError);
+    // Layer 2: IP fallback for ANY geolocation failure/timeout
+    try {
+      console.log("Layer 2: Attempting IP geolocation fallback...");
+      const ipLocation = await getLocationFromIP();
+      lat = ipLocation.latitude;
+      lon = ipLocation.longitude;
+      city = ipLocation.city;
+      permissionDenied = false; // We got their general location via IP!
+      console.log("IP Location found:", city);
+    } catch (ipError) {
+      console.warn("IP geolocation fallback failed, using Győr default.", ipError);
+      lat = 47.6875;
+      lon = 17.6504;
+      city = "Győr (Alapértelmezett)";
     }
   }
 
-  // Layer 4: Fetch Weather (always runs with final coordinates)
-  return await fetchWeatherFromOpenMeteo(lat, lon, city);
+  // Layer 3: Fetch Weather
+  const weatherResult = await fetchWeatherFromOpenMeteo(lat, lon, city);
+  return {
+    ...weatherResult,
+    permissionDenied: permissionDenied
+  };
 };
 
 // Search for Hungarian cities using Open-Meteo Geocoding API
@@ -292,8 +339,10 @@ export const searchHungarianCities = async (query: string): Promise<HungarianCit
   }
 
   try {
-    const response = await fetch(
-      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=5&language=hu&format=json&country=HU`
+    const response = await fetchWithTimeout(
+      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=5&language=hu&format=json&country=HU`,
+      {},
+      3000
     );
 
     if (!response.ok) {
