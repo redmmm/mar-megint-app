@@ -1,5 +1,17 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
+@font-face {
+  font-family: 'EmojiFont';
+  src: local('Apple Color Emoji'),
+       local('Segoe UI Emoji'),
+       local('Segoe UI Symbol'),
+       local('Noto Color Emoji'),
+       local('Android Emoji'),
+       local('EmojiSymbols');
+  /* Emojis, Pictographs, and Weather/Miscellaneous Symbols */
+  unicode-range: U+1F000-1FFFF, U+2600-27BF, U+2B50, U+E007F;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
