@@ -16,12 +16,12 @@ const SkateMapPage = () => {
               <span className="tracking-wider text-xs font-bold">SKATE MAP</span>
             </div>
             <h1 className="text-4xl md:text-6xl font-black tracking-tight text-gradient mb-4">
-              Skate Map
+              Győr Skate Map
             </h1>
             <p className="text-muted-foreground text-lg max-w-xl mx-auto mb-8 leading-relaxed">
-              A városod rejtett skate spotjai és parkjai egyetlen interaktív térképen. 
-              Keresd meg a következő legális vagy utcai tipped, nézd meg hol deszkáznak a többiek, 
-              vagy töltsd fel a saját felfedezéseidet. Ne csak gurulj, hódítsd meg a várost!
+              Győr város skate spotjai és parkjai egyetlen interaktív térképen. 
+              Keressél jó spotokat, vagy töltsd fel a saját felfedezéseidet. 
+              Ne csak gurulj, fedezd fel a várost!
             </p>
           </div>
 
