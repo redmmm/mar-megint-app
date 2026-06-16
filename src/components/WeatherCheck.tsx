@@ -82,6 +82,7 @@ export const WeatherCheck = () => {
 
   if (weatherState === 'result' && weatherData) {
     const variant = weatherData.canSkate ? 'green' : 'red';
+    const emoji = weatherData.canSkate ? '🛹' : '🌧️';
 
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -90,26 +91,11 @@ export const WeatherCheck = () => {
             {/* Weather Display (Top) */}
             <div className="flex flex-col items-center text-center">
               {/* Temperature Display */}
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
                 <span className="text-6xl font-bold text-gradient">
                   {Math.round(weatherData.temp)}°
                 </span>
-                <span className="flex items-center justify-center">
-                  {weatherData.canSkate ? (
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-10 h-10 text-emerald-400">
-                      <path d="M3 12c4-2 14-2 18 0" />
-                      <circle cx="7" cy="15" r="2" />
-                      <circle cx="17" cy="15" r="2" />
-                    </svg>
-                  ) : (
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-10 h-10 text-red-500 animate-bounce" style={{ animationDuration: '3s' }}>
-                      <path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25" />
-                      <line x1="8" y1="16" x2="8" y2="22" />
-                      <line x1="12" y1="16" x2="12" y2="22" />
-                      <line x1="16" y1="16" x2="16" y2="22" />
-                    </svg>
-                  )}
-                </span>
+                <span className="text-2xl">{emoji}</span>
               </div>
 
               {/* City */}
@@ -213,32 +199,7 @@ export const WeatherCheck = () => {
         className="text-center"
       >
         <div className="flex flex-col items-center gap-6">
-          <div className="flex items-center justify-center h-16">
-            {isLoading ? (
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-12 h-12 text-muted-foreground animate-spin">
-                <line x1="12" y1="2" x2="12" y2="6" />
-                <line x1="12" y1="18" x2="12" y2="22" />
-                <line x1="4.93" y1="4.93" x2="7.76" y2="7.76" />
-                <line x1="16.24" y1="16.24" x2="19.07" y2="19.07" />
-                <line x1="2" y1="12" x2="6" y2="12" />
-                <line x1="18" y1="12" x2="22" y2="12" />
-                <line x1="4.93" y1="19.07" x2="7.76" y2="16.24" />
-                <line x1="16.24" y1="7.76" x2="19.07" y2="4.93" />
-              </svg>
-            ) : (
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-16 h-16 text-yellow-500 animate-pulse">
-                <path d="M12 2v2" />
-                <path d="M12 20v2" />
-                <path d="M4.93 4.93l1.41 1.41" />
-                <path d="M17.66 17.66l1.41 1.41" />
-                <path d="M2 12h2" />
-                <path d="M20 12h2" />
-                <path d="M6.34 17.66l-1.41 1.41" />
-                <path d="M19.07 4.93l-1.41 1.41" />
-                <path d="M22 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25" />
-              </svg>
-            )}
-          </div>
+          <div className="text-4xl">{isLoading ? '⏳' : '🌤️'}</div>
           <h2 className="text-3xl font-bold text-gradient">
             Tudok deszkázni ma?
           </h2>

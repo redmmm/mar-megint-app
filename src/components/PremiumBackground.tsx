@@ -79,11 +79,11 @@ const PremiumBackground = ({ withParticles = false }: PremiumBackgroundProps) =>
             />
           ))}
 
-          {/* Left/Top: Skateboard SVGs */}
+          {/* Left/Top: Skateboard emojis */}
           {Array.from({ length: 4 }).map((_, i) => (
             <div
               key={`skateboard-${i}`}
-              className="absolute w-8 h-8 text-[#22c55e] opacity-40 animate-particle-float"
+              className="absolute text-2xl opacity-60 animate-particle-float"
               style={{
                 left: `${20 + Math.random() * 20}%`,
                 top: `${15 + Math.random() * 35}%`,
@@ -91,11 +91,7 @@ const PremiumBackground = ({ withParticles = false }: PremiumBackgroundProps) =>
                 animationDuration: `${10 + Math.random() * 6}s`,
               }}
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
-                <path d="M3 12c4-2 14-2 18 0" />
-                <circle cx="7" cy="15" r="2.5" />
-                <circle cx="17" cy="15" r="2.5" />
-              </svg>
+              🛹
             </div>
           ))}
 
@@ -113,11 +109,11 @@ const PremiumBackground = ({ withParticles = false }: PremiumBackgroundProps) =>
             />
           ))}
 
-          {/* Right/Bottom: Controller SVGs */}
+          {/* Right/Bottom: Controller emojis */}
           {Array.from({ length: 4 }).map((_, i) => (
             <div
               key={`controller-${i}`}
-              className="absolute w-8 h-8 text-[#ef4444] opacity-40 animate-particle-float"
+              className="absolute text-2xl opacity-60 animate-particle-float"
               style={{
                 right: `${20 + Math.random() * 20}%`,
                 bottom: `${15 + Math.random() * 35}%`,
@@ -125,13 +121,7 @@ const PremiumBackground = ({ withParticles = false }: PremiumBackgroundProps) =>
                 animationDuration: `${10 + Math.random() * 6}s`,
               }}
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
-                <line x1="6" y1="12" x2="10" y2="12" />
-                <line x1="8" y1="10" x2="8" y2="14" />
-                <circle cx="15" cy="13" r="1" />
-                <circle cx="18" cy="11" r="1" />
-                <rect x="2" y="6" width="20" height="12" rx="3" />
-              </svg>
+              🎮
             </div>
           ))}
         </>
