@@ -322,7 +322,8 @@ const SkateMapPage: React.FC = () => {
       const featureLabels: Record<string, string> = {
         rail: '🦯 Korlát',
         ledge: '🧱 Padka',
-        gap: '🪜 Gap',
+        stairs: '🪜 Lépcső',
+        gap: '🕳️ Gap',
         flatground: '🛹 Flat',
       };
 

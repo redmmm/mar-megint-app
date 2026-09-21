@@ -120,9 +120,10 @@ export const SpotDetailDrawer: React.FC<SpotDetailDrawerProps> = ({ spot, isOpen
               </Badge>
               {spot.features && spot.features.map((feat) => {
                 const featureLabels: Record<string, string> = {
-                  rail: '🦯 Rail',
-                  ledge: '🧱 Ledge',
-                  gap: '🪜 Gap',
+                  rail: '🦯 Korlát',
+                  ledge: '🧱 Padka',
+                  stairs: '🪜 Lépcső',
+                  gap: '🕳️ Gap',
                   flatground: '🛹 Flatground',
                 };
                 return (

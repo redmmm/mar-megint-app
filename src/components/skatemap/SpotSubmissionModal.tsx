@@ -34,10 +34,11 @@ const GYOR_BOUNDS = {
 };
 
 const AVAILABLE_FEATURES = [
-  { id: 'rail', label: 'Rail (Korlát)', emoji: '🦯' },
-  { id: 'ledge', label: 'Ledge (Padka)', emoji: '🧱' },
-  { id: 'gap', label: 'Gap (Ugrató)', emoji: '🪜' },
-  { id: 'flatground', label: 'Flatground (Sima talaj)', emoji: '🛹' },
+  { id: 'rail', label: 'Korlát', emoji: '🦯' },
+  { id: 'ledge', label: 'Padka', emoji: '🧱' },
+  { id: 'stairs', label: 'Lépcső', emoji: '🪜' },
+  { id: 'gap', label: 'Gap', emoji: '🕳️' },
+  { id: 'flatground', label: 'Flatground', emoji: '🛹' },
 ];
 
 const RATE_LIMIT_SECONDS = 60;
@@ -303,7 +304,7 @@ export const SpotSubmissionModal: React.FC<SpotSubmissionModalProps> = ({
                   {selectedFeatures.length === 0 ? 'Válassz elemeket' : `${selectedFeatures.length} kiválasztva`}
                 </span>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
                 {AVAILABLE_FEATURES.map((feat) => {
                   const isSelected = selectedFeatures.includes(feat.id);
                   return (
