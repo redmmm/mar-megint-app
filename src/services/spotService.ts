@@ -129,10 +129,67 @@ const saveLocalSpots = (spots: Spot[]) => {
 };
 
 /**
+ * Sync locally created offline spots to Supabase cloud once the table is ready
+ */
+export const syncLocalSpotsToSupabase = async (): Promise<number> => {
+  try {
+    const local = getLocalSpots();
+    const offlineSpots = local.filter((s) => s.id.startsWith('local-'));
+    if (offlineSpots.length === 0) return 0;
+
+    // Check session to determine if admin
+    const { data: sessionData } = await supabase.auth.getSession();
+    const isAuthenticated = !!sessionData.session;
+
+    let syncedCount = 0;
+    for (const spot of offlineSpots) {
+      // If authenticated, keep status; otherwise, anon can only insert pending
+      const statusToInsert = isAuthenticated ? spot.status : 'pending';
+
+      const { data, error } = await supabase
+        .from('spots')
+        .insert([
+          {
+            title: spot.title,
+            description: spot.description,
+            spot_type: spot.spot_type || 'street_spot',
+            features: spot.features || [],
+            latitude: spot.latitude,
+            longitude: spot.longitude,
+            images: spot.images || [],
+            status: statusToInsert,
+          },
+        ])
+        .select()
+        .single();
+
+      if (!error && data) {
+        syncedCount++;
+        // Update local spot ID to the Supabase UUID
+        const currentLocal = getLocalSpots();
+        const updated = currentLocal.map((s) => (s.id === spot.id ? { ...s, id: data.id } : s));
+        saveLocalSpots(updated);
+      }
+    }
+
+    if (syncedCount > 0) {
+      console.log(`Successfully synced ${syncedCount} local spots to Supabase.`);
+    }
+    return syncedCount;
+  } catch (err) {
+    console.warn('Sync local spots error:', err);
+    return 0;
+  }
+};
+
+/**
  * Get spots filtered by status
  */
 export const getSpots = async (status: 'approved' | 'pending' | 'all' = 'approved'): Promise<Spot[]> => {
   try {
+    // Attempt auto-sync of any previously offline-created spots
+    syncLocalSpotsToSupabase().catch(() => {});
+
     let query = supabase.from('spots').select('*').order('created_at', { ascending: false });
 
     if (status !== 'all') {

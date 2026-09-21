@@ -7,6 +7,7 @@ import {
   deleteSpot,
   updateSpot,
   uploadSpotImage,
+  syncLocalSpotsToSupabase,
 } from '@/services/spotService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -70,6 +71,10 @@ export const AdminSkateMapTab: React.FC = () => {
   const loadAllSpots = async () => {
     setIsLoading(true);
     try {
+      const synced = await syncLocalSpotsToSupabase();
+      if (synced > 0) {
+        toast.success(`${synced} korábbi helyi spot szinkronizálva a felhőbe!`);
+      }
       const [pending, approved] = await Promise.all([
         getSpots('pending'),
         getSpots('approved'),

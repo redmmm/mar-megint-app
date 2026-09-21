@@ -91,3 +91,41 @@ CREATE POLICY "Admins manage spot-images"
   TO authenticated
   USING (bucket_id = 'spot-images')
   WITH CHECK (bucket_id = 'spot-images');
+
+-- 6. Insert initial Győr spots into cloud database
+INSERT INTO public.spots (id, title, description, spot_type, features, latitude, longitude, images, status)
+VALUES
+  (
+    '00000000-0000-0000-0000-000000000001',
+    'Radó-sziget Skatepark',
+    'Győr egyik legnépszerűbb skateparkja a Radó-szigeten. Beton elemek, quarter pipe, funbox és flat rail a Rába partján.',
+    'skatepark',
+    '["rail", "ledge", "gap"]'::jsonb,
+    47.6892,
+    17.6294,
+    '["https://images.unsplash.com/photo-1520045892732-304bc3ac5d8e?auto=format&fit=crop&w=1200&q=80"]'::jsonb,
+    'approved'
+  ),
+  (
+    '00000000-0000-0000-0000-000000000002',
+    'Barátság Park Skatepark',
+    'Marcalvárosi beton skatepark, miniramp, ledgek és lépcsők. Street és park stílushoz is kiváló.',
+    'skatepark',
+    '["ledge", "gap", "stairs"]'::jsonb,
+    47.6695,
+    17.6438,
+    '["https://images.unsplash.com/photo-1564982752979-3f7bc974d29a?auto=format&fit=crop&w=1200&q=80"]'::jsonb,
+    'approved'
+  ),
+  (
+    '00000000-0000-0000-0000-000000000003',
+    'Dunakapu tér Street Spot',
+    'Tágas belvárosi tér a Mosoni-Duna partján, sima gránit burkolat, padkák és lépcsők. Csak este ajánlott, amikor nincs tömeg.',
+    'street_spot',
+    '["ledge", "gap", "flatground", "stairs"]'::jsonb,
+    47.6908,
+    17.6342,
+    '["https://images.unsplash.com/photo-1568832359672-e36cf5d74f54?auto=format&fit=crop&w=1200&q=80"]'::jsonb,
+    'approved'
+  )
+ON CONFLICT (id) DO NOTHING;
