@@ -53,6 +53,7 @@ export const MapSearchOverlay: React.FC<MapSearchOverlayProps> = ({
   const searchNominatim = async (searchText: string) => {
     if (!searchText.trim() || searchText.trim().length < 2) {
       setResults([]);
+      setIsOpen(false);
       setIsLoading(false);
       return;
     }
@@ -155,7 +156,7 @@ export const MapSearchOverlay: React.FC<MapSearchOverlayProps> = ({
     <div
       ref={containerRef}
       className={cn(
-        'relative transition-all duration-300 ease-out w-full',
+        'relative w-full sm:transition-[width] sm:duration-300 sm:ease-out',
         isExpanded ? 'sm:w-80 md:w-96' : 'sm:w-52 md:w-60',
         className
       )}
@@ -181,9 +182,9 @@ export const MapSearchOverlay: React.FC<MapSearchOverlayProps> = ({
           }}
           placeholder="Keresés: városrész, utca..."
           className={cn(
-            'w-full h-10 pl-9 pr-9 rounded-xl backdrop-blur-xl text-xs sm:text-sm text-white placeholder:text-neutral-400 focus:outline-none transition-all shadow-lg',
+            'w-full h-10 pl-9 pr-9 rounded-xl backdrop-blur-xl text-base sm:text-xs text-white placeholder:text-neutral-400 focus:outline-none transition-colors shadow-lg',
             isExpanded
-              ? 'bg-neutral-900/95 border border-emerald-500/50 ring-2 ring-emerald-500/20'
+              ? 'bg-neutral-900/95 border border-emerald-500/50 ring-1 ring-emerald-500/20'
               : 'bg-neutral-900/80 border border-white/10 hover:border-white/20'
           )}
         />
@@ -203,11 +204,11 @@ export const MapSearchOverlay: React.FC<MapSearchOverlayProps> = ({
       </div>
 
       {/* Autocomplete Dropdown */}
-      {isOpen && (
-        <div className="absolute top-12 left-0 right-0 z-50 rounded-2xl bg-neutral-950/95 border border-emerald-500/30 backdrop-blur-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+      {isOpen && (results.length > 0 || (!isLoading && query.trim().length >= 2)) && (
+        <div className="absolute top-12 left-0 right-0 z-50 rounded-2xl bg-neutral-950/95 border border-emerald-500/30 backdrop-blur-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150 max-h-[45vh] sm:max-h-64 flex flex-col">
           {results.length > 0 ? (
             <>
-              <div className="p-1.5 space-y-1 max-h-64 overflow-y-auto">
+              <div className="p-1.5 space-y-1 overflow-y-auto max-h-40 sm:max-h-56 overscroll-contain">
                 {results.map((item, idx) => {
                   const { main, secondary } = formatDisplayName(item.display_name);
                   const isSelected = selectedIndex === idx;
@@ -219,7 +220,7 @@ export const MapSearchOverlay: React.FC<MapSearchOverlayProps> = ({
                       onClick={() => handleSelect(item)}
                       onMouseEnter={() => setSelectedIndex(idx)}
                       className={cn(
-                        'group w-full text-left p-2.5 rounded-xl flex items-center justify-between gap-3 text-xs transition-all cursor-pointer',
+                        'group w-full text-left p-2.5 sm:p-2 rounded-xl flex items-center justify-between gap-3 text-xs transition-all cursor-pointer active:bg-emerald-500/25',
                         isSelected
                           ? 'bg-gradient-to-r from-emerald-500/25 to-emerald-500/10 border border-emerald-500/40 text-white shadow-md'
                           : 'border border-transparent text-neutral-300 hover:bg-white/5 hover:text-white'
@@ -271,7 +272,7 @@ export const MapSearchOverlay: React.FC<MapSearchOverlayProps> = ({
               </div>
 
               {/* Dropdown footer info */}
-              <div className="px-3 py-1.5 border-t border-white/10 flex items-center justify-between text-[10px] text-neutral-400 bg-neutral-950/80">
+              <div className="px-3 py-1.5 border-t border-white/10 flex items-center justify-between text-[10px] text-neutral-400 bg-neutral-950/80 shrink-0">
                 <span>{results.length} találat Győrben</span>
                 <span className="hidden sm:inline text-[10px] text-neutral-500">
                   ↑↓ navigáció • Enter kiválasztás

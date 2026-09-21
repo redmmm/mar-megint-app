@@ -605,10 +605,10 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
   };
 
   return (
-    <div className="relative w-full h-screen overflow-hidden bg-neutral-950">
+    <div className="relative w-full h-screen h-[100dvh] overflow-hidden bg-neutral-950">
       {/* Top Glass Header & Search Overlay */}
-      <header className="absolute top-4 left-4 right-4 sm:right-auto z-20 pointer-events-auto flex flex-col gap-2 max-w-full sm:max-w-4xl transition-all duration-300">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-2.5 sm:px-4 sm:py-2.5 rounded-2xl bg-neutral-950/75 border border-white/10 backdrop-blur-xl shadow-2xl transition-all duration-300">
+      <header className="absolute top-4 left-4 right-4 sm:right-auto z-20 pointer-events-auto flex flex-col gap-2 max-w-full sm:max-w-4xl">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3 p-2.5 sm:px-4 sm:py-2.5 rounded-2xl bg-neutral-950/75 border border-white/10 backdrop-blur-xl shadow-2xl">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
               <MapPin className="w-4 h-4" />
@@ -685,7 +685,7 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
           </div>
 
           {/* Category Filter Chips */}
-          <div className="flex items-center gap-1.5 sm:border-l sm:border-white/10 sm:pl-3 pt-1 sm:pt-0">
+          <div className="flex items-center gap-1.5 sm:border-l sm:border-white/10 sm:pl-3 pt-0.5 sm:pt-0 overflow-x-auto no-scrollbar max-w-full pb-0.5">
             <button
               type="button"
               onClick={() => setFilterType('all')}
