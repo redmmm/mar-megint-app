@@ -29,16 +29,20 @@ export const MapSearchOverlay: React.FC<MapSearchOverlayProps> = ({
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number>(-1);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const isExpanded = isFocused || query.trim().length > 0;
 
   // Close on click outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setIsOpen(false);
+        setIsFocused(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -71,7 +75,7 @@ export const MapSearchOverlay: React.FC<MapSearchOverlayProps> = ({
 
       const data: SearchResult[] = await response.json();
       setResults(data);
-      setIsOpen(data.length > 0);
+      setIsOpen(true);
     } catch (err) {
       console.warn('Nominatim search error:', err);
       setResults([]);
@@ -148,18 +152,40 @@ export const MapSearchOverlay: React.FC<MapSearchOverlayProps> = ({
   };
 
   return (
-    <div ref={containerRef} className={cn('relative w-full max-w-xs sm:max-w-sm', className)}>
+    <div
+      ref={containerRef}
+      className={cn(
+        'relative transition-all duration-300 ease-out w-full',
+        isExpanded ? 'sm:w-80 md:w-96' : 'sm:w-52 md:w-60',
+        className
+      )}
+    >
       {/* Search Input Box */}
       <div className="relative flex items-center">
-        <Search className="absolute left-3 w-4 h-4 text-emerald-400 pointer-events-none" />
+        <Search
+          className={cn(
+            'absolute left-3 w-4 h-4 transition-colors pointer-events-none',
+            isExpanded ? 'text-emerald-400' : 'text-neutral-400'
+          )}
+        />
         <input
           type="text"
           value={query}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
-          onFocus={() => query.trim().length >= 2 && results.length > 0 && setIsOpen(true)}
+          onFocus={() => {
+            setIsFocused(true);
+            if (query.trim().length >= 2) {
+              setIsOpen(true);
+            }
+          }}
           placeholder="Keresés: városrész, utca..."
-          className="w-full h-10 pl-9 pr-9 rounded-xl bg-neutral-900/80 border border-white/10 backdrop-blur-xl text-xs text-white placeholder:text-neutral-400 focus:outline-none focus:border-emerald-400/50 focus:ring-1 focus:ring-emerald-400/30 transition-all shadow-lg"
+          className={cn(
+            'w-full h-10 pl-9 pr-9 rounded-xl backdrop-blur-xl text-xs sm:text-sm text-white placeholder:text-neutral-400 focus:outline-none transition-all shadow-lg',
+            isExpanded
+              ? 'bg-neutral-900/95 border border-emerald-500/50 ring-2 ring-emerald-500/20'
+              : 'bg-neutral-900/80 border border-white/10 hover:border-white/20'
+          )}
         />
 
         {isLoading ? (
@@ -168,7 +194,8 @@ export const MapSearchOverlay: React.FC<MapSearchOverlayProps> = ({
           <button
             type="button"
             onClick={handleClear}
-            className="absolute right-3 p-0.5 rounded-full text-neutral-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="absolute right-2.5 p-1 rounded-full text-neutral-400 hover:text-white hover:bg-white/10 transition-colors"
+            title="Törlés"
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -176,36 +203,89 @@ export const MapSearchOverlay: React.FC<MapSearchOverlayProps> = ({
       </div>
 
       {/* Autocomplete Dropdown */}
-      {isOpen && results.length > 0 && (
-        <div className="absolute top-12 left-0 right-0 z-50 rounded-xl bg-neutral-950/95 border border-white/15 backdrop-blur-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="p-1.5 space-y-0.5 max-h-64 overflow-y-auto">
-            {results.map((item, idx) => {
-              const { main, secondary } = formatDisplayName(item.display_name);
-              const isSelected = selectedIndex === idx;
+      {isOpen && (
+        <div className="absolute top-12 left-0 right-0 z-50 rounded-2xl bg-neutral-950/95 border border-emerald-500/30 backdrop-blur-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+          {results.length > 0 ? (
+            <>
+              <div className="p-1.5 space-y-1 max-h-64 overflow-y-auto">
+                {results.map((item, idx) => {
+                  const { main, secondary } = formatDisplayName(item.display_name);
+                  const isSelected = selectedIndex === idx;
 
-              return (
-                <button
-                  key={item.place_id}
-                  type="button"
-                  onClick={() => handleSelect(item)}
-                  className={cn(
-                    'w-full text-left p-2.5 rounded-lg flex items-start gap-2.5 text-xs transition-colors',
-                    isSelected
-                      ? 'bg-emerald-500/20 text-white'
-                      : 'text-neutral-300 hover:bg-white/5 hover:text-white'
-                  )}
-                >
-                  <MapPin className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-white truncate">{main}</p>
-                    {secondary && (
-                      <p className="text-[11px] text-neutral-400 truncate">{secondary}</p>
-                    )}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+                  return (
+                    <button
+                      key={item.place_id}
+                      type="button"
+                      onClick={() => handleSelect(item)}
+                      onMouseEnter={() => setSelectedIndex(idx)}
+                      className={cn(
+                        'group w-full text-left p-2.5 rounded-xl flex items-center justify-between gap-3 text-xs transition-all cursor-pointer',
+                        isSelected
+                          ? 'bg-gradient-to-r from-emerald-500/25 to-emerald-500/10 border border-emerald-500/40 text-white shadow-md'
+                          : 'border border-transparent text-neutral-300 hover:bg-white/5 hover:text-white'
+                      )}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <div
+                          className={cn(
+                            'w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors',
+                            isSelected
+                              ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/40'
+                              : 'bg-white/5 text-neutral-400 group-hover:text-emerald-400 group-hover:bg-emerald-500/10'
+                          )}
+                        >
+                          <MapPin className="w-3.5 h-3.5" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p
+                            className={cn(
+                              'font-semibold truncate transition-colors',
+                              isSelected ? 'text-emerald-200' : 'text-white'
+                            )}
+                          >
+                            {main}
+                          </p>
+                          {secondary && (
+                            <p className="text-[11px] text-neutral-400 truncate mt-0.5">
+                              {secondary}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Selection action pill indicator */}
+                      <div
+                        className={cn(
+                          'shrink-0 flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-lg transition-all',
+                          isSelected
+                            ? 'opacity-100 bg-emerald-500 text-neutral-950 shadow-sm'
+                            : 'opacity-0 group-hover:opacity-70 text-neutral-400 bg-white/5'
+                        )}
+                      >
+                        <span>Ugrás</span>
+                        <Navigation className="w-2.5 h-2.5" />
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Dropdown footer info */}
+              <div className="px-3 py-1.5 border-t border-white/10 flex items-center justify-between text-[10px] text-neutral-400 bg-neutral-950/80">
+                <span>{results.length} találat Győrben</span>
+                <span className="hidden sm:inline text-[10px] text-neutral-500">
+                  ↑↓ navigáció • Enter kiválasztás
+                </span>
+              </div>
+            </>
+          ) : !isLoading && query.trim().length >= 2 ? (
+            <div className="p-4 text-center space-y-1">
+              <p className="text-xs text-neutral-300 font-medium">Nincs találat Győr területén</p>
+              <p className="text-[11px] text-neutral-500">
+                Próbálj utcanevet vagy városrészt keresni (pl. Baross Gábor út, Nádorváros)
+              </p>
+            </div>
+          ) : null}
         </div>
       )}
     </div>
