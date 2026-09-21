@@ -431,3 +431,10 @@
   scrollbar-width: none;
 }
 
+/* Prevent iOS Safari from auto-zooming on input focus */
+@media screen and (max-width: 767px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+

@@ -182,10 +182,8 @@ export const MapSearchOverlay: React.FC<MapSearchOverlayProps> = ({
           }}
           placeholder="Keresés: városrész, utca..."
           className={cn(
-            'w-full h-10 pl-9 pr-9 rounded-xl backdrop-blur-xl text-base sm:text-xs text-white placeholder:text-neutral-400 focus:outline-none transition-colors shadow-lg',
-            isExpanded
-              ? 'bg-neutral-900/95 border border-emerald-500/50 ring-1 ring-emerald-500/20'
-              : 'bg-neutral-900/80 border border-white/10 hover:border-white/20'
+            'w-full h-10 pl-9 pr-9 rounded-xl bg-neutral-900/80 border border-white/10 backdrop-blur-xl text-base sm:text-xs text-white placeholder:text-neutral-400 focus:outline-none focus:border-emerald-400/50 focus:ring-1 focus:ring-emerald-400/30 transition-colors shadow-lg',
+            isExpanded && 'sm:border-emerald-500/50 sm:ring-emerald-500/20 sm:bg-neutral-900/95'
           )}
         />
 
