@@ -245,3 +245,180 @@
     @apply premium-glass-hover;
   }
 }
+
+/* Transforms standard OSM light tiles into a dark mode theme */
+.map-dark-tiles {
+  filter: invert(100%) hue-rotate(180deg) brightness(85%) contrast(120%);
+}
+
+.leaflet-container {
+  background-color: #0a0a0a !important;
+}
+
+/* Custom CSS filter to give Győr boundary a true neon glow effect */
+.gyor-outer-glow path {
+  filter: drop-shadow(0px 0px 8px #10b981) drop-shadow(0px 0px 16px #10b981) drop-shadow(0px 0px 24px #00f3ff);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  animation: gyor-border-pulse 4s ease-in-out infinite alternate;
+}
+
+.gyor-inner-core path {
+  filter: drop-shadow(0px 0px 3px #ffffff);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@keyframes gyor-border-pulse {
+  0% {
+    opacity: 0.65;
+    filter: drop-shadow(0px 0px 6px #10b981) drop-shadow(0px 0px 12px #10b981);
+  }
+  100% {
+    opacity: 1;
+    filter: drop-shadow(0px 0px 10px #10b981) drop-shadow(0px 0px 20px #00f3ff);
+  }
+}
+
+/* Pulsing User Location Marker */
+.user-location-marker {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-location-dot {
+  width: 14px;
+  height: 14px;
+  background: #00f3ff;
+  border: 2.5px solid #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #00f3ff, 0 0 20px #00f3ff;
+  position: relative;
+  z-index: 2;
+}
+
+.user-location-pulse {
+  position: absolute;
+  width: 36px;
+  height: 36px;
+  background: rgba(0, 243, 255, 0.35);
+  border-radius: 50%;
+  animation: user-loc-pulse 2s infinite ease-out;
+  z-index: 1;
+}
+
+@keyframes user-loc-pulse {
+  0% {
+    transform: scale(0.35);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+/* Search Result Pin Animation */
+.search-result-marker {
+  animation: search-pin-bounce 0.6s ease-out;
+}
+
+@keyframes search-pin-bounce {
+  0% {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  50% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  75% {
+    transform: translateY(-6px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+/* User Location Tooltip Glass Styling */
+.leaflet-tooltip.user-loc-tooltip-container {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+.leaflet-tooltip.user-loc-tooltip-container::before {
+  display: none !important;
+}
+
+.user-loc-tooltip-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 12px;
+  background: rgba(10, 10, 10, 0.88);
+  border: 1px solid rgba(6, 182, 212, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 12px rgba(6, 182, 212, 0.25);
+  color: #67e8f9;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.user-loc-tooltip-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background-color: #22d3ee;
+  box-shadow: 0 0 8px #22d3ee;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Spot Glass Tooltip Styling */
+.leaflet-tooltip.spot-glass-tooltip {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+.leaflet-tooltip.spot-glass-tooltip::before {
+  display: none !important;
+}
+
+.spot-tooltip-content {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 12px;
+  border-radius: 14px;
+  background: rgba(10, 10, 10, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 15px rgba(16, 185, 129, 0.15);
+  pointer-events: none;
+  min-width: 130px;
+  max-width: 260px;
+}
+
+.search-loc-tooltip-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 12px;
+  background: rgba(10, 10, 10, 0.90);
+  border: 1px solid rgba(6, 182, 212, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), 0 0 12px rgba(6, 182, 212, 0.2);
+  white-space: nowrap;
+}
+

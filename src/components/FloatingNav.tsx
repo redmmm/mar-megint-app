@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Newspaper, CloudSun, Settings, Map } from 'lucide-react';
+import { Home, Newspaper, CloudSun, Map } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const FloatingNav = () => {
@@ -9,7 +9,7 @@ const FloatingNav = () => {
     { to: '/', icon: Home, label: 'Home' },
     { to: '/news', icon: Newspaper, label: 'Hírek' },
     { to: '/weather', icon: CloudSun, label: 'Időjárás' },
-    { to: '/skate-map', icon: Map, label: 'Skate Map' },
+    { to: '/skatemap', icon: Map, label: 'Skate Map' },
   ];
 
   return (
@@ -17,7 +17,8 @@ const FloatingNav = () => {
       <div className="flex items-center gap-1">
         {navItems.map(({ to, icon: Icon, label }) => {
           const isActive = location.pathname === to || 
-            (to !== '/' && location.pathname.startsWith(to));
+            (to !== '/' && location.pathname.startsWith(to)) ||
+            (to === '/skatemap' && location.pathname === '/skate-map');
           
           return (
             <Link
@@ -32,7 +33,7 @@ const FloatingNav = () => {
               <Icon className={cn(
                 'w-4 h-4 transition-colors',
                 isActive
-                  ? (to === '/weather' ? 'text-blue-500' : (to === '/skate-map' ? 'text-emerald-400' : (Icon === Home ? 'text-white' : 'text-primary')))
+                  ? (to === '/weather' ? 'text-blue-500' : (to === '/skatemap' ? 'text-emerald-400' : (Icon === Home ? 'text-white' : 'text-primary')))
                   : 'text-muted-foreground'
               )} />
               <span className={cn(

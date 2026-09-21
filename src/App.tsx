@@ -26,9 +26,11 @@ const App = () => (
             <Route path="/channel/:slug" element={<ChannelDashboard />} />
             <Route path="/news" element={<NewsPage />} />
             <Route path="/weather" element={<WeatherPage />} />
+            <Route path="/skatemap" element={<SkateMapPage />} />
             <Route path="/skate-map" element={<SkateMapPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/admin/skatemap" element={<Admin defaultTab="skatemap" />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
