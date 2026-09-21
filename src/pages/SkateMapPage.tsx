@@ -11,11 +11,10 @@ import { Spot } from '@/types/spot';
 import { Button } from '@/components/ui/button';
 import { MapPin, Plus, Compass, Loader2, Info, Locate, ShieldCheck } from 'lucide-react';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -625,56 +624,62 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
               </div>
 
               {/* Sub-row under Győri Skatemap: BETA pill + Info button */}
-              <div className="flex items-center gap-1.5 mt-1">
-                <TooltipProvider delayDuration={150}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="cursor-help inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[9px] font-black tracking-wider bg-amber-500/15 text-amber-300 border border-amber-500/30 hover:bg-amber-500/25 transition-all shadow-sm">
-                        BETA
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent
-                      side="bottom"
-                      align="start"
-                      className="max-w-[260px] bg-neutral-900/95 border border-amber-500/30 text-neutral-200 text-xs p-3 backdrop-blur-xl shadow-2xl rounded-xl"
+              <div className="flex items-center gap-2 mt-1">
+                {/* BETA popover */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className="cursor-pointer inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[9px] font-black tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/35 hover:bg-amber-500/30 active:scale-95 transition-all shadow-sm focus:outline-none"
+                      aria-label="Béta információ"
                     >
-                      <p className="font-bold text-amber-300 mb-0.5 text-xs">Fejlesztés alatt álló funkció</p>
-                      <p className="text-[11px] text-neutral-300 leading-relaxed">
-                        Ez a funkció még béta fázisban van: a térkép aktív fejlesztés alatt áll, a felület és a funkciók még nem véglegesek.
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
+                      BETA
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    side="bottom"
+                    align="start"
+                    sideOffset={8}
+                    className="max-w-[270px] bg-neutral-900/95 border border-amber-500/30 text-neutral-200 text-xs p-3.5 backdrop-blur-xl shadow-2xl rounded-2xl z-50"
+                  >
+                    <p className="font-bold text-amber-300 mb-1 text-xs">Fejlesztés alatt álló funkció</p>
+                    <p className="text-[11px] text-neutral-300 leading-relaxed">
+                      Ez a funkció még béta fázisban van: a térkép aktív fejlesztés alatt áll, a felület és a funkciók még nem véglegesek.
+                    </p>
+                  </PopoverContent>
+                </Popover>
 
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        type="button"
-                        className="inline-flex items-center justify-center w-4 h-4 rounded-full text-neutral-400 hover:text-white hover:bg-white/10 transition-colors"
-                        aria-label="Adatfelhasználási tájékoztató"
-                      >
-                        <Info className="w-3 h-3" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent
-                      side="bottom"
-                      align="start"
-                      className="max-w-[280px] bg-neutral-900/95 border border-white/15 text-neutral-200 text-xs p-3 backdrop-blur-xl shadow-2xl rounded-xl space-y-1.5"
+                {/* Info popover */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className="cursor-pointer inline-flex items-center justify-center w-5 h-5 rounded-full text-neutral-400 hover:text-white hover:bg-white/10 active:scale-95 transition-colors focus:outline-none"
+                      aria-label="Adatfelhasználási tájékoztató"
                     >
-                      <p className="font-bold text-white flex items-center gap-1.5 text-xs">
-                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                        Adatfelhasználási tájékoztató
-                      </p>
-                      <p className="text-[11px] text-neutral-300 leading-relaxed">
-                        A helyzetedet (GPS / IP koordinátáidat) kizárólag a böngésződben használjuk a térképen való megjelenítéshez.
-                      </p>
-                      <div className="pt-1 border-t border-white/10 text-[10px] text-neutral-400 space-y-0.5">
-                        <p>✓ Semmilyen személyes vagy helyadatot nem mentünk el.</p>
-                        <p>✓ Az adatokat nem használjuk fel semmire és nem továbbítjuk.</p>
-                        <p>✓ Az oldalon egyáltalán nincs reklám vagy hirdetés.</p>
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                      <Info className="w-3.5 h-3.5" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    side="bottom"
+                    align="start"
+                    sideOffset={8}
+                    className="max-w-[290px] bg-neutral-900/95 border border-white/15 text-neutral-200 text-xs p-3.5 backdrop-blur-xl shadow-2xl rounded-2xl space-y-2 z-50"
+                  >
+                    <p className="font-bold text-white flex items-center gap-1.5 text-xs">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                      Adatfelhasználási tájékoztató
+                    </p>
+                    <p className="text-[11px] text-neutral-300 leading-relaxed">
+                      A helyzetedet (GPS / IP koordinátáidat) kizárólag a böngésződben használjuk a térképen való megjelenítéshez.
+                    </p>
+                    <div className="pt-1.5 border-t border-white/10 text-[10px] text-neutral-400 space-y-1">
+                      <p>✓ Semmilyen személyes vagy helyadatot nem mentünk el.</p>
+                      <p>✓ Az adatokat nem használjuk fel semmire és nem továbbítjuk.</p>
+                      <p>✓ Az oldalon egyáltalán nincs reklám vagy hirdetés.</p>
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
           </div>
