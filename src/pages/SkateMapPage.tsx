@@ -28,15 +28,31 @@ const GYOR_BOUNDS: [[number, number], [number, number]] = [
 
 // Helper to create custom HTML markers matching dark glassmorphism
 const createSpotIcon = (title: string, spotType?: string) => {
-  const emoji = spotType === 'skatepark' ? '🛹' : '🏙️';
+  let emoji = '🏙️';
+  let borderColor = 'border-cyan-500/50';
+  let shadowColor = 'shadow-cyan-500/20';
+  let arrowBg = 'bg-cyan-400 border-cyan-500/50';
+
+  if (spotType === 'skatepark') {
+    emoji = '🛹';
+    borderColor = 'border-emerald-500/50';
+    shadowColor = 'shadow-emerald-500/20';
+    arrowBg = 'bg-emerald-400 border-emerald-500/50';
+  } else if (spotType === 'skateshop') {
+    emoji = '🏪';
+    borderColor = 'border-amber-500/50';
+    shadowColor = 'shadow-amber-500/20';
+    arrowBg = 'bg-amber-400 border-amber-500/50';
+  }
+
   return L.divIcon({
     className: 'custom-skate-marker',
     html: `
       <div class="relative group cursor-pointer flex items-center justify-center">
-        <div class="w-10 h-10 rounded-2xl bg-neutral-900/90 border border-emerald-500/50 backdrop-blur-md shadow-lg shadow-emerald-500/20 flex items-center justify-center transition-all duration-300 transform group-hover:scale-115 group-hover:border-emerald-400 group-hover:shadow-emerald-400/40">
+        <div class="w-10 h-10 rounded-2xl bg-neutral-900/90 border ${borderColor} backdrop-blur-md shadow-lg ${shadowColor} flex items-center justify-center transition-all duration-300 transform group-hover:scale-115">
           <span class="text-lg">${emoji}</span>
         </div>
-        <div class="absolute -bottom-1 w-2 h-2 bg-emerald-400 rotate-45 border-r border-b border-emerald-500/50"></div>
+        <div class="absolute -bottom-1 w-2 h-2 ${arrowBg} rotate-45 border-r border-b"></div>
       </div>
     `,
     iconSize: [40, 44],
@@ -104,7 +120,7 @@ const SkateMapPage: React.FC = () => {
   const searchMarkerRef = useRef<L.Marker | null>(null);
 
   const [spots, setSpots] = useState<Spot[]>([]);
-  const [filterType, setFilterType] = useState<'all' | 'skatepark' | 'street_spot'>('all');
+  const [filterType, setFilterType] = useState<'all' | 'skatepark' | 'street_spot' | 'skateshop'>('all');
   const [selectedSpot, setSelectedSpot] = useState<Spot | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -301,6 +317,7 @@ const SkateMapPage: React.FC = () => {
       });
 
       const isSkatepark = spot.spot_type === 'skatepark';
+      const isSkateshop = spot.spot_type === 'skateshop';
       const features = Array.isArray(spot.features) ? spot.features : [];
       const featureLabels: Record<string, string> = {
         rail: '🦯 Korlát',
@@ -308,6 +325,20 @@ const SkateMapPage: React.FC = () => {
         gap: '🪜 Gap',
         flatground: '🛹 Flat',
       };
+
+      const dotClass = isSkatepark
+        ? 'bg-emerald-400 shadow-[0_0_8px_#34d399]'
+        : isSkateshop
+        ? 'bg-amber-400 shadow-[0_0_8px_#fbbf24]'
+        : 'bg-cyan-400 shadow-[0_0_8px_#22d3ee]';
+
+      const badgeClass = isSkatepark
+        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+        : isSkateshop
+        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+        : 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30';
+
+      const typeLabel = isSkatepark ? 'Skatepark' : isSkateshop ? 'Skateshop' : 'Street';
 
       const featuresHtml =
         features.length > 0
@@ -330,18 +361,10 @@ const SkateMapPage: React.FC = () => {
         `
         <div class="spot-tooltip-content">
           <div class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full ${
-              isSkatepark
-                ? 'bg-emerald-400 shadow-[0_0_8px_#34d399]'
-                : 'bg-cyan-400 shadow-[0_0_8px_#22d3ee]'
-            }"></span>
+            <span class="w-2 h-2 rounded-full ${dotClass}"></span>
             <span class="font-bold text-white text-xs tracking-tight">${spot.title}</span>
-            <span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full ${
-              isSkatepark
-                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                : 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
-            }">
-              ${isSkatepark ? 'Skatepark' : 'Street'}
+            <span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full ${badgeClass}">
+              ${typeLabel}
             </span>
           </div>
           ${featuresHtml}
@@ -692,6 +715,18 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
               )}
             >
               🏙️ Street
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilterType('skateshop')}
+              className={cn(
+                "px-2.5 py-1 rounded-full text-xs font-medium transition-all",
+                filterType === 'skateshop'
+                  ? "bg-amber-500/25 text-amber-300 border border-amber-500/40 shadow-sm"
+                  : "text-neutral-400 hover:text-white hover:bg-white/5"
+              )}
+            >
+              🏪 Skateshop
             </button>
           </div>
 

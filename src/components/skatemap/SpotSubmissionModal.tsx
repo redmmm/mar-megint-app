@@ -252,12 +252,12 @@ export const SpotSubmissionModal: React.FC<SpotSubmissionModalProps> = ({
             <Label className="text-xs font-semibold uppercase text-neutral-300">
               Spot Típusa <span className="text-emerald-400">*</span>
             </Label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
                 onClick={() => setSpotType('skatepark')}
                 className={cn(
-                  "flex items-center justify-center gap-2 p-3 rounded-xl border text-xs font-semibold transition-all",
+                  "flex flex-col sm:flex-row items-center justify-center gap-1.5 p-2.5 rounded-xl border text-xs font-semibold transition-all text-center",
                   spotType === 'skatepark'
                     ? "bg-emerald-500/20 border-emerald-500 text-emerald-400 shadow-lg shadow-emerald-500/10"
                     : "bg-white/[0.03] border-white/10 text-neutral-400 hover:bg-white/[0.06] hover:text-white"
@@ -269,13 +269,25 @@ export const SpotSubmissionModal: React.FC<SpotSubmissionModalProps> = ({
                 type="button"
                 onClick={() => setSpotType('street_spot')}
                 className={cn(
-                  "flex items-center justify-center gap-2 p-3 rounded-xl border text-xs font-semibold transition-all",
+                  "flex flex-col sm:flex-row items-center justify-center gap-1.5 p-2.5 rounded-xl border text-xs font-semibold transition-all text-center",
                   spotType === 'street_spot'
                     ? "bg-emerald-500/20 border-emerald-500 text-emerald-400 shadow-lg shadow-emerald-500/10"
                     : "bg-white/[0.03] border-white/10 text-neutral-400 hover:bg-white/[0.06] hover:text-white"
                 )}
               >
                 <span className="text-base">🏙️</span> Street spot
+              </button>
+              <button
+                type="button"
+                onClick={() => setSpotType('skateshop')}
+                className={cn(
+                  "flex flex-col sm:flex-row items-center justify-center gap-1.5 p-2.5 rounded-xl border text-xs font-semibold transition-all text-center",
+                  spotType === 'skateshop'
+                    ? "bg-amber-500/20 border-amber-500 text-amber-400 shadow-lg shadow-amber-500/10"
+                    : "bg-white/[0.03] border-white/10 text-neutral-400 hover:bg-white/[0.06] hover:text-white"
+                )}
+              >
+                <span className="text-base">🏪</span> Skateshop
               </button>
             </div>
           </div>
@@ -322,7 +334,11 @@ export const SpotSubmissionModal: React.FC<SpotSubmissionModalProps> = ({
             </Label>
             <Textarea
               id="spot-desc"
-              placeholder="Milyen a talaj? Van-e lépcső, korlát vagy padka? Milyen napszakban a legjobb gurulni?"
+              placeholder={
+                spotType === 'skateshop'
+                  ? "Milyen márkákat árulnak? Nyitvatartási idő, elérhetőség vagy egyéb infók..."
+                  : "Milyen a talaj? Van-e lépcső, korlát vagy padka? Milyen napszakban a legjobb gurulni?"
+              }
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}

@@ -275,8 +275,17 @@ export const AdminSkateMapTab: React.FC = () => {
                           <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-[10px]">
                             Függőben lévő beküldés
                           </Badge>
-                          <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[10px]">
-                            {spot.spot_type === 'skatepark' ? '🛹 Skatepark' : '🏙️ Street spot'}
+                          <Badge
+                            className={cn(
+                              "text-[10px]",
+                              spot.spot_type === 'skatepark'
+                                ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
+                                : spot.spot_type === 'skateshop'
+                                ? "bg-amber-500/20 text-amber-400 border-amber-500/30"
+                                : "bg-cyan-500/20 text-cyan-400 border-cyan-500/30"
+                            )}
+                          >
+                            {spot.spot_type === 'skatepark' ? '🛹 Skatepark' : spot.spot_type === 'skateshop' ? '🏪 Skateshop' : '🏙️ Street spot'}
                           </Badge>
                           {spot.features && spot.features.map(f => (
                             <Badge key={f} variant="outline" className="text-[10px] text-neutral-300 border-white/10">
@@ -497,12 +506,12 @@ export const AdminSkateMapTab: React.FC = () => {
               <Label className="text-xs font-semibold uppercase text-neutral-300">
                 Spot Típusa
               </Label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 <button
                   type="button"
                   onClick={() => setEditFormData(prev => ({ ...prev, spot_type: 'skatepark' }))}
                   className={cn(
-                    "flex items-center justify-center gap-2 p-2.5 rounded-xl border text-xs font-semibold transition-all",
+                    "flex flex-col sm:flex-row items-center justify-center gap-1.5 p-2 rounded-xl border text-xs font-semibold transition-all text-center",
                     editFormData.spot_type === 'skatepark'
                       ? "bg-emerald-500/20 border-emerald-500 text-emerald-400 shadow-lg"
                       : "bg-white/[0.03] border-white/10 text-neutral-400 hover:bg-white/[0.06]"
@@ -514,13 +523,25 @@ export const AdminSkateMapTab: React.FC = () => {
                   type="button"
                   onClick={() => setEditFormData(prev => ({ ...prev, spot_type: 'street_spot' }))}
                   className={cn(
-                    "flex items-center justify-center gap-2 p-2.5 rounded-xl border text-xs font-semibold transition-all",
+                    "flex flex-col sm:flex-row items-center justify-center gap-1.5 p-2 rounded-xl border text-xs font-semibold transition-all text-center",
                     editFormData.spot_type === 'street_spot'
                       ? "bg-emerald-500/20 border-emerald-500 text-emerald-400 shadow-lg"
                       : "bg-white/[0.03] border-white/10 text-neutral-400 hover:bg-white/[0.06]"
                   )}
                 >
-                  <span className="text-base">🏙️</span> Street spot
+                  <span className="text-base">🏙️</span> Street
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditFormData(prev => ({ ...prev, spot_type: 'skateshop' }))}
+                  className={cn(
+                    "flex flex-col sm:flex-row items-center justify-center gap-1.5 p-2 rounded-xl border text-xs font-semibold transition-all text-center",
+                    editFormData.spot_type === 'skateshop'
+                      ? "bg-amber-500/20 border-amber-500 text-amber-400 shadow-lg"
+                      : "bg-white/[0.03] border-white/10 text-neutral-400 hover:bg-white/[0.06]"
+                  )}
+                >
+                  <span className="text-base">🏪</span> Skateshop
                 </button>
               </div>
             </div>

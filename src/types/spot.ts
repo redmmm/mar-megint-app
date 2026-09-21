@@ -1,5 +1,5 @@
 export type SpotStatus = 'pending' | 'approved';
-export type SpotType = 'skatepark' | 'street_spot';
+export type SpotType = 'skatepark' | 'street_spot' | 'skateshop';
 export type SpotFeature = 'rail' | 'ledge' | 'gap' | 'flatground';
 
 export interface Spot {

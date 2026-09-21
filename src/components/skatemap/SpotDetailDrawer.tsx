@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, Navigation, Copy, Check, ExternalLink, Image as ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 interface SpotDetailDrawerProps {
   spot: Spot | null;
@@ -84,9 +85,16 @@ export const SpotDetailDrawer: React.FC<SpotDetailDrawerProps> = ({ spot, isOpen
           <div className="absolute top-3 left-3 z-10">
             <Badge
               variant="outline"
-              className="bg-black/60 backdrop-blur-md border-emerald-500/40 text-emerald-400 font-semibold px-2.5 py-1 text-xs"
+              className={cn(
+                "backdrop-blur-md font-semibold px-2.5 py-1 text-xs",
+                spot.spot_type === 'skatepark'
+                  ? "bg-black/60 border-emerald-500/40 text-emerald-400"
+                  : spot.spot_type === 'skateshop'
+                  ? "bg-black/60 border-amber-500/40 text-amber-400"
+                  : "bg-black/60 border-cyan-500/40 text-cyan-400"
+              )}
             >
-              {spot.spot_type === 'skatepark' ? '🛹 Skatepark' : '🏙️ Street spot'}
+              {spot.spot_type === 'skatepark' ? '🛹 Skatepark' : spot.spot_type === 'skateshop' ? '🏪 Skateshop' : '🏙️ Street spot'}
             </Badge>
           </div>
         </div>
@@ -98,8 +106,17 @@ export const SpotDetailDrawer: React.FC<SpotDetailDrawerProps> = ({ spot, isOpen
               {spot.title}
             </SheetTitle>
             <div className="flex flex-wrap items-center gap-1.5 pt-1">
-              <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs font-semibold">
-                {spot.spot_type === 'skatepark' ? '🛹 Skatepark' : '🏙️ Street spot'}
+              <Badge
+                className={cn(
+                  "text-xs font-semibold",
+                  spot.spot_type === 'skatepark'
+                    ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
+                    : spot.spot_type === 'skateshop'
+                    ? "bg-amber-500/20 text-amber-400 border-amber-500/30"
+                    : "bg-cyan-500/20 text-cyan-400 border-cyan-500/30"
+                )}
+              >
+                {spot.spot_type === 'skatepark' ? '🛹 Skatepark' : spot.spot_type === 'skateshop' ? '🏪 Skateshop' : '🏙️ Street spot'}
               </Badge>
               {spot.features && spot.features.map((feat) => {
                 const featureLabels: Record<string, string> = {
