@@ -6,8 +6,8 @@
 -- 1. Create spots table
 CREATE TABLE IF NOT EXISTS public.spots (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  title TEXT NOT NULL,
-  description TEXT,
+  title TEXT NOT NULL CHECK (char_length(title) <= 100),
+  description TEXT CHECK (description IS NULL OR char_length(description) <= 1000),
   spot_type TEXT NOT NULL DEFAULT 'street_spot',
   features JSONB NOT NULL DEFAULT '[]'::jsonb,
   latitude DOUBLE PRECISION NOT NULL,
@@ -21,6 +21,10 @@ CREATE TABLE IF NOT EXISTS public.spots (
 -- Migration for existing tables:
 ALTER TABLE public.spots ADD COLUMN IF NOT EXISTS spot_type TEXT NOT NULL DEFAULT 'street_spot';
 ALTER TABLE public.spots ADD COLUMN IF NOT EXISTS features JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE public.spots DROP CONSTRAINT IF EXISTS spots_title_length_check;
+ALTER TABLE public.spots ADD CONSTRAINT spots_title_length_check CHECK (char_length(title) <= 100);
+ALTER TABLE public.spots DROP CONSTRAINT IF EXISTS spots_description_length_check;
+ALTER TABLE public.spots ADD CONSTRAINT spots_description_length_check CHECK (description IS NULL OR char_length(description) <= 1000);
 
 -- 2. Create updated_at trigger
 CREATE OR REPLACE FUNCTION public.handle_updated_at()

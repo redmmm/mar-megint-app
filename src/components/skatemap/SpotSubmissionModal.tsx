@@ -99,16 +99,24 @@ export const SpotSubmissionModal: React.FC<SpotSubmissionModalProps> = ({
 
     try {
       const uploadedUrls: string[] = [];
+      const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        if (!file.type.startsWith('image/')) continue;
+        if (!file.type.startsWith('image/')) {
+          setErrorMessage('Csak képfájlokat tölthetsz fel!');
+          continue;
+        }
+        if (file.size > MAX_FILE_SIZE) {
+          setErrorMessage(`A(z) "${file.name}" túl nagy! Maximum 10 MB engedélyezett.`);
+          continue;
+        }
         const url = await uploadSpotImage(file);
         uploadedUrls.push(url);
       }
       setImages((prev) => [...prev, ...uploadedUrls]);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Képfeltöltési hiba:', err);
-      setErrorMessage('Nem sikerült a képek feldolgozása.');
+      setErrorMessage(err?.message || 'Nem sikerült a képek feldolgozása.');
     } finally {
       setIsUploading(false);
       e.target.value = '';
@@ -132,6 +140,16 @@ export const SpotSubmissionModal: React.FC<SpotSubmissionModalProps> = ({
     // 1. Validation
     if (!title.trim()) {
       setErrorMessage('Kérjük, add meg a spot nevét!');
+      return;
+    }
+
+    if (title.trim().length > 100) {
+      setErrorMessage('A spot neve legfeljebb 100 karakter lehet!');
+      return;
+    }
+
+    if (description.trim().length > 1000) {
+      setErrorMessage('A leírás legfeljebb 1000 karakter lehet!');
       return;
     }
 

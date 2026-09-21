@@ -155,9 +155,17 @@ export const AdminSkateMapTab: React.FC = () => {
     setIsUploadingImage(true);
     try {
       const newUrls: string[] = [];
+      const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        if (!file.type.startsWith('image/')) continue;
+        if (!file.type.startsWith('image/')) {
+          toast.error('Csak képfájlokat lehet feltölteni.');
+          continue;
+        }
+        if (file.size > MAX_FILE_SIZE) {
+          toast.error(`A(z) "${file.name}" túl nagy! Maximum 10 MB engedélyezett.`);
+          continue;
+        }
         const url = await uploadSpotImage(file);
         newUrls.push(url);
       }
@@ -165,9 +173,9 @@ export const AdminSkateMapTab: React.FC = () => {
         ...prev,
         images: [...prev.images, ...newUrls],
       }));
-    } catch (err) {
+    } catch (err: any) {
       console.error('Image upload error:', err);
-      toast.error('Nem sikerült feltölteni a képet.');
+      toast.error(err?.message || 'Nem sikerült feltölteni a képet.');
     } finally {
       setIsUploadingImage(false);
       e.target.value = '';

@@ -82,8 +82,19 @@ export const compressImage = (file: File, maxWidth = 800, quality = 0.7): Promis
  * If bucket or permissions are not yet configured, falls back to compressed Base64.
  */
 export const uploadSpotImage = async (file: File): Promise<string> => {
+  // Security: validate MIME type and size limit (max 10MB)
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+  if (!allowedTypes.includes(file.type)) {
+    throw new Error('Csak JPG, PNG vagy WebP képek tölthetők fel!');
+  }
+
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+  if (file.size > MAX_FILE_SIZE) {
+    throw new Error('A fájl mérete meghaladja a megengedett 10 MB-os határt!');
+  }
+
   try {
-    const fileExt = file.name.split('.').pop();
+    const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
     const filePath = `spots/${fileName}`;
 
@@ -231,14 +242,28 @@ export const getSpots = async (status: 'approved' | 'pending' | 'all' = 'approve
  * Anonymous spot submission (enforces status = 'pending')
  */
 export const submitSpot = async (input: CreateSpotInput): Promise<Spot> => {
+  const cleanTitle = input.title.trim();
+  const cleanDesc = input.description?.trim() || '';
+
+  if (!cleanTitle || cleanTitle.length > 100) {
+    throw new Error('A spot címe kötelező és legfeljebb 100 karakter lehet!');
+  }
+
+  if (cleanDesc.length > 1000) {
+    throw new Error('A leírás hossza legfeljebb 1000 karakter lehet!');
+  }
+
+  // Cap image count to 5
+  const sanitizedImages = (input.images || []).slice(0, 5);
+
   const newSpotPayload = {
-    title: input.title.trim(),
-    description: input.description?.trim() || '',
+    title: cleanTitle,
+    description: cleanDesc,
     spot_type: input.spot_type || 'street_spot',
     features: input.features || [],
     latitude: input.latitude,
     longitude: input.longitude,
-    images: input.images || [],
+    images: sanitizedImages,
     status: 'pending' as const,
   };
 

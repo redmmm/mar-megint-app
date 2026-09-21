@@ -1,11 +1,9 @@
 // YouTube Service using rss2json for RSS feed parsing
 // Converts YouTube RSS feeds to JSON without CORS issues
 
-// Helper function to decode HTML entities in RSS feed titles
+// Helper function to decode HTML entities in RSS feed titles safely without innerHTML
 const decodeHtml = (html: string) => {
-  const txt = document.createElement("textarea");
-  txt.innerHTML = html;
-  return txt.value;
+  return new DOMParser().parseFromString(html, 'text/html').body.textContent || '';
 };
 
 export interface YouTubeVideo {

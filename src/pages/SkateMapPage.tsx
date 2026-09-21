@@ -25,6 +25,10 @@ const GYOR_BOUNDS: [[number, number], [number, number]] = [
   [47.7800, 17.8000],
 ];
 
+// XSS protection: escape user-provided strings before inserting into raw HTML
+const escapeHtml = (str: string): string =>
+  str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
 // Helper to create custom HTML markers matching dark glassmorphism
 const createSpotIcon = (title: string, spotType?: string) => {
   let emoji = '🏙️';
@@ -362,7 +366,7 @@ const SkateMapPage: React.FC = () => {
         <div class="spot-tooltip-content">
           <div class="flex items-center gap-2">
             <span class="w-2 h-2 rounded-full ${dotClass}"></span>
-            <span class="font-bold text-white text-xs tracking-tight">${spot.title}</span>
+            <span class="font-bold text-white text-xs tracking-tight">${escapeHtml(spot.title)}</span>
             <span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full ${badgeClass}">
               ${typeLabel}
             </span>
@@ -400,7 +404,7 @@ const SkateMapPage: React.FC = () => {
         `
         <div class="search-loc-tooltip-content">
           <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]"></span>
-          <span class="font-bold text-xs text-white tracking-tight">${name}</span>
+          <span class="font-bold text-xs text-white tracking-tight">${escapeHtml(name)}</span>
         </div>
         `,
         {
