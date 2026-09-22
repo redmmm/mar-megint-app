@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Spot, UpdateSpotInput, SpotType } from '@/types/spot';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 import {
   getSpots,
   approveSpot,
@@ -91,6 +92,21 @@ export const AdminSkateMapTab: React.FC = () => {
 
   useEffect(() => {
     loadAllSpots();
+
+    const channel = supabase
+      .channel('admin-skatemap-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'spots' },
+        () => {
+          loadAllSpots();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const handleApprove = async (id: string) => {

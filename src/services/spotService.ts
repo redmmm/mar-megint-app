@@ -139,6 +139,17 @@ const saveLocalSpots = (spots: Spot[]) => {
   }
 };
 
+const generateUUID = (): string => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+};
+
 /**
  * Sync locally created offline spots to Supabase cloud once the table is ready
  */
@@ -156,11 +167,14 @@ export const syncLocalSpotsToSupabase = async (): Promise<number> => {
     for (const spot of offlineSpots) {
       // If authenticated, keep status; otherwise, anon can only insert pending
       const statusToInsert = isAuthenticated ? spot.status : 'pending';
+      const newId = generateUUID();
 
-      const { data, error } = await supabase
+      // Note: Do not use .select() here because anonymous users cannot SELECT pending spots under RLS.
+      const { error } = await supabase
         .from('spots')
         .insert([
           {
+            id: newId,
             title: spot.title,
             description: spot.description,
             spot_type: spot.spot_type || 'street_spot',
@@ -170,16 +184,16 @@ export const syncLocalSpotsToSupabase = async (): Promise<number> => {
             images: spot.images || [],
             status: statusToInsert,
           },
-        ])
-        .select()
-        .single();
+        ]);
 
-      if (!error && data) {
+      if (!error) {
         syncedCount++;
         // Update local spot ID to the Supabase UUID
         const currentLocal = getLocalSpots();
-        const updated = currentLocal.map((s) => (s.id === spot.id ? { ...s, id: data.id } : s));
+        const updated = currentLocal.map((s) => (s.id === spot.id ? { ...s, id: newId } : s));
         saveLocalSpots(updated);
+      } else {
+        console.warn('Sync offline spot failed:', error.message);
       }
     }
 
@@ -214,27 +228,32 @@ export const getSpots = async (status: 'approved' | 'pending' | 'all' = 'approve
       console.warn('Supabase spots query notice (falling back to local cache):', error.message);
       const local = getLocalSpots();
       if (status === 'all') return local;
-      return local.filter(s => s.status === status);
+      return local.filter((s) => s.status === status);
     }
 
-    if (data && data.length > 0) {
-      return data.map((item: any) => ({
+    if (data) {
+      const mapped = data.map((item: any) => ({
         ...item,
         images: Array.isArray(item.images) ? item.images : [],
         features: Array.isArray(item.features) ? item.features : [],
         spot_type: item.spot_type || 'street_spot',
       })) as Spot[];
+
+      // If Supabase returned results, or if status is 'pending', use cloud data directly
+      if (mapped.length > 0 || status === 'pending') {
+        return mapped;
+      }
     }
 
-    // If Supabase table is empty, return local spots if status is approved or all
+    // If Supabase table is empty for approved spots, return local seed spots
     const local = getLocalSpots();
     if (status === 'all') return local;
-    return local.filter(s => s.status === status);
+    return local.filter((s) => s.status === status);
   } catch (err) {
     console.error('getSpots error, using local fallback:', err);
     const local = getLocalSpots();
     if (status === 'all') return local;
-    return local.filter(s => s.status === status);
+    return local.filter((s) => s.status === status);
   }
 };
 
@@ -255,8 +274,11 @@ export const submitSpot = async (input: CreateSpotInput): Promise<Spot> => {
 
   // Cap image count to 5
   const sanitizedImages = (input.images || []).slice(0, 5);
+  const newSpotId = generateUUID();
+  const now = new Date().toISOString();
 
   const newSpotPayload = {
+    id: newSpotId,
     title: cleanTitle,
     description: cleanDesc,
     spot_type: input.spot_type || 'street_spot',
@@ -265,40 +287,35 @@ export const submitSpot = async (input: CreateSpotInput): Promise<Spot> => {
     longitude: input.longitude,
     images: sanitizedImages,
     status: 'pending' as const,
+    created_at: now,
+    updated_at: now,
   };
 
   try {
-    const { data, error } = await supabase
+    // Note: Do not use .select() here because anonymous users cannot SELECT pending spots under RLS.
+    const { error } = await supabase
       .from('spots')
-      .insert([newSpotPayload])
-      .select()
-      .single();
+      .insert([newSpotPayload]);
 
-    if (!error && data) {
+    if (!error) {
       const created: Spot = {
-        ...data,
-        images: Array.isArray(data.images) ? data.images : [],
-        features: Array.isArray(data.features) ? data.features : [],
-        spot_type: data.spot_type || 'street_spot',
+        ...newSpotPayload,
       };
       // Keep local cache in sync
       const local = getLocalSpots();
       saveLocalSpots([created, ...local]);
       return created;
     }
-    if (error) {
-      console.warn('Supabase insert failed, saving locally:', error.message);
-    }
+
+    console.warn('Supabase insert failed, saving locally:', error.message);
   } catch (err) {
     console.warn('Supabase insert error, saving locally:', err);
   }
 
-  // Local fallback
+  // Local fallback if cloud insert fails (e.g. offline)
   const fallbackSpot: Spot = {
-    id: `local-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
     ...newSpotPayload,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    id: `local-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
   };
 
   const local = getLocalSpots();
@@ -317,18 +334,23 @@ export const approveSpot = async (id: string): Promise<boolean> => {
       .update({ status: 'approved', updated_at: new Date().toISOString() })
       .eq('id', id);
 
-    if (!error) success = true;
-    else console.warn('Supabase approve error:', error.message);
+    if (!error) {
+      success = true;
+    } else {
+      console.warn('Supabase approve error:', error.message);
+    }
   } catch (err) {
     console.warn('Supabase approve error:', err);
   }
 
   // Always update local cache
   const local = getLocalSpots();
-  const updated = local.map(s => (s.id === id ? { ...s, status: 'approved' as const, updated_at: new Date().toISOString() } : s));
+  const updated = local.map((s) =>
+    s.id === id ? { ...s, status: 'approved' as const, updated_at: new Date().toISOString() } : s
+  );
   saveLocalSpots(updated);
 
-  return success || true;
+  return success;
 };
 
 /**
@@ -342,18 +364,21 @@ export const updateSpot = async (id: string, updates: UpdateSpotInput): Promise<
       .update({ ...updates, updated_at: new Date().toISOString() })
       .eq('id', id);
 
-    if (!error) success = true;
-    else console.warn('Supabase update error:', error.message);
+    if (!error) {
+      success = true;
+    } else {
+      console.warn('Supabase update error:', error.message);
+    }
   } catch (err) {
     console.warn('Supabase update error:', err);
   }
 
   // Update local cache
   const local = getLocalSpots();
-  const updated = local.map(s => (s.id === id ? { ...s, ...updates, updated_at: new Date().toISOString() } : s));
+  const updated = local.map((s) => (s.id === id ? { ...s, ...updates, updated_at: new Date().toISOString() } : s));
   saveLocalSpots(updated);
 
-  return success || true;
+  return success;
 };
 
 /**
@@ -367,16 +392,19 @@ export const deleteSpot = async (id: string): Promise<boolean> => {
       .delete()
       .eq('id', id);
 
-    if (!error) success = true;
-    else console.warn('Supabase delete error:', error.message);
+    if (!error) {
+      success = true;
+    } else {
+      console.warn('Supabase delete error:', error.message);
+    }
   } catch (err) {
     console.warn('Supabase delete error:', err);
   }
 
   // Update local cache
   const local = getLocalSpots();
-  const filtered = local.filter(s => s.id !== id);
+  const filtered = local.filter((s) => s.id !== id);
   saveLocalSpots(filtered);
 
-  return success || true;
+  return success;
 };

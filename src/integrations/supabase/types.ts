@@ -40,6 +40,48 @@ export type Database = {
           title?: string
         }
         Relationships: []
+      },
+      spots: {
+        Row: {
+          created_at: string
+          description: string | null
+          features: Json
+          id: string
+          images: Json
+          latitude: number
+          longitude: number
+          spot_type: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          features?: Json
+          id?: string
+          images?: Json
+          latitude: number
+          longitude: number
+          spot_type?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          features?: Json
+          id?: string
+          images?: Json
+          latitude?: number
+          longitude?: number
+          spot_type?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
     }
     Views: {

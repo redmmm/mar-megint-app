@@ -7,6 +7,7 @@ import { SpotSubmissionModal } from '@/components/skatemap/SpotSubmissionModal';
 import { MapSearchOverlay } from '@/components/skatemap/MapSearchOverlay';
 import { LocationPermissionDialog } from '@/components/skatemap/LocationPermissionDialog';
 import { getSpots } from '@/services/spotService';
+import { supabase } from '@/integrations/supabase/client';
 import { Spot } from '@/types/spot';
 import { Button } from '@/components/ui/button';
 import { MapPin, Plus, Compass, Loader2, Info, Locate, ShieldCheck } from 'lucide-react';
@@ -153,6 +154,21 @@ const SkateMapPage: React.FC = () => {
 
   useEffect(() => {
     loadApprovedSpots();
+
+    const channel = supabase
+      .channel('public-skatemap-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'spots' },
+        () => {
+          loadApprovedSpots();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   // 2. Initialize Leaflet Map with CARTO Dark Matter & Győr Bounds

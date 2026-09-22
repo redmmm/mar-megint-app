@@ -46,11 +46,12 @@ ALTER TABLE public.spots ENABLE ROW LEVEL SECURITY;
 
 -- 4. RLS Policies:
 
--- A) Anyone (including anonymous users) can view approved spots on the public map
+-- A) Anyone can view approved spots (and pending spots during insertion/verification)
 DROP POLICY IF EXISTS "Allow public to read approved spots" ON public.spots;
-CREATE POLICY "Allow public to read approved spots"
+DROP POLICY IF EXISTS "Allow public to read spots" ON public.spots;
+CREATE POLICY "Allow public to read spots"
   ON public.spots FOR SELECT
-  USING (status = 'approved');
+  USING (true);
 
 -- B) Anonymous users can submit new spots ONLY with status = 'pending'
 -- This prevents attackers from spoofing a POST request with status = 'approved'
