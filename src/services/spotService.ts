@@ -232,12 +232,31 @@ export const getSpots = async (status: 'approved' | 'pending' | 'all' = 'approve
     }
 
     if (data) {
-      const mapped = data.map((item: any) => ({
-        ...item,
-        images: Array.isArray(item.images) ? item.images : [],
-        features: Array.isArray(item.features) ? item.features : [],
-        spot_type: item.spot_type || 'street_spot',
-      })) as Spot[];
+      const local = getLocalSpots();
+      const localMap = new Map(local.map((s) => [s.id, s]));
+
+      const mapped = data.map((item: any) => {
+        const localSpot = localMap.get(item.id);
+        const isReported = localSpot?.is_reported !== undefined
+          ? Boolean(localSpot.is_reported)
+          : Boolean(item.is_reported);
+        const reportReason = localSpot?.is_reported !== undefined
+          ? localSpot.report_reason
+          : item.report_reason;
+        const reportedAt = localSpot?.is_reported !== undefined
+          ? localSpot.reported_at
+          : item.reported_at;
+
+        return {
+          ...item,
+          images: Array.isArray(item.images) ? item.images : [],
+          features: Array.isArray(item.features) ? item.features : [],
+          spot_type: item.spot_type || 'street_spot',
+          is_reported: isReported,
+          report_reason: reportReason,
+          reported_at: reportedAt,
+        };
+      }) as Spot[];
 
       // If Supabase returned results, or if status is 'pending', use cloud data directly
       if (mapped.length > 0 || status === 'pending') {
@@ -408,3 +427,182 @@ export const deleteSpot = async (id: string): Promise<boolean> => {
 
   return success;
 };
+
+/**
+ * Anonymous spot report:
+ * Calls the secure RPC 'report_spot' on Supabase if connected.
+ * Prevents server overload and duplicate reports: if a spot is already reported,
+ * it does NOT duplicate or overwrite the report, and returns alreadyReported = true.
+ * Falls back to localStorage if offline/local dev.
+ */
+export const reportSpot = async (
+  id: string,
+  reason: string,
+  spotData?: Partial<Spot>
+): Promise<{ success: boolean; alreadyReported?: boolean; message?: string }> => {
+  const trimmedReason = reason?.trim();
+  if (!trimmedReason || trimmedReason.length < 5) {
+    return { success: false, message: 'Az indoklásnak legalább 5 karakterből kell állnia!' };
+  }
+
+  // 1. Check local cache first for instant anti-spam & duplicate prevention
+  const localSpots = getLocalSpots();
+  const localSpot = localSpots.find((s) => s.id === id);
+  if (localSpot && localSpot.is_reported) {
+    return { success: true, alreadyReported: true };
+  }
+
+  // 2. Try Supabase RPC
+  try {
+    const { data, error } = await supabase.rpc('report_spot', {
+      p_spot_id: id,
+      p_reason: trimmedReason,
+    });
+
+    if (!error && data) {
+      const res = data as { success: boolean; alreadyReported?: boolean; message?: string };
+      // Keep local cache in sync
+      if (res.success) {
+        const now = new Date().toISOString();
+        const exists = localSpots.some((s) => s.id === id);
+        const updated = exists
+          ? localSpots.map((s) =>
+              s.id === id
+                ? {
+                    ...s,
+                    is_reported: true,
+                    report_reason: trimmedReason,
+                    reported_at: s.reported_at || now,
+                  }
+                : s
+            )
+          : [
+              {
+                id,
+                title: spotData?.title || 'Spot',
+                description: spotData?.description || '',
+                spot_type: spotData?.spot_type || 'street_spot',
+                features: spotData?.features || [],
+                latitude: spotData?.latitude || 47.6875,
+                longitude: spotData?.longitude || 17.6504,
+                images: spotData?.images || [],
+                status: 'approved' as const,
+                created_at: now,
+                updated_at: now,
+                is_reported: true,
+                report_reason: trimmedReason,
+                reported_at: now,
+              },
+              ...localSpots,
+            ];
+        saveLocalSpots(updated);
+      }
+      return res;
+    }
+
+    if (error) {
+      console.warn('Supabase RPC report_spot notice (falling back to local):', error.message);
+    }
+  } catch (err) {
+    console.warn('Supabase report_spot error, saving locally:', err);
+  }
+
+  // 3. Fallback: Save in localStorage (even if not previously in localStorage)
+  const now = new Date().toISOString();
+  let updatedSpots: Spot[];
+
+  const exists = localSpots.some((s) => s.id === id);
+  if (exists) {
+    updatedSpots = localSpots.map((s) =>
+      s.id === id
+        ? {
+            ...s,
+            is_reported: true,
+            report_reason: trimmedReason,
+            reported_at: now,
+          }
+        : s
+    );
+  } else {
+    // Spot was loaded from cloud, add to localSpots with report
+    const newSpot: Spot = {
+      id,
+      title: spotData?.title || 'Spot',
+      description: spotData?.description || '',
+      spot_type: spotData?.spot_type || 'street_spot',
+      features: spotData?.features || [],
+      latitude: spotData?.latitude || 47.6875,
+      longitude: spotData?.longitude || 17.6504,
+      images: spotData?.images || [],
+      status: 'approved',
+      created_at: now,
+      updated_at: now,
+      is_reported: true,
+      report_reason: trimmedReason,
+      reported_at: now,
+    };
+    updatedSpots = [newSpot, ...localSpots];
+  }
+
+  saveLocalSpots(updatedSpots);
+
+  // Also try direct Supabase update (in case columns exist but RPC doesn't)
+  try {
+    await supabase
+      .from('spots')
+      .update({
+        is_reported: true,
+        report_reason: trimmedReason,
+        reported_at: now,
+      })
+      .eq('id', id);
+  } catch (err) {
+    // silent catch for local dev
+  }
+
+  return { success: true, alreadyReported: false };
+};
+
+/**
+ * Admin: Dismiss a spot report (resolve or false alarm)
+ */
+export const dismissSpotReport = async (id: string): Promise<boolean> => {
+  let success = false;
+  try {
+    const { error } = await supabase
+      .from('spots')
+      .update({
+        is_reported: false,
+        report_reason: null,
+        reported_at: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id);
+
+    if (!error) {
+      success = true;
+    } else {
+      console.warn('Supabase dismiss report error:', error.message);
+    }
+  } catch (err) {
+    console.warn('Supabase dismiss report error:', err);
+  }
+
+  // Always update local cache
+  const local = getLocalSpots();
+  const updated = local.map((s) =>
+    s.id === id
+      ? {
+          ...s,
+          is_reported: false,
+          report_reason: undefined,
+          reported_at: undefined,
+          updated_at: new Date().toISOString(),
+        }
+      : s
+  );
+  saveLocalSpots(updated);
+
+  return success;
+};
+

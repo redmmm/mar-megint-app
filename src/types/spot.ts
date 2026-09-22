@@ -12,6 +12,9 @@ export interface Spot {
   longitude: number;
   images: string[];
   status: SpotStatus;
+  is_reported?: boolean;
+  report_reason?: string;
+  reported_at?: string;
   created_at: string;
   updated_at: string;
 }
@@ -35,5 +38,8 @@ export interface UpdateSpotInput {
   longitude?: number;
   images?: string[];
   status?: SpotStatus;
+  is_reported?: boolean;
+  report_reason?: string;
+  reported_at?: string;
 }
 

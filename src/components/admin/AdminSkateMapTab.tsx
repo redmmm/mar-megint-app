@@ -9,6 +9,7 @@ import {
   updateSpot,
   uploadSpotImage,
   syncLocalSpotsToSupabase,
+  dismissSpotReport,
 } from '@/services/spotService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,6 +37,8 @@ import {
   X,
   Plus,
   RefreshCw,
+  AlertTriangle,
+  Check,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { AdminMiniMap } from './AdminMiniMap';
@@ -53,6 +56,7 @@ export const AdminSkateMapTab: React.FC = () => {
   const [approvedSpots, setApprovedSpots] = useState<Spot[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+  const [approvedFilter, setApprovedFilter] = useState<'all' | 'reported'>('all');
 
   // Edit dialog state
   const [editingSpot, setEditingSpot] = useState<Spot | null>(null);
@@ -136,6 +140,20 @@ export const AdminSkateMapTab: React.FC = () => {
     } catch (err) {
       console.error('Delete error:', err);
       toast.error('Hiba történt a törlés során.');
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  const handleDismissReport = async (id: string) => {
+    setActionLoadingId(id);
+    try {
+      await dismissSpotReport(id);
+      toast.success('Bejelentés sikeresen törölve / feloldva!');
+      loadAllSpots();
+    } catch (err) {
+      console.error('Dismiss report error:', err);
+      toast.error('Hiba történt a bejelentés feloldása során.');
     } finally {
       setActionLoadingId(null);
     }
@@ -272,6 +290,12 @@ export const AdminSkateMapTab: React.FC = () => {
           <TabsTrigger value="approved" className="gap-2 text-xs">
             <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
             Jóváhagyott Spotok ({approvedSpots.length})
+            {approvedSpots.filter((s) => s.is_reported).length > 0 && (
+              <Badge className="ml-1 bg-red-600 text-white border-red-500 text-[10px] font-bold px-1.5 py-0 shadow-sm">
+                <AlertTriangle className="w-2.5 h-2.5 mr-1 text-white" />
+                {approvedSpots.filter((s) => s.is_reported).length} bejelentve
+              </Badge>
+            )}
           </TabsTrigger>
         </TabsList>
 
@@ -413,6 +437,50 @@ export const AdminSkateMapTab: React.FC = () => {
 
         {/* 2. Approved Spots Management */}
         <TabsContent value="approved" className="mt-6 space-y-4">
+          {/* Filter Pills */}
+          <div className="flex items-center justify-between gap-2 pb-1">
+            <div className="flex items-center gap-1.5">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setApprovedFilter('all')}
+                className={cn(
+                  "h-7 px-3 text-xs rounded-lg transition-all",
+                  approvedFilter === 'all'
+                    ? "bg-white/10 text-white font-semibold shadow-sm"
+                    : "text-neutral-400 hover:text-white"
+                )}
+              >
+                Összes ({approvedSpots.length})
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setApprovedFilter('reported')}
+                className={cn(
+                  "h-7 px-3 text-xs rounded-lg gap-1.5 transition-all font-semibold",
+                  approvedFilter === 'reported'
+                    ? "bg-red-600 text-white shadow-sm"
+                    : approvedSpots.some((s) => s.is_reported)
+                    ? "text-red-400 hover:text-white hover:bg-red-600/20 border border-red-500/40"
+                    : "text-neutral-400 hover:text-neutral-200"
+                )}
+              >
+                <AlertTriangle
+                  className={cn(
+                    "w-3.5 h-3.5",
+                    approvedFilter === 'reported'
+                      ? "text-white"
+                      : approvedSpots.some((s) => s.is_reported)
+                      ? "text-red-400"
+                      : "text-neutral-400"
+                  )}
+                />
+                Bejelentett ({approvedSpots.filter((s) => s.is_reported).length})
+              </Button>
+            </div>
+          </div>
+
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-6 h-6 animate-spin text-emerald-400" />
@@ -423,24 +491,48 @@ export const AdminSkateMapTab: React.FC = () => {
                 <p className="text-base font-semibold text-white">Nincs még jóváhagyott spot.</p>
               </CardContent>
             </Card>
+          ) : approvedFilter === 'reported' && approvedSpots.filter((s) => s.is_reported).length === 0 ? (
+            <Card className="premium-glass border-white/10">
+              <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                <CheckCircle className="w-10 h-10 text-emerald-400/50 mb-2" />
+                <p className="text-base font-semibold text-white">Nincs bejelentett spot!</p>
+                <p className="text-xs text-neutral-400 mt-1">
+                  Egyetlen jóváhagyott spothoz sincs aktív hibabejelentés.
+                </p>
+              </CardContent>
+            </Card>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {approvedSpots.map((spot) => (
+              {(approvedFilter === 'reported'
+                ? approvedSpots.filter((s) => s.is_reported)
+                : approvedSpots
+              ).map((spot) => (
                 <Card
                   key={spot.id}
-                  className="premium-glass border-white/10 bg-neutral-900/40 flex flex-col justify-between overflow-hidden"
+                  className={cn(
+                    "premium-glass flex flex-col justify-between overflow-hidden transition-all",
+                    spot.is_reported
+                      ? "border-2 border-red-500/70 bg-neutral-900/90 shadow-[0_0_20px_rgba(239,68,68,0.12)]"
+                      : "border-white/10 bg-neutral-900/40"
+                  )}
                 >
                   <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-start justify-between gap-2">
                       <div>
                         <CardTitle className="text-base font-bold text-white">
                           {spot.title}
                         </CardTitle>
                         <div className="flex flex-wrap items-center gap-1.5 my-1.5">
+                          {spot.is_reported && (
+                            <Badge className="bg-red-500/20 text-red-400 border border-red-500/50 text-[10px] font-bold flex items-center gap-1">
+                              <AlertTriangle className="w-3 h-3 text-red-400" />
+                              BEJELENTVE
+                            </Badge>
+                          )}
                           <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[10px]">
-                            {spot.spot_type === 'skatepark' ? '🛹 Skatepark' : '🏙️ Street spot'}
+                            {spot.spot_type === 'skatepark' ? '🛹 Skatepark' : spot.spot_type === 'skateshop' ? '🏪 Skateshop' : '🏙️ Street spot'}
                           </Badge>
-                          {spot.features && spot.features.map(f => (
+                          {spot.features && spot.features.map((f) => (
                             <Badge key={f} variant="outline" className="text-[10px] text-neutral-300 border-white/10">
                               {f}
                             </Badge>
@@ -453,13 +545,58 @@ export const AdminSkateMapTab: React.FC = () => {
                           </span>
                         </div>
                       </div>
-                      <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[10px]">
-                        Aktív
+                      <Badge
+                        className={cn(
+                          "text-[10px] font-bold",
+                          spot.is_reported
+                            ? "bg-red-600 text-white border-red-500 shadow-sm"
+                            : "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
+                        )}
+                      >
+                        {spot.is_reported ? 'BEJELENTETT' : 'Aktív'}
                       </Badge>
                     </div>
                   </CardHeader>
 
                   <CardContent className="space-y-3">
+                    {/* Reported Issue Alert Box: High-contrast, clean & clearly legible */}
+                    {spot.is_reported && (
+                      <div className="p-3.5 rounded-xl bg-red-950/30 border border-red-500/50 text-xs space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-red-400 flex items-center gap-1.5 text-xs">
+                            <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+                            BEJELENTETT HIBA / INDOKLÁS:
+                          </span>
+                          {spot.reported_at && (
+                            <span className="text-[11px] text-neutral-300 font-mono">
+                              {new Date(spot.reported_at).toLocaleString('hu-HU')}
+                            </span>
+                          )}
+                        </div>
+                        <div className="bg-neutral-950/80 p-3 rounded-lg border border-red-500/30">
+                          <p className="text-neutral-100 text-xs font-medium leading-relaxed break-words whitespace-pre-wrap">
+                            {spot.report_reason}
+                          </p>
+                        </div>
+                        <div className="flex items-center justify-end pt-0.5">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDismissReport(spot.id)}
+                            disabled={actionLoadingId === spot.id}
+                            className="h-7 text-xs font-semibold border-red-500/40 text-red-300 hover:text-white hover:bg-red-600/30 gap-1.5 cursor-pointer transition-colors"
+                          >
+                            {actionLoadingId === spot.id ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <Check className="w-3 h-3 text-emerald-400" />
+                            )}
+                            Bejelentés feloldása (Megoldva / Alaptalan)
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
                     <p className="text-xs text-neutral-300 line-clamp-2">
                       {spot.description || 'Nincs leírás megadva.'}
                     </p>

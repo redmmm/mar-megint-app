@@ -16,9 +16,10 @@ import {
 } from '@/components/ui/carousel';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Navigation, Copy, Check, ExternalLink, Image as ImageIcon } from 'lucide-react';
+import { MapPin, Navigation, Copy, Check, ExternalLink, Image as ImageIcon, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { SpotReportModal } from './SpotReportModal';
 
 interface SpotDetailDrawerProps {
   spot: Spot | null;
@@ -28,6 +29,7 @@ interface SpotDetailDrawerProps {
 
 export const SpotDetailDrawer: React.FC<SpotDetailDrawerProps> = ({ spot, isOpen, onClose }) => {
   const [copied, setCopied] = React.useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = React.useState(false);
 
   if (!spot) return null;
 
@@ -82,11 +84,11 @@ export const SpotDetailDrawer: React.FC<SpotDetailDrawerProps> = ({ spot, isOpen
             </div>
           )}
 
-          <div className="absolute top-3 left-3 z-10">
+          <div className="absolute top-3 left-3 z-10 flex flex-col items-start gap-2">
             <Badge
               variant="outline"
               className={cn(
-                "backdrop-blur-md font-semibold px-2.5 py-1 text-xs",
+                "backdrop-blur-md font-semibold px-2.5 py-1 text-xs shadow-md",
                 spot.spot_type === 'skatepark'
                   ? "bg-black/60 border-emerald-500/40 text-emerald-400"
                   : spot.spot_type === 'skateshop'
@@ -96,6 +98,17 @@ export const SpotDetailDrawer: React.FC<SpotDetailDrawerProps> = ({ spot, isOpen
             >
               {spot.spot_type === 'skatepark' ? '🛹 Skatepark' : spot.spot_type === 'skateshop' ? '🏪 Skateshop' : '🏙️ Street spot'}
             </Badge>
+
+            {/* Still orange icon-only REPORT button under the tag (no glow, no pulse) */}
+            <button
+              type="button"
+              onClick={() => setIsReportModalOpen(true)}
+              title="Probléma jelentése (anonim)"
+              aria-label="Probléma jelentése"
+              className="w-8 h-8 rounded-xl bg-black/80 border border-orange-500/40 hover:border-orange-400 text-orange-400 hover:text-orange-300 transition-colors flex items-center justify-center active:scale-90 cursor-pointer"
+            >
+              <AlertTriangle className="w-4 h-4 text-orange-400" />
+            </button>
           </div>
         </div>
 
@@ -193,6 +206,13 @@ export const SpotDetailDrawer: React.FC<SpotDetailDrawerProps> = ({ spot, isOpen
             Bezárás
           </Button>
         </div>
+
+        {/* Spot Report Modal Dialog */}
+        <SpotReportModal
+          spot={spot}
+          isOpen={isReportModalOpen}
+          onClose={() => setIsReportModalOpen(false)}
+        />
       </SheetContent>
     </Sheet>
   );

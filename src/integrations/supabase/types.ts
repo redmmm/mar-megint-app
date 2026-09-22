@@ -48,8 +48,11 @@ export type Database = {
           features: Json
           id: string
           images: Json
+          is_reported: boolean | null
           latitude: number
           longitude: number
+          report_reason: string | null
+          reported_at: string | null
           spot_type: string
           status: string
           title: string
@@ -61,8 +64,11 @@ export type Database = {
           features?: Json
           id?: string
           images?: Json
+          is_reported?: boolean | null
           latitude: number
           longitude: number
+          report_reason?: string | null
+          reported_at?: string | null
           spot_type?: string
           status?: string
           title: string
@@ -74,8 +80,11 @@ export type Database = {
           features?: Json
           id?: string
           images?: Json
+          is_reported?: boolean | null
           latitude?: number
           longitude?: number
+          report_reason?: string | null
+          reported_at?: string | null
           spot_type?: string
           status?: string
           title?: string
@@ -88,7 +97,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      report_spot: {
+        Args: {
+          p_spot_id: string
+          p_reason: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
