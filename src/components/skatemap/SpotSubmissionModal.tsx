@@ -41,7 +41,7 @@ const AVAILABLE_FEATURES = [
   { id: 'flatground', label: 'Flatground', emoji: '🛹' },
 ];
 
-const RATE_LIMIT_SECONDS = 60;
+const RATE_LIMIT_SECONDS = 15;
 const LAST_SUBMIT_KEY = 'gyor_skatemap_last_submit';
 
 export const SpotSubmissionModal: React.FC<SpotSubmissionModalProps> = ({
