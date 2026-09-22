@@ -6,6 +6,7 @@ import { SpotDetailDrawer } from '@/components/skatemap/SpotDetailDrawer';
 import { SpotSubmissionModal } from '@/components/skatemap/SpotSubmissionModal';
 import { MapSearchOverlay } from '@/components/skatemap/MapSearchOverlay';
 import { LocationPermissionDialog } from '@/components/skatemap/LocationPermissionDialog';
+import { EventNotificationBanner } from '@/components/skatemap/EventNotificationBanner';
 import { getSpots } from '@/services/spotService';
 import { supabase } from '@/integrations/supabase/client';
 import { Spot } from '@/types/spot';
@@ -1231,6 +1232,9 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
         isLoading={isLocating}
         errorType={locErrorType}
       />
+
+      {/* Scheduled Apple-Style Event Notification Popup */}
+      <EventNotificationBanner />
 
       {/* Site Floating Navigation */}
       <FloatingNav />

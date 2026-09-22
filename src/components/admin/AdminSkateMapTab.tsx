@@ -39,9 +39,22 @@ import {
   RefreshCw,
   AlertTriangle,
   Check,
+  Megaphone,
+  Calendar,
+  ExternalLink,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { Switch } from '@/components/ui/switch';
 import { AdminMiniMap } from './AdminMiniMap';
+import { SkatemapEvent, CreateEventInput, UpdateEventInput } from '@/types/event';
+import {
+  getAllEvents,
+  createEvent,
+  updateEvent,
+  deleteEvent,
+  toggleEventActive,
+} from '@/services/eventService';
+import { AdminEventModal } from './AdminEventModal';
 
 const AVAILABLE_FEATURES = [
   { id: 'rail', label: 'Korlát', emoji: '🦯' },
@@ -58,6 +71,13 @@ export const AdminSkateMapTab: React.FC = () => {
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [approvedFilter, setApprovedFilter] = useState<'all' | 'reported'>('all');
 
+  // Event Notification State
+  const [events, setEvents] = useState<SkatemapEvent[]>([]);
+  const [isLoadingEvents, setIsLoadingEvents] = useState(false);
+  const [isEventModalOpen, setIsEventModalOpen] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<SkatemapEvent | null>(null);
+  const [eventActionLoadingId, setEventActionLoadingId] = useState<string | null>(null);
+
   // Edit dialog state
   const [editingSpot, setEditingSpot] = useState<Spot | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -72,6 +92,19 @@ export const AdminSkateMapTab: React.FC = () => {
   });
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
+
+  const loadAllEvents = async () => {
+    setIsLoadingEvents(true);
+    try {
+      const data = await getAllEvents();
+      setEvents(data);
+    } catch (err) {
+      console.error('Error loading events:', err);
+      toast.error('Nem sikerült betölteni az eseményeket.');
+    } finally {
+      setIsLoadingEvents(false);
+    }
+  };
 
   const loadAllSpots = async () => {
     setIsLoading(true);
@@ -96,6 +129,7 @@ export const AdminSkateMapTab: React.FC = () => {
 
   useEffect(() => {
     loadAllSpots();
+    loadAllEvents();
 
     const channel = supabase
       .channel('admin-skatemap-realtime')
@@ -106,12 +140,110 @@ export const AdminSkateMapTab: React.FC = () => {
           loadAllSpots();
         }
       )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'skatemap_events' },
+        () => {
+          loadAllEvents();
+        }
+      )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
   }, []);
+
+  const handleOpenCreateEvent = () => {
+    setEditingEvent(null);
+    setIsEventModalOpen(true);
+  };
+
+  const handleOpenEditEvent = (event: SkatemapEvent) => {
+    setEditingEvent(event);
+    setIsEventModalOpen(true);
+  };
+
+  const handleSaveEvent = async (input: CreateEventInput | UpdateEventInput) => {
+    try {
+      if (editingEvent) {
+        await updateEvent(editingEvent.id, input as UpdateEventInput);
+        toast.success('Esemény sikeresen módosítva!');
+      } else {
+        await createEvent(input as CreateEventInput);
+        toast.success('Új esemény sikeresen létrehozva!');
+      }
+      setIsEventModalOpen(false);
+      setEditingEvent(null);
+      await loadAllEvents();
+    } catch (err: any) {
+      console.error('Save event error:', err);
+      toast.error(err?.message || 'Hiba történt az esemény mentésekor.');
+      throw err;
+    }
+  };
+
+  const handleToggleEventActive = async (id: string, currentStatus: boolean) => {
+    setEventActionLoadingId(id);
+    try {
+      await toggleEventActive(id, !currentStatus);
+      toast.success(!currentStatus ? 'Esemény aktiválva!' : 'Esemény kikapcsolva!');
+      await loadAllEvents();
+    } catch (err) {
+      console.error('Toggle event active error:', err);
+      toast.error('Nem sikerült módosítani az esemény státuszát.');
+    } finally {
+      setEventActionLoadingId(null);
+    }
+  };
+
+  const handleDeleteEvent = async (id: string) => {
+    if (!window.confirm('Biztosan törölni szeretnéd ezt az eseményt?')) return;
+    setEventActionLoadingId(id);
+    try {
+      await deleteEvent(id);
+      toast.success('Esemény sikeresen törölve.');
+      await loadAllEvents();
+    } catch (err) {
+      console.error('Delete event error:', err);
+      toast.error('Hiba történt az esemény törlésekor.');
+    } finally {
+      setEventActionLoadingId(null);
+    }
+  };
+
+  const getEventStatus = (event: SkatemapEvent) => {
+    if (!event.is_active) {
+      return {
+        label: 'Kikapcsolva',
+        color: 'bg-neutral-800/80 text-neutral-400 border-neutral-700/60',
+        dot: 'bg-neutral-500',
+      };
+    }
+    const now = new Date().getTime();
+    const start = new Date(event.start_at).getTime();
+    const end = new Date(event.end_at).getTime();
+
+    if (now < start) {
+      return {
+        label: 'Időzített (Jövőbeli)',
+        color: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
+        dot: 'bg-amber-400 animate-pulse',
+      };
+    }
+    if (now > end) {
+      return {
+        label: 'Lejárt',
+        color: 'bg-red-500/20 text-red-400 border-red-500/40',
+        dot: 'bg-red-400',
+      };
+    }
+    return {
+      label: 'Aktív (Élő a térképen)',
+      color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
+      dot: 'bg-emerald-400 animate-pulse',
+    };
+  };
 
   const handleApprove = async (id: string) => {
     setActionLoadingId(id);
@@ -271,16 +403,19 @@ export const AdminSkateMapTab: React.FC = () => {
         <Button
           variant="outline"
           size="sm"
-          onClick={loadAllSpots}
-          disabled={isLoading}
+          onClick={() => {
+            loadAllSpots();
+            loadAllEvents();
+          }}
+          disabled={isLoading || isLoadingEvents}
           className="gap-1.5 border-white/10 hover:bg-white/5 text-xs text-neutral-300"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`w-3.5 h-3.5 ${isLoading || isLoadingEvents ? 'animate-spin' : ''}`} />
           Frissítés
         </Button>
       </div>
 
-      {/* Tabs for Pending vs Approved */}
+      {/* Tabs for Pending vs Approved vs Events */}
       <Tabs defaultValue="pending" className="w-full">
         <TabsList className="bg-white/[0.04] border border-white/10 p-1">
           <TabsTrigger value="pending" className="gap-2 text-xs">
@@ -294,6 +429,32 @@ export const AdminSkateMapTab: React.FC = () => {
               <Badge className="ml-1 bg-red-600 text-white border-red-500 text-[10px] font-bold px-1.5 py-0 shadow-sm">
                 <AlertTriangle className="w-2.5 h-2.5 mr-1 text-white" />
                 {approvedSpots.filter((s) => s.is_reported).length} bejelentve
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="events" className="gap-2 text-xs">
+            <Megaphone className="w-3.5 h-3.5 text-indigo-400" />
+            Események & Értesítések ({events.length})
+            {events.filter((e) => {
+              const now = new Date().getTime();
+              return (
+                e.is_active &&
+                now >= new Date(e.start_at).getTime() &&
+                now <= new Date(e.end_at).getTime()
+              );
+            }).length > 0 && (
+              <Badge className="ml-1 bg-emerald-600 text-white border-emerald-500 text-[10px] font-bold px-1.5 py-0 shadow-sm">
+                {
+                  events.filter((e) => {
+                    const now = new Date().getTime();
+                    return (
+                      e.is_active &&
+                      now >= new Date(e.start_at).getTime() &&
+                      now <= new Date(e.end_at).getTime()
+                    );
+                  }).length
+                }{' '}
+                aktív
               </Badge>
             )}
           </TabsTrigger>
@@ -642,6 +803,167 @@ export const AdminSkateMapTab: React.FC = () => {
             </div>
           )}
         </TabsContent>
+
+        {/* 3. Event Notification & Scheduling Management */}
+        <TabsContent value="events" className="mt-6 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/[0.02] p-4 rounded-xl border border-white/10">
+            <div>
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <Megaphone className="w-4 h-4 text-indigo-400" />
+                Felugró Események & Hírek Kezelése
+              </h3>
+              <p className="text-xs text-neutral-400 mt-0.5">
+                Időzített Apple-stílusú értesítések és verseny hírek a /skatemap felületen
+              </p>
+            </div>
+            <Button
+              size="sm"
+              onClick={handleOpenCreateEvent}
+              className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs gap-1.5 shrink-0 shadow-lg shadow-indigo-600/20"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Új Esemény / Értesítés
+            </Button>
+          </div>
+
+          {isLoadingEvents ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-6 h-6 animate-spin text-indigo-400" />
+            </div>
+          ) : events.length === 0 ? (
+            <Card className="premium-glass border-white/10">
+              <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                <Megaphone className="w-12 h-12 text-indigo-400/30 mb-3" />
+                <p className="text-base font-semibold text-white">Nincs még létrehozott esemény</p>
+                <p className="text-xs text-neutral-400 mt-1 max-w-md">
+                  Hozz létre egy új felugró kártyát, amely a megadott időintervallumban automatikusan megjelenik a látogatóknak a térképen.
+                </p>
+                <Button
+                  size="sm"
+                  onClick={handleOpenCreateEvent}
+                  className="mt-4 bg-indigo-600 hover:bg-indigo-500 text-white text-xs gap-1.5"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Első esemény létrehozása
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {events.map((event) => {
+                const status = getEventStatus(event);
+                return (
+                  <Card
+                    key={event.id}
+                    className={cn(
+                      "premium-glass flex flex-col justify-between overflow-hidden transition-all border-white/10 bg-neutral-900/60",
+                      !event.is_active && "opacity-75 bg-neutral-950/40"
+                    )}
+                  >
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <span className="text-3xl select-none p-2 rounded-xl bg-white/[0.04] border border-white/10 shrink-0">
+                            {event.icon || '🏆'}
+                          </span>
+                          <div>
+                            <CardTitle className="text-base font-bold text-white line-clamp-1">
+                              {event.title}
+                            </CardTitle>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge
+                                variant="outline"
+                                className={cn(
+                                  "text-[10px] font-bold flex items-center gap-1.5 px-2 py-0.5",
+                                  status.color
+                                )}
+                              >
+                                <span className={cn("w-1.5 h-1.5 rounded-full", status.dot)} />
+                                {status.label}
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Active Switch */}
+                        <div className="flex flex-col items-end gap-1 shrink-0">
+                          <Switch
+                            checked={event.is_active}
+                            onCheckedChange={() => handleToggleEventActive(event.id, event.is_active)}
+                            disabled={eventActionLoadingId === event.id}
+                          />
+                          <span className="text-[9px] text-neutral-400">
+                            {event.is_active ? 'Aktív' : 'Inaktív'}
+                          </span>
+                        </div>
+                      </div>
+                    </CardHeader>
+
+                    <CardContent className="space-y-3.5 flex-1 flex flex-col justify-between">
+                      <div className="space-y-3">
+                        {/* Message */}
+                        <p className="text-xs text-neutral-300 leading-relaxed bg-white/[0.02] p-3 rounded-lg border border-white/5 whitespace-pre-wrap line-clamp-3">
+                          {event.message}
+                        </p>
+
+                        {/* Link Preview if exists */}
+                        {event.link_url && (
+                          <div className="flex items-center gap-2 text-xs text-indigo-300 bg-indigo-500/10 px-3 py-2 rounded-lg border border-indigo-500/20">
+                            <ExternalLink className="w-3.5 h-3.5 shrink-0 text-indigo-400" />
+                            <span className="font-semibold truncate">
+                              {event.link_text || 'Hivatkozás'}:
+                            </span>
+                            <span className="text-neutral-400 truncate text-[11px]">
+                              {event.link_url}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Schedule Info */}
+                        <div className="space-y-1 text-[11px] text-neutral-400 bg-black/20 p-2.5 rounded-lg border border-white/5 font-mono">
+                          <div className="flex items-center justify-between">
+                            <span className="text-neutral-500 uppercase text-[9px] font-sans font-semibold flex items-center gap-1">
+                              <Calendar className="w-2.5 h-2.5" /> Kezdés:
+                            </span>
+                            <span>{new Date(event.start_at).toLocaleString('hu-HU')}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-neutral-500 uppercase text-[9px] font-sans font-semibold flex items-center gap-1">
+                              <Clock className="w-2.5 h-2.5" /> Befejezés:
+                            </span>
+                            <span>{new Date(event.end_at).toLocaleString('hu-HU')}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex items-center gap-2 pt-3 border-t border-white/10">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleOpenEditEvent(event)}
+                          className="flex-1 border-white/10 hover:bg-white/5 text-xs gap-1.5"
+                        >
+                          <Edit className="w-3.5 h-3.5 text-neutral-300" />
+                          Szerkesztés
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleDeleteEvent(event.id)}
+                          disabled={eventActionLoadingId === event.id}
+                          className="border-red-500/20 text-red-400 hover:bg-red-500/10 text-xs px-2.5"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </TabsContent>
       </Tabs>
 
       {/* Edit Spot Dialog */}
@@ -876,6 +1198,14 @@ export const AdminSkateMapTab: React.FC = () => {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Event Create / Edit Modal */}
+      <AdminEventModal
+        isOpen={isEventModalOpen}
+        onClose={() => setIsEventModalOpen(false)}
+        editingEvent={editingEvent}
+        onSave={handleSaveEvent}
+      />
     </div>
   );
 };

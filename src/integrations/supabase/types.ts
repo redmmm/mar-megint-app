@@ -91,6 +91,45 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      },
+      skatemap_events: {
+        Row: {
+          created_at: string
+          end_at: string
+          icon: string | null
+          id: string
+          is_active: boolean
+          link_text: string | null
+          link_url: string | null
+          message: string
+          start_at: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          end_at: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          link_text?: string | null
+          link_url?: string | null
+          message: string
+          start_at: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          end_at?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          link_text?: string | null
+          link_url?: string | null
+          message?: string
+          start_at?: string
+          title?: string
+        }
+        Relationships: []
       }
     }
     Views: {
