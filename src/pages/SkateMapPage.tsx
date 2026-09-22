@@ -10,7 +10,7 @@ import { getSpots } from '@/services/spotService';
 import { supabase } from '@/integrations/supabase/client';
 import { Spot } from '@/types/spot';
 import { Button } from '@/components/ui/button';
-import { MapPin, Plus, Compass, Loader2, Info, Locate, ShieldCheck } from 'lucide-react';
+import { MapPin, Plus, Compass, Loader2, Info, Locate, ShieldCheck, Dices, X } from 'lucide-react';
 import {
   Popover,
   PopoverContent,
@@ -24,6 +24,15 @@ const GYOR_CENTER: [number, number] = [47.6875, 17.6504];
 const GYOR_BOUNDS: [[number, number], [number, number]] = [
   [47.5800, 17.5000],
   [47.7800, 17.8000],
+];
+
+// All available spot feature filters
+const SPOT_FEATURE_FILTERS = [
+  { id: 'rail', label: 'Korlát', emoji: '🦯' },
+  { id: 'ledge', label: 'Padka', emoji: '🧱' },
+  { id: 'stairs', label: 'Lépcső', emoji: '🪜' },
+  { id: 'gap', label: 'Gap', emoji: '🕳️' },
+  { id: 'flatground', label: 'Flatground', emoji: '🛹' },
 ];
 
 // XSS protection: escape user-provided strings before inserting into raw HTML
@@ -115,6 +124,109 @@ const createSearchPinIcon = () => {
   });
 };
 
+// Hook for fluid, momentum drag-to-scroll using window-level mouse listeners.
+// Avoids setPointerCapture which breaks child button onClick events.
+const useDragScroll = (onScrollChange?: () => void) => {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const isDraggingRef = useRef(false);
+  const startXRef = useRef(0);
+  const scrollLeftRef = useRef(0);
+  const draggedDistanceRef = useRef(0);
+  const velocityRef = useRef(0);
+  const lastXRef = useRef(0);
+  const lastTimeRef = useRef(0);
+  const animFrameIdRef = useRef<number | null>(null);
+
+  const onMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return;
+    if (!ref.current) return;
+
+    if (animFrameIdRef.current) {
+      cancelAnimationFrame(animFrameIdRef.current);
+      animFrameIdRef.current = null;
+    }
+
+    isDraggingRef.current = true;
+    startXRef.current = e.pageX;
+    lastXRef.current = e.pageX;
+    lastTimeRef.current = performance.now();
+    scrollLeftRef.current = ref.current.scrollLeft;
+    draggedDistanceRef.current = 0;
+    velocityRef.current = 0;
+
+    const handleMouseMove = (ev: MouseEvent) => {
+      if (!isDraggingRef.current || !ref.current) return;
+
+      const currentX = ev.pageX;
+      const now = performance.now();
+      const dt = now - lastTimeRef.current;
+      const dx = currentX - lastXRef.current;
+
+      if (dt > 0) velocityRef.current = dx / dt;
+      lastXRef.current = currentX;
+      lastTimeRef.current = now;
+
+      const totalWalk = currentX - startXRef.current;
+      draggedDistanceRef.current = Math.abs(totalWalk);
+      ref.current.scrollLeft = scrollLeftRef.current - totalWalk;
+      onScrollChange?.();
+    };
+
+    const handleMouseUp = () => {
+      isDraggingRef.current = false;
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+
+      // Smooth inertia glide after release
+      if (ref.current && Math.abs(velocityRef.current) > 0.08) {
+        let v = velocityRef.current * 16;
+        const friction = 0.93;
+        const glide = () => {
+          if (!ref.current || Math.abs(v) < 0.4) {
+            animFrameIdRef.current = null;
+            return;
+          }
+          ref.current.scrollLeft -= v;
+          v *= friction;
+          onScrollChange?.();
+          animFrameIdRef.current = requestAnimationFrame(glide);
+        };
+        animFrameIdRef.current = requestAnimationFrame(glide);
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+  };
+
+  // Suppress click on children only when a real drag happened (>5px)
+  const onClickCapture = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (draggedDistanceRef.current > 5) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+  };
+
+  const onWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (e.deltaY !== 0 && ref.current) {
+      ref.current.scrollLeft += e.deltaY;
+      onScrollChange?.();
+    }
+  };
+
+  return {
+    ref,
+    draggedDistance: draggedDistanceRef,
+    events: {
+      onMouseDown,
+      onWheel,
+      onClickCapture,
+    },
+  };
+};
+
+
+
 const SkateMapPage: React.FC = () => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -124,12 +236,103 @@ const SkateMapPage: React.FC = () => {
   const searchMarkerRef = useRef<L.Marker | null>(null);
 
   const [spots, setSpots] = useState<Spot[]>([]);
-  const [filterType, setFilterType] = useState<'all' | 'skatepark' | 'street_spot' | 'skateshop'>('all');
+  // Single-select Spot Type: 'all' | 'skatepark' | 'street_spot' | 'skateshop'
+  const [spotTypeFilter, setSpotTypeFilter] = useState<'all' | 'skatepark' | 'street_spot' | 'skateshop'>('all');
+  // Multi-select Features: array of feature IDs (e.g. ['rail', 'ledge'])
+  const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
+  const [randomSpotId, setRandomSpotId] = useState<string | null>(null);
   const [selectedSpot, setSelectedSpot] = useState<Spot | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAddingPin, setIsAddingPin] = useState(false);
   const [tempCoords, setTempCoords] = useState<{ lat: number; lng: number } | null>(null);
+
+  // Dynamic extra features from loaded spots
+  const extraFeatures = React.useMemo(() => {
+    const set = new Set<string>();
+    spots.forEach((s) => {
+      if (Array.isArray(s.features)) {
+        s.features.forEach((f) => {
+          if (!SPOT_FEATURE_FILTERS.some((sf) => sf.id === f)) {
+            set.add(f);
+          }
+        });
+      }
+    });
+    return Array.from(set);
+  }, [spots]);
+
+  // Handle Single-select Spot Type filter (Row 1)
+  const handleSelectSpotType = (type: 'all' | 'skatepark' | 'street_spot' | 'skateshop') => {
+    setRandomSpotId(null);
+    setSpotTypeFilter(type);
+    if (type === 'all') {
+      setSelectedFeatures([]);
+    }
+  };
+
+  // Handle Multi-select Feature filter (Row 2)
+  const handleToggleFeature = (featureId: string) => {
+    setRandomSpotId(null);
+    setSelectedFeatures((prev) =>
+      prev.includes(featureId)
+        ? prev.filter((id) => id !== featureId)
+        : [...prev, featureId]
+    );
+  };
+
+  // Top row smooth drag-scroll instance
+  const topRowDrag = useDragScroll();
+
+  // Bottom row scroll indicators and smooth drag-scroll instance
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const bottomRowDrag = useDragScroll(() => {
+    const el = bottomRowDrag.ref.current;
+    if (el) {
+      setCanScrollLeft(el.scrollLeft > 6);
+      setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 6);
+    }
+  });
+
+  const checkScroll = React.useCallback(() => {
+    const el = bottomRowDrag.ref.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 6);
+    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 6);
+  }, [bottomRowDrag.ref]);
+
+  useEffect(() => {
+    checkScroll();
+  }, [spots, checkScroll]);
+
+  // Handle Random Spot selection (hides other spots)
+  const handleSelectRandomSpot = () => {
+    if (spots.length === 0) {
+      toast.error('Nincsenek elérhető spotok a sorsoláshoz.');
+      return;
+    }
+
+    const pool = spots.length > 1 && randomSpotId
+      ? spots.filter((s) => s.id !== randomSpotId)
+      : spots;
+    const picked = pool[Math.floor(Math.random() * pool.length)];
+
+    setRandomSpotId(picked.id);
+    setSelectedSpot(picked);
+    setIsDrawerOpen(true);
+
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.flyTo([picked.latitude, picked.longitude], 16, {
+        duration: 1.2,
+      });
+    }
+
+    toast.success(`🎲 Kiválasztott spot: ${picked.title}`, {
+      description: 'A többi spot elrejtve. Kattints az "Összes"-re a visszaállításhoz.',
+    });
+  };
   const [isLoading, setIsLoading] = useState(true);
   const [isLocating, setIsLocating] = useState(false);
   const [isPermissionDialogOpen, setIsPermissionDialogOpen] = useState(false);
@@ -314,16 +517,35 @@ const SkateMapPage: React.FC = () => {
     };
   }, []);
 
+  // Compute filtered spots based on single-select type and multi-select features
+  const filteredSpots = React.useMemo(() => {
+    return spots.filter((spot) => {
+      // 1. If a random spot is selected, hide all other spots
+      if (randomSpotId) {
+        return spot.id === randomSpotId;
+      }
+
+      // 2. Spot Type filter (Single-select: 'all' | 'skatepark' | 'street_spot' | 'skateshop')
+      if (spotTypeFilter !== 'all' && spot.spot_type !== spotTypeFilter) {
+        return false;
+      }
+
+      // 3. Features filter (Multi-select: spot must have all selected features)
+      if (selectedFeatures.length > 0) {
+        const spotFeatures = Array.isArray(spot.features) ? spot.features : [];
+        const hasAllFeatures = selectedFeatures.every((f) => spotFeatures.includes(f));
+        if (!hasAllFeatures) return false;
+      }
+
+      return true;
+    });
+  }, [spots, randomSpotId, spotTypeFilter, selectedFeatures]);
+
   // 3. Render approved spot markers whenever spots or filter changes
   useEffect(() => {
     if (!mapInstanceRef.current || !markersLayerRef.current) return;
 
     markersLayerRef.current.clearLayers();
-
-    const filteredSpots = spots.filter((spot) => {
-      if (filterType === 'all') return true;
-      return spot.spot_type === filterType;
-    });
 
     // Priority order: Skatepark (highest) > Skateshop (high) > Street spot (normal)
     // We sort spots so that street spots are added to Leaflet first (lower DOM order),
@@ -422,7 +644,7 @@ const SkateMapPage: React.FC = () => {
 
       markersLayerRef.current?.addLayer(marker);
     });
-  }, [spots, filterType]);
+  }, [filteredSpots]);
 
   // Handle search location selection
   const handleSelectSearchLocation = (lat: number, lon: number, name: string) => {
@@ -662,7 +884,11 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
                   Győri Skatemap
                 </h1>
                 <span className="inline-flex items-center justify-center min-w-[56px] text-center text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shadow-sm">
-                  {spots.length} spot
+                  {randomSpotId
+                    ? `1 / ${spots.length} spot`
+                    : spotTypeFilter !== 'all' || selectedFeatures.length > 0
+                    ? `${filteredSpots.length} / ${spots.length} spot`
+                    : `${spots.length} spot`}
                 </span>
               </div>
 
@@ -727,56 +953,167 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
             </div>
           </div>
 
-          {/* Category Filter Chips */}
-          <div className="flex items-center gap-1.5 sm:border-l sm:border-white/10 sm:pl-3 pt-0.5 sm:pt-0 overflow-x-auto no-scrollbar max-w-full pb-0.5">
-            <button
-              type="button"
-              onClick={() => setFilterType('all')}
-              className={cn(
-                "px-2.5 py-1 rounded-full text-xs font-medium transition-all",
-                filterType === 'all'
-                  ? "bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 shadow-sm"
-                  : "text-neutral-400 hover:text-white hover:bg-white/5"
-              )}
+          {/* Category & Feature Filter Section */}
+          <div className="flex flex-col gap-1.5 sm:border-l sm:border-white/10 sm:pl-3 pt-0.5 sm:pt-0 min-w-0 flex-1 max-w-[calc(100vw-3rem)] sm:max-w-[400px] md:max-w-[460px] lg:max-w-[520px]">
+            {/* Row 1: Types (Single-select only: Összes, Skatepark, Street, Skateshop) - Draggable */}
+            <div
+              ref={topRowDrag.ref}
+              {...topRowDrag.events}
+              className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5 select-none cursor-grab active:cursor-grabbing shrink-0"
             >
-              Összes
-            </button>
-            <button
-              type="button"
-              onClick={() => setFilterType('skatepark')}
-              className={cn(
-                "px-2.5 py-1 rounded-full text-xs font-medium transition-all",
-                filterType === 'skatepark'
-                  ? "bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 shadow-sm"
-                  : "text-neutral-400 hover:text-white hover:bg-white/5"
+              <button
+                type="button"
+                onClick={() => handleSelectSpotType('all')}
+                title="Összes spot megjelenítése"
+                className={cn(
+                  "px-2.5 py-1 rounded-full text-xs font-medium transition-all shrink-0 cursor-pointer",
+                  spotTypeFilter === 'all' && !randomSpotId
+                    ? "bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 shadow-sm font-semibold"
+                    : "text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent"
+                )}
+              >
+                Összes
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSelectSpotType('skatepark')}
+                title="Csak skateparkok"
+                className={cn(
+                  "px-2.5 py-1 rounded-full text-xs font-medium transition-all shrink-0 cursor-pointer",
+                  spotTypeFilter === 'skatepark' && !randomSpotId
+                    ? "bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 shadow-sm font-semibold"
+                    : "text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent"
+                )}
+              >
+                🛹 Skatepark
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSelectSpotType('street_spot')}
+                title="Csak street spotok"
+                className={cn(
+                  "px-2.5 py-1 rounded-full text-xs font-medium transition-all shrink-0 cursor-pointer",
+                  spotTypeFilter === 'street_spot' && !randomSpotId
+                    ? "bg-cyan-500/25 text-cyan-300 border border-cyan-500/40 shadow-sm font-semibold"
+                    : "text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent"
+                )}
+              >
+                🏙️ Street
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSelectSpotType('skateshop')}
+                title="Csak skateshopok"
+                className={cn(
+                  "px-2.5 py-1 rounded-full text-xs font-medium transition-all shrink-0 cursor-pointer",
+                  spotTypeFilter === 'skateshop' && !randomSpotId
+                    ? "bg-amber-500/25 text-amber-300 border border-amber-500/40 shadow-sm font-semibold"
+                    : "text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent"
+                )}
+              >
+                🏪 Skateshop
+              </button>
+
+            </div>
+
+            {/* Row 2: RANDOM directly under Összes + Multi-select Features (Scrollable & visibly clipped) */}
+            <div className="relative min-w-0 w-full group">
+              {/* Left fade gradient when scrolled */}
+              {canScrollLeft && (
+                <div className="pointer-events-none absolute left-0 top-0 bottom-1 w-6 bg-gradient-to-r from-neutral-950 via-neutral-950/90 to-transparent z-10 transition-opacity duration-200" />
               )}
-            >
-              🛹 Skatepark
-            </button>
-            <button
-              type="button"
-              onClick={() => setFilterType('street_spot')}
-              className={cn(
-                "px-2.5 py-1 rounded-full text-xs font-medium transition-all",
-                filterType === 'street_spot'
-                  ? "bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 shadow-sm"
-                  : "text-neutral-400 hover:text-white hover:bg-white/5"
+
+              <div
+                ref={bottomRowDrag.ref}
+                {...bottomRowDrag.events}
+                onScroll={checkScroll}
+                className="flex items-center gap-1.5 overflow-x-auto pb-1 select-none cursor-grab active:cursor-grabbing custom-horizontal-scrollbar"
+              >
+                {/* RANDOM Button */}
+                <button
+                  type="button"
+                  onClick={handleSelectRandomSpot}
+                  title="Véletlenszerű spot sorsolása (a többi elrejtése)"
+                  className={cn(
+                    "px-2.5 py-1 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5",
+                    randomSpotId
+                      ? "bg-purple-600/40 text-purple-200 border border-purple-400 shadow-[0_0_12px_rgba(168,85,247,0.4)] ring-1 ring-purple-400/50"
+                      : "text-neutral-400 hover:text-white hover:bg-white/5 border border-white/5"
+                  )}
+                >
+                  <Dices className={cn("w-3.5 h-3.5", randomSpotId ? "text-purple-300" : "text-neutral-400")} />
+                  <span>RANDOM</span>
+                </button>
+
+                {/* Multi-select Feature Chips */}
+                {SPOT_FEATURE_FILTERS.map((feat) => {
+                  const isSelected = selectedFeatures.includes(feat.id) && !randomSpotId;
+                  return (
+                    <button
+                      key={feat.id}
+                      type="button"
+                      onClick={() => handleToggleFeature(feat.id)}
+                      title={`Szűrés: ${feat.label} (több is kiválasztható)`}
+                      className={cn(
+                        "px-2.5 py-1 rounded-full text-xs font-medium transition-all shrink-0 cursor-pointer flex items-center gap-1",
+                        isSelected
+                          ? "bg-emerald-500/25 text-emerald-300 border border-emerald-400 shadow-sm font-semibold ring-1 ring-emerald-400/40"
+                          : "text-neutral-400 hover:text-white hover:bg-white/5 border border-white/5"
+                      )}
+                    >
+                      {isSelected && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                      )}
+                      <span>{feat.emoji}</span>
+                      <span>{feat.label}</span>
+                    </button>
+                  );
+                })}
+
+                {/* Extra dynamic features */}
+                {extraFeatures.map((feat) => {
+                  const isSelected = selectedFeatures.includes(feat) && !randomSpotId;
+                  return (
+                    <button
+                      key={feat}
+                      type="button"
+                      onClick={() => handleToggleFeature(feat)}
+                      title={`Szűrés: ${feat} (több is kiválasztható)`}
+                      className={cn(
+                        "px-2.5 py-1 rounded-full text-xs font-medium transition-all shrink-0 cursor-pointer flex items-center gap-1",
+                        isSelected
+                          ? "bg-emerald-500/25 text-emerald-300 border border-emerald-400 shadow-sm font-semibold ring-1 ring-emerald-400/40"
+                          : "text-neutral-400 hover:text-white hover:bg-white/5 border border-white/5"
+                      )}
+                    >
+                      {isSelected && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                      )}
+                      <span>🏷️</span>
+                      <span className="capitalize">{feat}</span>
+                    </button>
+                  );
+                })}
+
+                {/* Clear Selected Features button if any active */}
+                {selectedFeatures.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedFeatures([])}
+                    title="Kiválasztott elemek törlése"
+                    className="px-2 py-1 rounded-full text-[10px] font-medium text-neutral-400 hover:text-rose-400 hover:bg-rose-500/15 border border-white/10 shrink-0 cursor-pointer flex items-center gap-1 transition-all"
+                  >
+                    <X className="w-3 h-3" />
+                    <span>Törlés ({selectedFeatures.length})</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Right fade gradient showing clipping & scrollability */}
+              {canScrollRight && (
+                <div className="pointer-events-none absolute right-0 top-0 bottom-1 w-8 bg-gradient-to-l from-neutral-950 via-neutral-950/90 to-transparent z-10 transition-opacity duration-200" />
               )}
-            >
-              🏙️ Street
-            </button>
-            <button
-              type="button"
-              onClick={() => setFilterType('skateshop')}
-              className={cn(
-                "px-2.5 py-1 rounded-full text-xs font-medium transition-all",
-                filterType === 'skateshop'
-                  ? "bg-amber-500/25 text-amber-300 border border-amber-500/40 shadow-sm"
-                  : "text-neutral-400 hover:text-white hover:bg-white/5"
-              )}
-            >
-              🏪 Skateshop
-            </button>
+            </div>
           </div>
 
           {/* Real-time Geofenced Search Input */}
@@ -807,31 +1144,34 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
       )}
 
       {/* Floating Action Controls */}
-      <div className="absolute bottom-24 right-4 sm:right-6 z-20 flex flex-col gap-3 pointer-events-auto">
-        {/* Show My Location Button */}
-        <Button
-          size="icon"
-          onClick={requestUserLocation}
-          disabled={isLocating}
-          className="w-12 h-12 rounded-2xl bg-neutral-950/80 border border-white/10 backdrop-blur-xl text-neutral-300 hover:text-white hover:bg-neutral-900 shadow-xl transition-all hover:scale-105 active:scale-95"
-          title="Saját helyzetem mutatása"
-        >
-          {isLocating ? (
-            <Loader2 className="w-5 h-5 text-cyan-400 animate-spin" />
-          ) : (
-            <Locate className="w-5 h-5 text-cyan-400" />
-          )}
-        </Button>
+      <div className="absolute bottom-24 right-4 sm:right-6 z-20 flex flex-col items-end gap-3 pointer-events-auto">
+        {/* Iránytű és Saját helyzet egymás mellett (az iránytű mellett jobb oldalon a saját helyzet) */}
+        <div className="flex items-center gap-2.5">
+          {/* Recenter Button (Iránytű) */}
+          <Button
+            size="icon"
+            onClick={handleRecenter}
+            className="w-12 h-12 rounded-2xl bg-neutral-950/80 border border-white/10 backdrop-blur-xl text-neutral-300 hover:text-white hover:bg-neutral-900 shadow-xl transition-all hover:scale-105 active:scale-95"
+            title="Vissza Győr központjához (Iránytű)"
+          >
+            <Compass className="w-5 h-5" />
+          </Button>
 
-        {/* Recenter Button */}
-        <Button
-          size="icon"
-          onClick={handleRecenter}
-          className="w-12 h-12 rounded-2xl bg-neutral-950/80 border border-white/10 backdrop-blur-xl text-neutral-300 hover:text-white hover:bg-neutral-900 shadow-xl transition-all hover:scale-105 active:scale-95"
-          title="Vissza Győr központjához"
-        >
-          <Compass className="w-5 h-5" />
-        </Button>
+          {/* Show My Location Button (Saját helyzet) - az iránytű mellett a jobb oldalon */}
+          <Button
+            size="icon"
+            onClick={requestUserLocation}
+            disabled={isLocating}
+            className="w-12 h-12 rounded-2xl bg-neutral-950/80 border border-white/10 backdrop-blur-xl text-neutral-300 hover:text-white hover:bg-neutral-900 shadow-xl transition-all hover:scale-105 active:scale-95"
+            title="Saját helyzetem mutatása"
+          >
+            {isLocating ? (
+              <Loader2 className="w-5 h-5 text-cyan-400 animate-spin" />
+            ) : (
+              <Locate className="w-5 h-5 text-cyan-400" />
+            )}
+          </Button>
+        </div>
 
         {/* Add Spot Button */}
         <Button

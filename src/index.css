@@ -431,6 +431,26 @@
   scrollbar-width: none;
 }
 
+/* Sleek subtle horizontal scrollbar for filter chips */
+.custom-horizontal-scrollbar::-webkit-scrollbar {
+  height: 3px;
+}
+.custom-horizontal-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 9999px;
+}
+.custom-horizontal-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 9999px;
+}
+.custom-horizontal-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+.custom-horizontal-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+}
+
 /* Prevent iOS Safari from auto-zooming on input focus */
 @media screen and (max-width: 767px) {
   input, select, textarea {
