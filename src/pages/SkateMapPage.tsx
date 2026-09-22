@@ -30,31 +30,31 @@ const GYOR_BOUNDS: [[number, number], [number, number]] = [
 const escapeHtml = (str: string): string =>
   str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
-// Helper to create custom HTML markers matching dark glassmorphism
+// Helper to create custom HTML markers matching dark glassmorphism (solid base to prevent zoom/overlap GPU glitches)
 const createSpotIcon = (title: string, spotType?: string) => {
   let emoji = '🏙️';
-  let borderColor = 'border-cyan-500/50';
-  let shadowColor = 'shadow-cyan-500/20';
-  let arrowBg = 'bg-cyan-400 border-cyan-500/50';
+  let borderColor = 'border-cyan-500/80';
+  let shadowColor = 'shadow-cyan-500/30';
+  let arrowBg = 'bg-cyan-500 border-cyan-400';
 
   if (spotType === 'skatepark') {
     emoji = '🛹';
-    borderColor = 'border-emerald-500/50';
-    shadowColor = 'shadow-emerald-500/20';
-    arrowBg = 'bg-emerald-400 border-emerald-500/50';
+    borderColor = 'border-emerald-400';
+    shadowColor = 'shadow-emerald-500/40';
+    arrowBg = 'bg-emerald-500 border-emerald-400';
   } else if (spotType === 'skateshop') {
     emoji = '🏪';
-    borderColor = 'border-amber-500/50';
-    shadowColor = 'shadow-amber-500/20';
-    arrowBg = 'bg-amber-400 border-amber-500/50';
+    borderColor = 'border-amber-400';
+    shadowColor = 'shadow-amber-500/40';
+    arrowBg = 'bg-amber-500 border-amber-400';
   }
 
   return L.divIcon({
     className: 'custom-skate-marker',
     html: `
-      <div class="relative group cursor-pointer flex items-center justify-center">
-        <div class="w-10 h-10 rounded-2xl bg-neutral-900/90 border ${borderColor} backdrop-blur-md shadow-lg ${shadowColor} flex items-center justify-center transition-all duration-300 transform group-hover:scale-115">
-          <span class="text-lg">${emoji}</span>
+      <div class="relative cursor-pointer flex items-center justify-center">
+        <div class="marker-card w-10 h-10 rounded-2xl bg-[#121215] border-2 ${borderColor} shadow-xl ${shadowColor} flex items-center justify-center">
+          <span class="text-lg leading-none select-none">${emoji}</span>
         </div>
         <div class="absolute -bottom-1 w-2 h-2 ${arrowBg} rotate-45 border-r border-b"></div>
       </div>
@@ -325,9 +325,34 @@ const SkateMapPage: React.FC = () => {
       return spot.spot_type === filterType;
     });
 
-    filteredSpots.forEach((spot) => {
+    // Priority order: Skatepark (highest) > Skateshop (high) > Street spot (normal)
+    // We sort spots so that street spots are added to Leaflet first (lower DOM order),
+    // and skatepark/skateshop spots are added last (higher DOM order).
+    const priorityWeight: Record<string, number> = {
+      skatepark: 3,
+      skateshop: 2,
+      street_spot: 1,
+    };
+
+    const sortedSpots = [...filteredSpots].sort((a, b) => {
+      const wA = priorityWeight[a.spot_type || 'street_spot'] || 1;
+      const wB = priorityWeight[b.spot_type || 'street_spot'] || 1;
+      return wA - wB;
+    });
+
+    sortedSpots.forEach((spot) => {
+      const isSkatepark = spot.spot_type === 'skatepark';
+      const isSkateshop = spot.spot_type === 'skateshop';
+
+      // zIndexOffset: guarantees Skatepark (1000) and Skateshop (800) always
+      // display above Street spots (100) when overlapping
+      const zOffset = isSkatepark ? 1000 : isSkateshop ? 800 : 100;
+
       const marker = L.marker([spot.latitude, spot.longitude], {
         icon: createSpotIcon(spot.title, spot.spot_type),
+        zIndexOffset: zOffset,
+        riseOnHover: true,
+        riseOffset: 1500,
       });
 
       marker.on('click', () => {
@@ -335,8 +360,6 @@ const SkateMapPage: React.FC = () => {
         setIsDrawerOpen(true);
       });
 
-      const isSkatepark = spot.spot_type === 'skatepark';
-      const isSkateshop = spot.spot_type === 'skateshop';
       const features = Array.isArray(spot.features) ? spot.features : [];
       const featureLabels: Record<string, string> = {
         rail: '🦯 Korlát',

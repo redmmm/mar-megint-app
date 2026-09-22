@@ -438,3 +438,27 @@
   }
 }
 
+/* Custom Skate Marker Styling - hardware-accelerated, prevents glitching/colliding on zoom */
+.custom-skate-marker {
+  contain: layout style;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+.custom-skate-marker .marker-card {
+  will-change: transform;
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.custom-skate-marker:hover .marker-card {
+  transform: scale(1.15);
+}
+
+/* Disable transitions during Leaflet map zoom animations to eliminate jitter and glitching */
+.leaflet-zoom-anim .custom-skate-marker,
+.leaflet-zoom-anim .custom-skate-marker * {
+  transition: none !important;
+  animation: none !important;
+}
+
