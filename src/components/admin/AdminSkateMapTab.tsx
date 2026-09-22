@@ -53,6 +53,7 @@ import {
   updateEvent,
   deleteEvent,
   toggleEventActive,
+  checkEventTableStatus,
 } from '@/services/eventService';
 import { AdminEventModal } from './AdminEventModal';
 
@@ -77,6 +78,7 @@ export const AdminSkateMapTab: React.FC = () => {
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<SkatemapEvent | null>(null);
   const [eventActionLoadingId, setEventActionLoadingId] = useState<string | null>(null);
+  const [isEventTableMissing, setIsEventTableMissing] = useState(false);
 
   // Edit dialog state
   const [editingSpot, setEditingSpot] = useState<Spot | null>(null);
@@ -96,6 +98,8 @@ export const AdminSkateMapTab: React.FC = () => {
   const loadAllEvents = async () => {
     setIsLoadingEvents(true);
     try {
+      const tableStatus = await checkEventTableStatus();
+      setIsEventTableMissing(!tableStatus.exists);
       const data = await getAllEvents();
       setEvents(data);
     } catch (err) {
@@ -167,11 +171,23 @@ export const AdminSkateMapTab: React.FC = () => {
   const handleSaveEvent = async (input: CreateEventInput | UpdateEventInput) => {
     try {
       if (editingEvent) {
-        await updateEvent(editingEvent.id, input as UpdateEventInput);
-        toast.success('Esemény sikeresen módosítva!');
+        const res = await updateEvent(editingEvent.id, input as UpdateEventInput);
+        if (!res.isCloud) {
+          toast.warning(
+            'A módosítás csak helyben mentődött el! Mobilon és más eszközökön való megjelenítéshez futtasd le a supabase_events.sql-t a Supabase-ben.'
+          );
+        } else {
+          toast.success('Esemény sikeresen módosítva!');
+        }
       } else {
-        await createEvent(input as CreateEventInput);
-        toast.success('Új esemény sikeresen létrehozva!');
+        const res = await createEvent(input as CreateEventInput);
+        if (!res.isCloud) {
+          toast.warning(
+            'Az esemény csak helyben mentődött el! Mobilon és más eszközökön való megjelenítéshez futtasd le a supabase_events.sql-t a Supabase-ben.'
+          );
+        } else {
+          toast.success('Új esemény sikeresen létrehozva!');
+        }
       }
       setIsEventModalOpen(false);
       setEditingEvent(null);
@@ -825,6 +841,22 @@ export const AdminSkateMapTab: React.FC = () => {
               Új Esemény / Értesítés
             </Button>
           </div>
+
+          {/* Cloud Database Missing Warning */}
+          {isEventTableMissing && (
+            <div className="p-4 rounded-xl bg-amber-950/40 border border-amber-500/50 text-amber-200 text-xs flex items-start gap-3 shadow-lg">
+              <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="font-bold text-amber-300">
+                  Supabase beállítás szükséges a mobilos és eszközök közötti szinkronizációhoz!
+                </p>
+                <p className="text-amber-200/90 leading-relaxed">
+                  A <code className="bg-black/50 px-1.5 py-0.5 rounded text-amber-300 font-mono">skatemap_events</code> tábla még nem létezik a Supabase felhőben, ezért a létrehozott események jelenleg csak ezen a böngészőn mentődnek el.
+                  Ahhoz, hogy telefonon és más felhasználóknál is megjelenjenek, futtasd le a projekt gyökerében lévő <code className="bg-black/50 px-1.5 py-0.5 rounded text-amber-300 font-mono">supabase_events.sql</code> fájlt a Supabase SQL Editorban!
+                </p>
+              </div>
+            </div>
+          )}
 
           {isLoadingEvents ? (
             <div className="flex items-center justify-center py-12">

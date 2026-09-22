@@ -3,39 +3,31 @@ import { SkatemapEvent, CreateEventInput, UpdateEventInput } from '@/types/event
 
 const LOCAL_STORAGE_EVENTS_KEY = 'gyor_skatemap_events';
 
-// Initial seed event for Győr skaters
-const SEED_EVENTS: SkatemapEvent[] = [
-  {
-    id: 'seed-event-spring-jam',
-    title: 'Győri Tavaszi Skate Jam',
-    message: 'Találkozzunk a Radó-szigeten szombat délután 15:00-tól! Best trick contest, jó zene és hangulat vár mindenkire.',
-    icon: '🏆',
-    link_url: 'https://www.instagram.com',
-    link_text: 'Részletek Instagramon',
-    start_at: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
-    end_at: new Date(Date.now() + 86400000 * 7).toISOString(), // 7 days from now
-    is_active: true,
-    created_at: new Date().toISOString(),
-  },
-];
+// No mock seed events: only genuine events created by admins should appear
+const SEED_EVENTS: SkatemapEvent[] = [];
 
 const getLocalEvents = (): SkatemapEvent[] => {
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_EVENTS_KEY);
     if (!raw) {
-      localStorage.setItem(LOCAL_STORAGE_EVENTS_KEY, JSON.stringify(SEED_EVENTS));
-      return SEED_EVENTS;
+      return [];
     }
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    // Filter out any legacy 'seed-event-spring-jam' that might already be cached in localStorage
+    return Array.isArray(parsed)
+      ? (parsed.filter((e: any) => e.id !== 'seed-event-spring-jam') as SkatemapEvent[])
+      : [];
   } catch (e) {
     console.error('Error reading localStorage events:', e);
-    return SEED_EVENTS;
+    return [];
   }
 };
 
 const saveLocalEvents = (events: SkatemapEvent[]) => {
   try {
-    localStorage.setItem(LOCAL_STORAGE_EVENTS_KEY, JSON.stringify(events));
+    // Ensure legacy seed is never persisted
+    const filtered = events.filter((e) => e.id !== 'seed-event-spring-jam');
+    localStorage.setItem(LOCAL_STORAGE_EVENTS_KEY, JSON.stringify(filtered));
   } catch (e) {
     console.error('Error saving to localStorage events:', e);
   }
@@ -68,11 +60,14 @@ export const getActiveEvents = async (): Promise<SkatemapEvent[]> => {
       .gte('end_at', now)
       .order('start_at', { ascending: true });
 
-    if (!error && data && data.length > 0) {
+    if (!error && data) {
       return data as SkatemapEvent[];
     }
+    if (error) {
+      console.warn('Supabase getActiveEvents notice (using local cache):', error.message);
+    }
   } catch (err) {
-    console.warn('Supabase getActiveEvents notice (using local cache):', err);
+    console.warn('Supabase getActiveEvents error (using local cache):', err);
   }
 
   // Local fallback: filter local events by timeframe and is_active
@@ -97,14 +92,13 @@ export const getAllEvents = async (): Promise<SkatemapEvent[]> => {
       .order('created_at', { ascending: false });
 
     if (!error && data) {
-      // Merge with any local events that might not be in Supabase
-      const local = getLocalEvents();
-      const cloudIds = new Set(data.map((d) => d.id));
-      const localOnly = local.filter((l) => !cloudIds.has(l.id));
-      return [...(data as SkatemapEvent[]), ...localOnly];
+      return data as SkatemapEvent[];
+    }
+    if (error) {
+      console.warn('Supabase getAllEvents notice (using local cache):', error.message);
     }
   } catch (err) {
-    console.warn('Supabase getAllEvents notice (using local cache):', err);
+    console.warn('Supabase getAllEvents error (using local cache):', err);
   }
 
   return getLocalEvents();
@@ -113,7 +107,9 @@ export const getAllEvents = async (): Promise<SkatemapEvent[]> => {
 /**
  * Admin: Create a new event
  */
-export const createEvent = async (input: CreateEventInput): Promise<SkatemapEvent> => {
+export const createEvent = async (
+  input: CreateEventInput
+): Promise<{ event: SkatemapEvent; isCloud: boolean; error?: string }> => {
   const id = generateUUID();
   const now = new Date().toISOString();
 
@@ -130,27 +126,38 @@ export const createEvent = async (input: CreateEventInput): Promise<SkatemapEven
     created_at: now,
   };
 
+  let isCloud = false;
+  let cloudError: string | undefined = undefined;
+
   try {
     const { error } = await supabase.from('skatemap_events').insert([newEvent]);
     if (error) {
       console.warn('Supabase createEvent notice, saving locally:', error.message);
+      cloudError = error.message;
+    } else {
+      isCloud = true;
     }
-  } catch (err) {
+  } catch (err: any) {
     console.warn('Supabase createEvent error, saving locally:', err);
+    cloudError = err?.message;
   }
 
   // Always update local cache
   const local = getLocalEvents();
   saveLocalEvents([newEvent, ...local]);
 
-  return newEvent;
+  return { event: newEvent, isCloud, error: cloudError };
 };
 
 /**
  * Admin: Update an existing event
  */
-export const updateEvent = async (id: string, updates: UpdateEventInput): Promise<boolean> => {
-  let success = false;
+export const updateEvent = async (
+  id: string,
+  updates: UpdateEventInput
+): Promise<{ success: boolean; isCloud: boolean; error?: string }> => {
+  let isCloud = false;
+  let cloudError: string | undefined = undefined;
 
   try {
     const { error } = await supabase
@@ -159,12 +166,14 @@ export const updateEvent = async (id: string, updates: UpdateEventInput): Promis
       .eq('id', id);
 
     if (!error) {
-      success = true;
+      isCloud = true;
     } else {
       console.warn('Supabase updateEvent notice:', error.message);
+      cloudError = error.message;
     }
-  } catch (err) {
+  } catch (err: any) {
     console.warn('Supabase updateEvent error:', err);
+    cloudError = err?.message;
   }
 
   // Always update local cache
@@ -172,31 +181,39 @@ export const updateEvent = async (id: string, updates: UpdateEventInput): Promis
   const updated = local.map((evt) => (evt.id === id ? { ...evt, ...updates } : evt));
   saveLocalEvents(updated);
 
-  return success;
+  return { success: true, isCloud, error: cloudError };
 };
 
 /**
  * Admin: Toggle is_active status of an event
  */
-export const toggleEventActive = async (id: string, isActive: boolean): Promise<boolean> => {
+export const toggleEventActive = async (
+  id: string,
+  isActive: boolean
+): Promise<{ success: boolean; isCloud: boolean; error?: string }> => {
   return updateEvent(id, { is_active: isActive });
 };
 
 /**
  * Admin: Delete an event permanently
  */
-export const deleteEvent = async (id: string): Promise<boolean> => {
-  let success = false;
+export const deleteEvent = async (
+  id: string
+): Promise<{ success: boolean; isCloud: boolean; error?: string }> => {
+  let isCloud = false;
+  let cloudError: string | undefined = undefined;
 
   try {
     const { error } = await supabase.from('skatemap_events').delete().eq('id', id);
     if (!error) {
-      success = true;
+      isCloud = true;
     } else {
       console.warn('Supabase deleteEvent notice:', error.message);
+      cloudError = error.message;
     }
-  } catch (err) {
+  } catch (err: any) {
     console.warn('Supabase deleteEvent error:', err);
+    cloudError = err?.message;
   }
 
   // Always update local cache
@@ -204,5 +221,23 @@ export const deleteEvent = async (id: string): Promise<boolean> => {
   const filtered = local.filter((evt) => evt.id !== id);
   saveLocalEvents(filtered);
 
-  return success;
+  return { success: true, isCloud, error: cloudError };
+};
+
+/**
+ * Check if the skatemap_events table exists in Supabase
+ */
+export const checkEventTableStatus = async (): Promise<{ exists: boolean; message?: string }> => {
+  try {
+    const { error } = await supabase.from('skatemap_events').select('id').limit(1);
+    if (error && (error.code === 'PGRST205' || error.message?.includes('schema cache'))) {
+      return { exists: false, message: 'A skatemap_events tábla még nem létezik a Supabase-ben.' };
+    }
+    if (error) {
+      return { exists: false, message: error.message };
+    }
+    return { exists: true };
+  } catch (e: any) {
+    return { exists: false, message: e?.message };
+  }
 };
