@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import FloatingNav from '@/components/FloatingNav';
+import { useSEO } from '@/hooks/useSEO';
 import { SpotDetailDrawer } from '@/components/skatemap/SpotDetailDrawer';
 import { SpotSubmissionModal } from '@/components/skatemap/SpotSubmissionModal';
 import { MapSearchOverlay } from '@/components/skatemap/MapSearchOverlay';
@@ -229,6 +230,13 @@ const useDragScroll = (onScrollChange?: () => void) => {
 
 
 const SkateMapPage: React.FC = () => {
+  useSEO({
+    title: 'Győr Skate Map | Győri Gördeszkás Helyek, Skateparkok és Spotok',
+    description: 'A legteljesebb interaktív Győr Skate Map: böngészd Győr legjobb gördeszkás helyeit, skateparkjait, padkáit, korlátjait és lépcsőit a Már megint? platformján!',
+    keywords: 'győr skatemap, győri skate map, skatemap győr, győr gördeszka spotok, győr skatepark, győri deszkások, gördeszka térkép győr, már megint skate',
+    ogTitle: 'Győr Skate Map – Győri Gördeszkás Helyek és Skateparkok',
+  });
+
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
@@ -885,7 +893,8 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
                 <h1 className="text-sm sm:text-base font-black tracking-tight text-white leading-none">
-                  Győri Skatemap
+                  Győr Skate Map
+                  <span className="sr-only"> - Győri Gördeszkás Helyek, Skateparkok és Street Spotok</span>
                 </h1>
                 <span className="inline-flex items-center justify-center min-w-[56px] text-center text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shadow-sm">
                   {randomSpotId

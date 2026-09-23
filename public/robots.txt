@@ -12,3 +12,5 @@ Allow: /
 
 User-agent: *
 Allow: /
+
+Sitemap: https://redmmm.github.io/mar-megint-app/sitemap.xml

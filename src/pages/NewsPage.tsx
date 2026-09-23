@@ -5,9 +5,17 @@ import { FilterTabs, FilterValue } from '@/components/FilterTabs';
 import FloatingNav from '@/components/FloatingNav';
 import PremiumBackground from '@/components/PremiumBackground';
 import { useNews, NewsPost } from '@/hooks/useNews';
+import { useSEO } from '@/hooks/useSEO';
 import { Loader2, Newspaper } from 'lucide-react';
 
 const NewsPage = () => {
+  useSEO({
+    title: 'Hírek és Bejelentések | Már megint? & Győr Skate Map',
+    description: 'A legfrissebb hírek, bejelentések és események a Már megint? és Már megint játszunk? csapatától.',
+    keywords: 'már megint hírek, már megint játszunk bejelentések, skate hírek győr, győr skatemap hírek',
+    ogTitle: 'Hírek & Bejelentések - Már megint? Hub',
+  });
+
   const [filter, setFilter] = useState<FilterValue>('all');
   const [selectedPost, setSelectedPost] = useState<NewsPost | null>(null);
   const { data: news, isLoading } = useNews(filter);

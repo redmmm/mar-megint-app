@@ -1,9 +1,16 @@
 import FloatingNav from '@/components/FloatingNav';
 import PremiumBackground from '@/components/PremiumBackground';
 import { WeatherCheck } from '@/components/WeatherCheck';
+import { useSEO } from '@/hooks/useSEO';
 import { CloudSun } from 'lucide-react';
 
 const WeatherPage = () => {
+  useSEO({
+    title: 'Gördeszkás Időjárás Győr | Mikor érdemes deszkázni? - Már megint?',
+    description: 'Valós idejű gördeszkás időjárás előrejelzés Győrben: csapadék, szél és felület-száradási viszonyok, hogy tudd mikor a legjobb kimenni skate-elni!',
+    keywords: 'gördeszkás időjárás győr, skate időjárás győr, deszkás időjárás, győr skatemap időjárás',
+    ogTitle: 'Gördeszkás Időjárás Győr - Már megint? Hub',
+  });
   return (
     <div className="min-h-screen relative">
       <PremiumBackground />

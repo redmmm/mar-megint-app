@@ -2,8 +2,16 @@ import { ChannelCard } from '@/components/ChannelCard';
 import DotGrid from '@/components/DotGrid';
 import FloatingNav from '@/components/FloatingNav';
 import { Footer } from '@/components/Footer';
+import { useSEO } from '@/hooks/useSEO';
 
 const Index = () => {
+  useSEO({
+    title: 'Győr Skate Map & Már megint? Hub | Győri Gördeszkás Térkép és Közösség',
+    description: 'A hivatalos Győr Skate Map és Már megint? Hub. Fedezd fel Győr legjobb gördeszkás helyeit, street spotjait, skateparkjait, a legújabb videókat és gördeszkás időjárást!',
+    keywords: 'győr skatemap, győri skate map, skatemap győr, győr gördeszka, győri skatepark, skate spotok győr, már megint, már megint játszunk, marmegint hub',
+    ogTitle: 'Győr Skate Map & Már megint? Hub | Győri Gördeszkás Térkép',
+  });
+
   return (
     <div className="min-h-screen relative flex items-center justify-center">
       {/* Interactive DotGrid Background */}
@@ -17,6 +25,9 @@ const Index = () => {
           returnDuration={1.2}
         />
       </div>
+
+      {/* Visually Hidden SEO Heading for Google Crawlers */}
+      <h1 className="sr-only">Győr Skate Map &amp; Már megint? Hub - Hivatalos Győri Gördeszkás Térkép</h1>
 
       {/* Centered Container with Fixed Height */}
       <main className="relative z-10 w-full max-w-6xl px-4">

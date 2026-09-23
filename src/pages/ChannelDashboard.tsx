@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, Navigate } from 'react-router-dom';
+import { useParams, Navigate, Link } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { VideoCard } from '@/components/VideoCard';
 import { NewsCard } from '@/components/NewsCard';
@@ -10,7 +10,8 @@ import PremiumBackground from '@/components/PremiumBackground';
 import { useYouTubeVideos } from '@/hooks/useYouTubeData';
 import { useNews, NewsPost } from '@/hooks/useNews';
 import { CHANNELS, ChannelTag } from '@/lib/youtube';
-import { Loader2, Video, Newspaper, AlertCircle } from 'lucide-react';
+import { useSEO } from '@/hooks/useSEO';
+import { Loader2, Video, Newspaper, AlertCircle, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const ChannelDashboard = () => {
@@ -26,6 +27,17 @@ const ChannelDashboard = () => {
 
   const channelTag = channel.tag as ChannelTag;
   const variant = channelTag === 'marmegint' ? 'a' : 'b';
+
+  useSEO({
+    title: `${channel.name} | Hivatalos Videók és Hírek - Már megint? Hub`,
+    description: variant === 'a'
+      ? 'A Már megint? csatorna hivatalos oldala: skate videók, vlogok, hírek és a győri gördeszkás közösség egy helyen!'
+      : 'A Már megint játszunk? csatorna hivatalos oldala: gameplay videók, gaming hírek és szórakozás egy helyen!',
+    keywords: variant === 'a'
+      ? 'már megint, már megint?, marmegint, skate, gördeszka, győr skatemap, győri gördeszkázás, marmegint videók'
+      : 'már megint játszunk, már megint játszunk?, marmegint gaming, gameplay videók, játéktesztek',
+    ogTitle: `${channel.name} - Már megint? Hub`,
+  });
   
   const {
     data: videos,
@@ -66,6 +78,18 @@ const ChannelDashboard = () => {
             <p className="text-muted-foreground text-lg max-w-xl">
               A legújabb videók és hírek egy helyen
             </p>
+
+            {variant === 'a' && (
+              <div className="mt-5">
+                <Link
+                  to="/skatemap"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 hover:text-white transition-all shadow-sm group"
+                >
+                  <MapPin className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
+                  <span>Keresel egy jó spotot Győrben? Nyisd meg a Győr Skate Map-et!</span>
+                </Link>
+              </div>
+            )}
           </div>
           
           {/* Section 1: Latest Videos */}

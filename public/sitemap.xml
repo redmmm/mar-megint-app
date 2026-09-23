@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Homepage: Gyor Skate Map and Mar megint? Hub -->
+  <url>
+    <loc>https://redmmm.github.io/mar-megint-app/</loc>
+    <lastmod>2026-09-23</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <!-- Gyor Skate Map interactive map -->
+  <url>
+    <loc>https://redmmm.github.io/mar-megint-app/#/skatemap</loc>
+    <lastmod>2026-09-23</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.95</priority>
+  </url>
+  <!-- Alternative route to skate map -->
+  <url>
+    <loc>https://redmmm.github.io/mar-megint-app/#/skate-map</loc>
+    <lastmod>2026-09-23</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+  </url>
+  <!-- Mar megint? channel dashboard (skate, vlogs) -->
+  <url>
+    <loc>https://redmmm.github.io/mar-megint-app/#/channel/marmegint</loc>
+    <lastmod>2026-09-23</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <!-- Mar megint jatszunk? channel dashboard (gaming) -->
+  <url>
+    <loc>https://redmmm.github.io/mar-megint-app/#/channel/jatszunk</loc>
+    <lastmod>2026-09-23</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <!-- Skate weather forecast -->
+  <url>
+    <loc>https://redmmm.github.io/mar-megint-app/#/weather</loc>
+    <lastmod>2026-09-23</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <!-- Latest news and announcements -->
+  <url>
+    <loc>https://redmmm.github.io/mar-megint-app/#/news</loc>
+    <lastmod>2026-09-23</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.75</priority>
+  </url>
+</urlset>
