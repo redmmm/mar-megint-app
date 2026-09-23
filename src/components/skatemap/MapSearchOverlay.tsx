@@ -180,6 +180,7 @@ export const MapSearchOverlay: React.FC<MapSearchOverlayProps> = ({
               setIsOpen(true);
             }
           }}
+          aria-label="Helyszín vagy utca keresése"
           placeholder="Keresés: városrész, utca..."
           className={cn(
             'w-full h-10 pl-9 pr-9 rounded-xl bg-neutral-900/80 border border-white/10 backdrop-blur-xl text-base sm:text-xs text-white placeholder:text-neutral-400 focus:outline-none focus:border-emerald-400/50 focus:ring-1 focus:ring-emerald-400/30 transition-colors shadow-lg',
@@ -193,6 +194,7 @@ export const MapSearchOverlay: React.FC<MapSearchOverlayProps> = ({
           <button
             type="button"
             onClick={handleClear}
+            aria-label="Keresés törlése"
             className="absolute right-2.5 p-1 rounded-full text-neutral-400 hover:text-white hover:bg-white/10 transition-colors"
             title="Törlés"
           >

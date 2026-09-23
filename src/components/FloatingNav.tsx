@@ -24,6 +24,7 @@ const FloatingNav = () => {
             <Link
               key={to}
               to={to}
+              aria-label={label}
               className={cn(
                 'flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300',
                 'hover:bg-accent/50',

@@ -39,6 +39,9 @@ export const AdminMiniMap: React.FC<AdminMiniMapProps> = ({
       className: 'map-dark-tiles',
       maxZoom: 19,
       minZoom: 11,
+      keepBuffer: 2,
+      updateWhenIdle: true,
+      updateWhenZooming: false,
     }).addTo(map);
 
     const icon = L.divIcon({

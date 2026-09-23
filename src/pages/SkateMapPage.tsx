@@ -399,6 +399,9 @@ const SkateMapPage: React.FC = () => {
       className: 'map-dark-tiles',
       maxZoom: 19,
       minZoom: 12,
+      keepBuffer: 2,
+      updateWhenIdle: true,
+      updateWhenZooming: false,
     }).addTo(map);
 
     // Zoom controls positioned at top-right
@@ -1152,6 +1155,7 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
           <Button
             size="icon"
             onClick={handleRecenter}
+            aria-label="Vissza Győr központjához (Iránytű)"
             className="w-12 h-12 rounded-2xl bg-neutral-950/80 border border-white/10 backdrop-blur-xl text-neutral-300 hover:text-white hover:bg-neutral-900 shadow-xl transition-all hover:scale-105 active:scale-95"
             title="Vissza Győr központjához (Iránytű)"
           >
@@ -1163,6 +1167,7 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
             size="icon"
             onClick={requestUserLocation}
             disabled={isLocating}
+            aria-label="Saját helyzetem mutatása"
             className="w-12 h-12 rounded-2xl bg-neutral-950/80 border border-white/10 backdrop-blur-xl text-neutral-300 hover:text-white hover:bg-neutral-900 shadow-xl transition-all hover:scale-105 active:scale-95"
             title="Saját helyzetem mutatása"
           >

@@ -10,6 +10,9 @@ function copyToDocsPlugin(): Plugin {
       const src = path.resolve(__dirname, 'dist');
       const dest = path.resolve(__dirname, 'docs');
       if (fs.existsSync(src)) {
+        if (fs.existsSync(dest)) {
+          fs.rmSync(dest, { recursive: true, force: true });
+        }
         fs.cpSync(src, dest, { recursive: true });
       }
     },
@@ -26,6 +29,19 @@ export default defineConfig(() => ({
   build: {
     outDir: "dist",
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('leaflet')) return 'vendor-leaflet';
+            if (id.includes('recharts') || id.includes('d3-')) return 'vendor-charts';
+            if (id.includes('@supabase')) return 'vendor-supabase';
+            if (id.includes('gsap')) return 'vendor-gsap';
+            if (id.includes('lucide-react')) return 'vendor-icons';
+          }
+        },
+      },
+    },
   },
   plugins: [react(), copyToDocsPlugin()],
   resolve: {

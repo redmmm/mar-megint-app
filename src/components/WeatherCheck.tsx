@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Loader2, Search, X } from 'lucide-react';
 import { GlassCard } from './GlassCard';
-import { getSkateWeatherCheck, WeatherData, searchHungarianCities, HungarianCityResult } from '@/services/weatherService';
+import { getSkateWeatherCheck, WeatherData, searchHungarianCities, HungarianCityResult, fetchWeatherFromOpenMeteo } from '@/services/weatherService';
 
 type WeatherState = 'initial' | 'loading' | 'result';
 
@@ -69,7 +69,6 @@ export const WeatherCheck = () => {
 
     try {
       // Fetch weather directly for selected city
-      const { fetchWeatherFromOpenMeteo } = await import('@/services/weatherService');
       const cityWeatherData = await fetchWeatherFromOpenMeteo(city.latitude, city.longitude, city.name);
       setWeatherData(cityWeatherData);
       setWeatherState('result');

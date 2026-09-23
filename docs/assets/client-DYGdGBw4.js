@@ -1,0 +1,1 @@
+import{c as s}from"./vendor-supabase-MEHSyf2E.js";const e="https://czryzqrxxfwthmzwpeah.supabase.co",t="sb_publishable_7gjqAKcwUvchmm6MYJqWUg_ak9re_pg",o=s(e,t,{auth:{storage:localStorage,persistSession:!0,autoRefreshToken:!0}});export{o as s};

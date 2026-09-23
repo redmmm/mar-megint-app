@@ -18,6 +18,7 @@ export const Header = ({ showBack = false, title }: HeaderProps) => {
         {showBack && (
           <Link
             to="/"
+            aria-label="Vissza a kezdőlapra"
             className="premium-glass premium-glass-hover p-3 rounded-full inline-flex items-center justify-center"
           >
             <ArrowLeft className="w-5 h-5" />
