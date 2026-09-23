@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Spot, CreateSpotInput, UpdateSpotInput } from '@/types/spot';
+import { compressImage, compressImageToBase64 } from '@/utils/imageCompressor';
 
 const LOCAL_STORAGE_KEY = 'gyor_skatemap_spots';
 
@@ -47,73 +48,58 @@ const SEED_SPOTS: Spot[] = [
 ];
 
 /**
- * HTML5 Canvas Image Compression helper
- * Prevents QuotaExceededError in localStorage when running in fallback mode
- */
-export const compressImage = (file: File, maxWidth = 800, quality = 0.7): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target?.result as string;
-      img.onload = () => {
-        const scale = Math.min(maxWidth / img.width, 1);
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.round(img.width * scale);
-        canvas.height = Math.round(img.height * scale);
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          resolve(img.src);
-          return;
-        }
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL('image/jpeg', quality));
-      };
-      img.onerror = (err) => reject(err);
-    };
-    reader.onerror = (err) => reject(err);
-  });
-};
-
-/**
  * Upload an image file:
+ * Automatically compresses to modern .webp format (max 1600px, 0.8 quality).
  * Attempts Supabase Storage upload first ('spot-images' bucket).
- * If bucket or permissions are not yet configured, falls back to compressed Base64.
+ * Falls back to compressed Base64 if storage is unavailable.
  */
-export const uploadSpotImage = async (file: File): Promise<string> => {
-  // Security: validate MIME type and size limit (max 10MB)
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-  if (!allowedTypes.includes(file.type)) {
-    throw new Error('Csak JPG, PNG vagy WebP képek tölthetők fel!');
+export const uploadSpotImage = async (file: File, bucketName = 'spot-images'): Promise<string> => {
+  // Validate MIME type / extension
+  const isImage = file.type.startsWith('image/') || /\.(heic|heif|jpe?g|png|webp|gif)$/i.test(file.name);
+  if (!isImage) {
+    throw new Error('Csak képfájlok (JPG, PNG, WebP, HEIC) tölthetők fel!');
   }
 
-  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+  const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB initial buffer before compression
   if (file.size > MAX_FILE_SIZE) {
-    throw new Error('A fájl mérete meghaladja a megengedett 10 MB-os határt!');
+    throw new Error('A fájl mérete meghaladja a megengedett 15 MB-os határt!');
   }
 
-  try {
-    const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
-    const filePath = `spots/${fileName}`;
+  // 1. Client-side compression to WebP (<= 1600px, 80% quality)
+  const compressedFile = await compressImage(file, {
+    maxWidth: 1600,
+    maxHeight: 1600,
+    quality: 0.8,
+    targetFormat: 'image/webp',
+  });
 
-    const { error: uploadError } = await supabase.storage
-      .from('spot-images')
-      .upload(filePath, file, { cacheControl: '3600', upsert: false });
+  const fileName = `spots/${Date.now()}-${Math.random().toString(36).substring(2, 9)}.webp`;
 
-    if (!uploadError) {
-      const { data } = supabase.storage.from('spot-images').getPublicUrl(filePath);
-      if (data?.publicUrl) {
-        return data.publicUrl;
+  if (supabase) {
+    try {
+      const { error: uploadError } = await supabase.storage
+        .from(bucketName)
+        .upload(fileName, compressedFile, {
+          cacheControl: '31536000',
+          upsert: false,
+          contentType: 'image/webp',
+        });
+
+      if (!uploadError) {
+        const { data } = supabase.storage.from(bucketName).getPublicUrl(fileName);
+        if (data?.publicUrl) {
+          return data.publicUrl;
+        }
+      } else {
+        console.warn('Supabase storage upload error, using fallback:', uploadError.message);
       }
+    } catch (err) {
+      console.warn('Supabase storage upload failed or not configured, using compressed Base64 fallback:', err);
     }
-  } catch (err) {
-    console.warn('Supabase storage upload failed or not configured, using compressed Base64 fallback:', err);
   }
 
   // Fallback to compressed base64
-  return await compressImage(file, 800, 0.7);
+  return await compressImageToBase64(compressedFile);
 };
 
 // Local storage helpers
@@ -291,8 +277,8 @@ export const submitSpot = async (input: CreateSpotInput): Promise<Spot> => {
     throw new Error('A leírás hossza legfeljebb 1000 karakter lehet!');
   }
 
-  // Cap image count to 5
-  const sanitizedImages = (input.images || []).slice(0, 5);
+  // Cap image count to 2
+  const sanitizedImages = (input.images || []).slice(0, 2);
   const newSpotId = generateUUID();
   const now = new Date().toISOString();
 
@@ -604,5 +590,133 @@ export const dismissSpotReport = async (id: string): Promise<boolean> => {
   saveLocalSpots(updated);
 
   return success;
+};
+
+/**
+ * Böngészős kötegelt kép-optimalizáló meglévő régi képekhez (Admin eszköz)
+ */
+export const optimizeExistingSpotImages = async (
+  onProgress?: (current: number, total: number, log: string) => void
+): Promise<{ processed: number; total: number; bytesSaved: number }> => {
+  if (!supabase) throw new Error('Supabase kliens nem elérhető!');
+
+  const { data: spots, error } = await supabase.from('spots').select('*');
+  if (error || !spots) throw new Error('Nem sikerült lekérni a spotokat: ' + (error?.message || 'Ismeretlen hiba'));
+
+  let totalProcessed = 0;
+  let totalBytesSaved = 0;
+  const imagesToOptimize: { spotId: string; oldUrl: string; index: number; spotTitle: string }[] = [];
+
+  // Kiszűrjük a nem-WebP képeket
+  for (const spot of spots) {
+    const imgs: string[] = Array.isArray(spot.images) ? spot.images : [];
+    imgs.forEach((url, idx) => {
+      if (
+        typeof url === 'string' &&
+        !url.endsWith('.webp') &&
+        (url.includes('.jpg') || url.includes('.jpeg') || url.includes('.png') || url.includes('spot-images'))
+      ) {
+        imagesToOptimize.push({
+          spotId: spot.id,
+          oldUrl: url,
+          index: idx,
+          spotTitle: spot.title || 'Névtelen spot',
+        });
+      }
+    });
+  }
+
+  const total = imagesToOptimize.length;
+  if (total === 0) {
+    if (onProgress) onProgress(0, 0, 'Minden meglévő kép optimális WebP formátumban van!');
+    return { processed: 0, total: 0, bytesSaved: 0 };
+  }
+
+  for (let i = 0; i < total; i++) {
+    const item = imagesToOptimize[i];
+    if (onProgress) onProgress(i + 1, total, `Kép letöltése és tömörítése (${i + 1}/${total}): [${item.spotTitle}]...`);
+
+    try {
+      const response = await fetch(item.oldUrl);
+      if (!response.ok) {
+        if (onProgress) onProgress(i + 1, total, `⚠️ Nem sikerült letölteni: ${item.oldUrl}`);
+        continue;
+      }
+
+      const blob = await response.blob();
+      const originalSize = blob.size;
+      const file = new File([blob], 'legacy_image.jpg', { type: blob.type || 'image/jpeg' });
+
+      // Tömörítés WebP-re (<= 1600px, 80% minőség)
+      const compressed = await compressImage(file, { maxWidth: 1600, maxHeight: 1600, quality: 0.8, targetFormat: 'image/webp' });
+      const newSize = compressed.size;
+      const savedBytes = Math.max(0, originalSize - newSize);
+      totalBytesSaved += savedBytes;
+
+      // Új WebP feltöltése
+      const newPath = `spots/opt-${Date.now()}-${i}.webp`;
+      const { error: uploadErr } = await supabase.storage.from('spot-images').upload(newPath, compressed, {
+        contentType: 'image/webp',
+        cacheControl: '31536000',
+      });
+
+      if (!uploadErr) {
+        const { data: publicData } = supabase.storage.from('spot-images').getPublicUrl(newPath);
+        const newUrl = publicData.publicUrl;
+
+        // Adatbázis frissítése
+        const { data: currentSpot } = await supabase.from('spots').select('images').eq('id', item.spotId).single();
+        if (currentSpot && Array.isArray(currentSpot.images)) {
+          const updatedImages = [...currentSpot.images];
+          updatedImages[item.index] = newUrl;
+          await supabase.from('spots').update({ images: updatedImages }).eq('id', item.spotId);
+
+          // Update local cache
+          const local = getLocalSpots();
+          const updatedLocal = local.map((s) => (s.id === item.spotId ? { ...s, images: updatedImages } : s));
+          saveLocalSpots(updatedLocal);
+        }
+
+        // Régi fájl törlése a storage-ból ha Supabase storage URL volt
+        const oldPathMatch = item.oldUrl.match(/spot-images\/(.+)$/);
+        if (oldPathMatch && oldPathMatch[1]) {
+          await supabase.storage.from('spot-images').remove([oldPathMatch[1]]);
+        }
+
+        totalProcessed++;
+        if (onProgress) {
+          onProgress(
+            i + 1,
+            total,
+            `✅ Kész (${i + 1}/${total}): ${(originalSize / 1024).toFixed(0)} KB ➔ ${(newSize / 1024).toFixed(0)} KB (-${Math.round((savedBytes / originalSize) * 100)}%)`
+          );
+        }
+      } else {
+        console.warn('Feltöltési hiba optimalizáláskor:', uploadErr.message);
+        if (onProgress) onProgress(i + 1, total, `❌ Feltöltési hiba: ${uploadErr.message}`);
+      }
+    } catch (err: unknown) {
+      console.error(`Hiba a kép optimalizálásakor (${item.oldUrl}):`, err);
+      const message = err instanceof Error ? err.message : 'Ismeretlen hiba';
+      if (onProgress) onProgress(i + 1, total, `❌ Hiba: ${message}`);
+    }
+  }
+
+  const summary = `Kész! ${totalProcessed} kép optimalizálva. Megtakarítás: ${(totalBytesSaved / (1024 * 1024)).toFixed(2)} MB.`;
+  if (onProgress) onProgress(total, total, summary);
+  return { processed: totalProcessed, total, bytesSaved: totalBytesSaved };
+};
+
+export const spotService = {
+  uploadSpotImage,
+  submitSpot,
+  getSpots,
+  approveSpot,
+  updateSpot,
+  deleteSpot,
+  reportSpot,
+  dismissSpotReport,
+  syncLocalSpotsToSupabase,
+  optimizeExistingSpotImages,
 };
 

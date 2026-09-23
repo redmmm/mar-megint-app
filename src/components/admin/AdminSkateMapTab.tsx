@@ -11,6 +11,8 @@ import {
   syncLocalSpotsToSupabase,
   dismissSpotReport,
 } from '@/services/spotService';
+import { compressImage } from '@/utils/imageCompressor';
+import { AdminStorageOptimizeModal } from './AdminStorageOptimizeModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -42,6 +44,7 @@ import {
   Megaphone,
   Calendar,
   ExternalLink,
+  Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Switch } from '@/components/ui/switch';
@@ -83,6 +86,7 @@ export const AdminSkateMapTab: React.FC = () => {
   // Edit dialog state
   const [editingSpot, setEditingSpot] = useState<Spot | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isOptimizeModalOpen, setIsOptimizeModalOpen] = useState(false);
   const [editFormData, setEditFormData] = useState({
     title: '',
     description: '',
@@ -334,30 +338,39 @@ export const AdminSkateMapTab: React.FC = () => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
+    if (editFormData.images.length + files.length > 2) {
+      toast.error('Spotonként legfeljebb 2 képet lehet feltölteni.');
+      return;
+    }
+
     setIsUploadingImage(true);
     try {
       const newUrls: string[] = [];
-      const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+      const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        if (!file.type.startsWith('image/')) {
+        const isImage = file.type.startsWith('image/') || /\.(heic|heif|jpe?g|png|webp)$/i.test(file.name);
+        if (!isImage) {
           toast.error('Csak képfájlokat lehet feltölteni.');
           continue;
         }
         if (file.size > MAX_FILE_SIZE) {
-          toast.error(`A(z) "${file.name}" túl nagy! Maximum 10 MB engedélyezett.`);
+          toast.error(`A(z) "${file.name}" túl nagy! Maximum 15 MB engedélyezett.`);
           continue;
         }
-        const url = await uploadSpotImage(file);
+
+        const compressed = await compressImage(file, { maxWidth: 1600, maxHeight: 1600, quality: 0.8 });
+        const url = await uploadSpotImage(compressed);
         newUrls.push(url);
       }
       setEditFormData((prev) => ({
         ...prev,
-        images: [...prev.images, ...newUrls],
+        images: [...prev.images, ...newUrls].slice(0, 2),
       }));
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Image upload error:', err);
-      toast.error(err?.message || 'Nem sikerült feltölteni a képet.');
+      const message = err instanceof Error ? err.message : 'Nem sikerült feltölteni a képet.';
+      toast.error(message);
     } finally {
       setIsUploadingImage(false);
       e.target.value = '';
@@ -416,19 +429,30 @@ export const AdminSkateMapTab: React.FC = () => {
             Jóváhagyásra váró és aktív győri skate spotok adminisztrációja
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            loadAllSpots();
-            loadAllEvents();
-          }}
-          disabled={isLoading || isLoadingEvents}
-          className="gap-1.5 border-white/10 hover:bg-white/5 text-xs text-neutral-300"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${isLoading || isLoadingEvents ? 'animate-spin' : ''}`} />
-          Frissítés
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsOptimizeModalOpen(true)}
+            className="gap-1.5 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300 text-xs shadow-sm"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+            Tárhely Optimalizálás
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              loadAllSpots();
+              loadAllEvents();
+            }}
+            disabled={isLoading || isLoadingEvents}
+            className="gap-1.5 border-white/10 hover:bg-white/5 text-xs text-neutral-300"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading || isLoadingEvents ? 'animate-spin' : ''}`} />
+            Frissítés
+          </Button>
+        </div>
       </div>
 
       {/* Tabs for Pending vs Approved vs Events */}
@@ -1163,44 +1187,49 @@ export const AdminSkateMapTab: React.FC = () => {
             {/* Images */}
             <div className="space-y-2">
               <Label className="text-xs font-semibold uppercase text-neutral-300 flex justify-between items-center">
-                <span>Fotók kezelése</span>
+                <span>Fotók kezelése (max. 2)</span>
                 <span className="text-[10px] text-neutral-400">
-                  {editFormData.images.length} kép
+                  {editFormData.images.length}/2 kép
                 </span>
               </Label>
 
               {editFormData.images.length > 0 && (
-                <div className="grid grid-cols-4 gap-2 mb-2">
+                <div className="grid grid-cols-2 gap-2 mb-2">
                   {editFormData.images.map((img, idx) => (
                     <div
                       key={idx}
-                      className="relative aspect-square rounded-lg overflow-hidden border border-white/10 group"
+                      className="relative aspect-video rounded-xl overflow-hidden border border-white/10 group bg-neutral-950"
                     >
                       <img src={img} alt="Preview" className="w-full h-full object-cover" />
                       <button
                         type="button"
                         onClick={() => handleRemoveEditImage(idx)}
-                        className="absolute top-1 right-1 p-1 rounded-full bg-black/70 text-white hover:bg-red-600 transition-colors"
+                        className="absolute top-1.5 right-1.5 p-1 rounded-full bg-black/70 text-white hover:bg-red-600 transition-colors"
                       >
-                        <X className="w-3 h-3" />
+                        <X className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   ))}
                 </div>
               )}
 
-              <label className="flex items-center justify-center gap-2 p-3 rounded-xl border border-dashed border-white/15 bg-white/[0.02] hover:bg-white/[0.05] cursor-pointer text-xs text-neutral-300">
-                <Upload className="w-4 h-4 text-emerald-400" />
-                <span>{isUploadingImage ? 'Feltöltés...' : 'Új kép hozzáadása'}</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleEditImageUpload}
-                  disabled={isUploadingImage}
-                  className="hidden"
-                />
-              </label>
+              {editFormData.images.length < 2 && (
+                <label className="flex flex-col items-center justify-center p-3 rounded-xl border border-dashed border-white/15 bg-white/[0.02] hover:bg-white/[0.05] cursor-pointer text-xs text-neutral-300 text-center">
+                  <div className="flex items-center gap-1.5 font-medium">
+                    <Upload className="w-4 h-4 text-emerald-400" />
+                    <span>{isUploadingImage ? 'Tömörítés és feltöltés...' : `Új kép hozzáadása (${editFormData.images.length}/2)`}</span>
+                  </div>
+                  <span className="text-[10px] text-neutral-400 mt-0.5">Automatikusan WebP-re tömörítve (JPG, PNG, HEIC)</span>
+                  <input
+                    type="file"
+                    accept="image/*,.heic,.heif"
+                    multiple
+                    onChange={handleEditImageUpload}
+                    disabled={isUploadingImage}
+                    className="hidden"
+                  />
+                </label>
+              )}
             </div>
 
             <DialogFooter className="pt-3">
@@ -1237,6 +1266,13 @@ export const AdminSkateMapTab: React.FC = () => {
         onClose={() => setIsEventModalOpen(false)}
         editingEvent={editingEvent}
         onSave={handleSaveEvent}
+      />
+
+      {/* Storage Image Optimization Modal */}
+      <AdminStorageOptimizeModal
+        isOpen={isOptimizeModalOpen}
+        onClose={() => setIsOptimizeModalOpen(false)}
+        onSuccess={() => loadAllSpots()}
       />
     </div>
   );

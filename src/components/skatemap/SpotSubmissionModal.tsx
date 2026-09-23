@@ -14,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Upload, X, MapPin, ShieldCheck, Check, Info } from 'lucide-react';
 import { submitSpot, uploadSpotImage } from '@/services/spotService';
+import { compressImage, formatBytes } from '@/utils/imageCompressor';
 import { SpotType } from '@/types/spot';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -58,6 +59,7 @@ export const SpotSubmissionModal: React.FC<SpotSubmissionModalProps> = ({
   const [lng, setLng] = useState<string>('17.6504');
   const [images, setImages] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [statusText, setStatusText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -89,8 +91,8 @@ export const SpotSubmissionModal: React.FC<SpotSubmissionModalProps> = ({
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    if (images.length + files.length > 5) {
-      setErrorMessage('Legfeljebb 5 képet tölthetsz fel.');
+    if (images.length + files.length > 2) {
+      setErrorMessage('Spotanként maximum 2 fotót tölthetsz fel!');
       return;
     }
 
@@ -99,26 +101,31 @@ export const SpotSubmissionModal: React.FC<SpotSubmissionModalProps> = ({
 
     try {
       const uploadedUrls: string[] = [];
-      const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+      const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        if (!file.type.startsWith('image/')) {
-          setErrorMessage('Csak képfájlokat tölthetsz fel!');
+        const isImage = file.type.startsWith('image/') || /\.(heic|heif|jpe?g|png|webp)$/i.test(file.name);
+        if (!isImage) {
+          setErrorMessage('Csak képfájlokat (JPG, PNG, WebP, HEIC) tölthetsz fel!');
           continue;
         }
         if (file.size > MAX_FILE_SIZE) {
-          setErrorMessage(`A(z) "${file.name}" túl nagy! Maximum 10 MB engedélyezett.`);
+          setErrorMessage(`A(z) "${file.name}" túl nagy! Maximum 15 MB engedélyezett.`);
           continue;
         }
-        const url = await uploadSpotImage(file);
+
+        setStatusText(`Kép tömörítése és feltöltése (${i + 1}/${files.length})...`);
+        const compressed = await compressImage(file, { maxWidth: 1600, maxHeight: 1600, quality: 0.8 });
+        const url = await uploadSpotImage(compressed);
         uploadedUrls.push(url);
       }
-      setImages((prev) => [...prev, ...uploadedUrls]);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Képfeltöltési hiba:', err);
-      setErrorMessage(err?.message || 'Nem sikerült a képek feldolgozása.');
+      const message = err instanceof Error ? err.message : 'Nem sikerült a képek feldolgozása.';
+      setErrorMessage(message);
     } finally {
       setIsUploading(false);
+      setStatusText('');
       e.target.value = '';
     }
   };
@@ -398,35 +405,40 @@ export const SpotSubmissionModal: React.FC<SpotSubmissionModalProps> = ({
           {/* Image Upload */}
           <div className="space-y-2">
             <Label className="text-xs font-semibold uppercase text-neutral-300 flex justify-between items-center">
-              <span>Képek feltöltése (max. 5)</span>
-              <span className="text-[10px] text-neutral-400 font-normal">{images.length}/5 kép</span>
+              <span>Fotók csatolása (max. 2 kép)</span>
+              <span className="text-[10px] text-neutral-400 font-normal">{images.length}/2 kép</span>
             </Label>
 
             {/* Uploaded thumbnails */}
             {images.length > 0 && (
-              <div className="grid grid-cols-5 gap-2 mb-2">
+              <div className="grid grid-cols-2 gap-3 mb-2">
                 {images.map((img, idx) => (
-                  <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border border-white/10 group">
-                    <img src={img} alt="Preview" className="w-full h-full object-cover" />
+                  <div key={idx} className="relative aspect-video rounded-xl overflow-hidden border border-white/10 group bg-neutral-950">
+                    <img src={img} alt="Spot preview" className="w-full h-full object-cover" />
                     <button
                       type="button"
                       onClick={() => handleRemoveImage(idx)}
-                      className="absolute top-1 right-1 p-1 rounded-full bg-black/70 text-white opacity-90 hover:opacity-100 hover:bg-red-600 transition-all"
+                      className="absolute top-1.5 right-1.5 p-1 rounded-full bg-black/70 text-white opacity-90 hover:opacity-100 hover:bg-red-600 transition-all"
                     >
-                      <X className="w-3 h-3" />
+                      <X className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 ))}
               </div>
             )}
 
-            {images.length < 5 && (
-              <label className="flex items-center justify-center gap-2 p-4 rounded-xl border border-dashed border-white/15 bg-white/[0.02] hover:bg-white/[0.05] cursor-pointer transition-colors text-xs text-neutral-300">
-                <Upload className="w-4 h-4 text-emerald-400" />
-                <span>{isUploading ? 'Kép feldolgozása...' : 'Kép hozzáadása (JPG, PNG)'}</span>
+            {images.length < 2 && (
+              <label className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-white/15 hover:border-emerald-500/50 rounded-xl cursor-pointer bg-neutral-950/50 hover:bg-neutral-950 transition text-center group">
+                <div className="flex items-center gap-2 text-xs font-medium text-neutral-200">
+                  <Upload className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
+                  <span>{isUploading ? statusText || 'Kép feldolgozása...' : `Kép kiválasztása (${images.length}/2)`}</span>
+                </div>
+                <span className="text-[10px] text-neutral-400 mt-1">
+                  Automatikusan WebP-re tömörítve (JPG, PNG, HEIC)
+                </span>
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/*,.heic,.heif"
                   multiple
                   onChange={handleImageFiles}
                   disabled={isUploading}
