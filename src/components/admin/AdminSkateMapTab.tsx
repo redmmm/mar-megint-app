@@ -12,7 +12,6 @@ import {
   dismissSpotReport,
 } from '@/services/spotService';
 import { compressImage } from '@/utils/imageCompressor';
-import { AdminStorageOptimizeModal } from './AdminStorageOptimizeModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -44,7 +43,6 @@ import {
   Megaphone,
   Calendar,
   ExternalLink,
-  Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Switch } from '@/components/ui/switch';
@@ -86,7 +84,6 @@ export const AdminSkateMapTab: React.FC = () => {
   // Edit dialog state
   const [editingSpot, setEditingSpot] = useState<Spot | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isOptimizeModalOpen, setIsOptimizeModalOpen] = useState(false);
   const [editFormData, setEditFormData] = useState({
     title: '',
     description: '',
@@ -429,30 +426,19 @@ export const AdminSkateMapTab: React.FC = () => {
             Jóváhagyásra váró és aktív győri skate spotok adminisztrációja
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsOptimizeModalOpen(true)}
-            className="gap-1.5 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300 text-xs shadow-sm"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-            Tárhely Optimalizálás
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              loadAllSpots();
-              loadAllEvents();
-            }}
-            disabled={isLoading || isLoadingEvents}
-            className="gap-1.5 border-white/10 hover:bg-white/5 text-xs text-neutral-300"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isLoading || isLoadingEvents ? 'animate-spin' : ''}`} />
-            Frissítés
-          </Button>
-        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            loadAllSpots();
+            loadAllEvents();
+          }}
+          disabled={isLoading || isLoadingEvents}
+          className="gap-1.5 border-white/10 hover:bg-white/5 text-xs text-neutral-300"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${isLoading || isLoadingEvents ? 'animate-spin' : ''}`} />
+          Frissítés
+        </Button>
       </div>
 
       {/* Tabs for Pending vs Approved vs Events */}
@@ -1266,13 +1252,6 @@ export const AdminSkateMapTab: React.FC = () => {
         onClose={() => setIsEventModalOpen(false)}
         editingEvent={editingEvent}
         onSave={handleSaveEvent}
-      />
-
-      {/* Storage Image Optimization Modal */}
-      <AdminStorageOptimizeModal
-        isOpen={isOptimizeModalOpen}
-        onClose={() => setIsOptimizeModalOpen(false)}
-        onSuccess={() => loadAllSpots()}
       />
     </div>
   );

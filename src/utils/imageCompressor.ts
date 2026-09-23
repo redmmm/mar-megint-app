@@ -74,6 +74,13 @@ export async function compressImage(
           let width = img.width;
           let height = img.height;
 
+          const isAlreadyWebP = file.type === 'image/webp' || file.name.toLowerCase().endsWith('.webp');
+          // Ha a kép már eleve WebP formátumú és méretei sem haladják meg a korlátot, nem tömörítjük újra
+          if (isAlreadyWebP && width <= maxWidth && height <= maxHeight) {
+            resolve(file);
+            return;
+          }
+
           // Arányos átméretezés: max 1600px
           if (width > maxWidth || height > maxHeight) {
             if (width > height) {
