@@ -1,0 +1,48 @@
+name: Supabase Keep-Alive
+
+on:
+  schedule:
+    # Minden nap 06:00 UTC-kor (magyar idő szerint 07:00 / 08:00) és 18:00 UTC-kor lefut
+    # Ez garantálja, hogy a projekt soha nem éri el a 7 napos inaktivitási határt.
+    - cron: '0 6,18 * * *'
+  workflow_dispatch: # Lehetővé teszi a manuális indítást a GitHub Actions fülről bármikor
+
+jobs:
+  ping-supabase:
+    name: Ping Supabase Database & Auth API
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST API (Database query)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://czryzqrxxfwthmzwpeah.supabase.co' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'sb_publishable_7gjqAKcwUvchmm6MYJqWUg_ak9re_pg' }}
+        run: |
+          echo "📡 Pinging Supabase REST API endpoint..."
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X GET "${SUPABASE_URL}/rest/v1/spots?select=id&limit=1" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}")
+          
+          echo "HTTP Válaszkód: ${HTTP_STATUS}"
+          
+          if [ "$HTTP_STATUS" -eq 200 ]; then
+            echo "✅ Supabase adatbázis sikeresen elérve és aktívan tartva! (HTTP 200)"
+          else
+            echo "⚠️ Figyelmeztetés: Nem 200-as válaszkód érkezett (${HTTP_STATUS})"
+            exit 1
+          fi
+
+      - name: Ping Supabase Auth API
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://czryzqrxxfwthmzwpeah.supabase.co' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'sb_publishable_7gjqAKcwUvchmm6MYJqWUg_ak9re_pg' }}
+        run: |
+          echo "📡 Pinging Supabase Auth Health..."
+          AUTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X GET "${SUPABASE_URL}/auth/v1/health" \
+            -H "apikey: ${SUPABASE_ANON_KEY}")
+          
+          echo "Auth API Válaszkód: ${AUTH_STATUS}"
+          if [ "$AUTH_STATUS" -eq 200 ]; then
+            echo "✅ Supabase Auth API rendben!"
+          fi
