@@ -833,23 +833,9 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
       }
     };
 
-    // Check if permission is already explicitly denied in the browser settings
-    try {
-      if (navigator.permissions && navigator.permissions.query) {
-        const permStatus = await navigator.permissions.query({ name: 'geolocation' });
-        if (permStatus.state === 'denied') {
-          setIsLocating(false);
-          setLocErrorType('permission_denied');
-          setIsPermissionDialogOpen(true);
-          return;
-        }
-      }
-    } catch (e) {
-      // Permissions API not supported or query failed, continue to standard request
-    }
-
-    // Call native browser geolocation with a generous 20s timeout so the user has time
-    // to see the native prompt ("Engedélyezés" / "Elutasítás") and make their choice!
+    // Call native browser geolocation directly — this is the ONLY way to trigger the browser's
+    // native "Allow / Block" permission prompt. We use a generous 20s timeout so the user has
+    // plenty of time to see the prompt and make their choice.
     navigator.geolocation.getCurrentPosition(
       (position) => {
         handleSuccess(position.coords.latitude, position.coords.longitude);
