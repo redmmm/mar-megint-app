@@ -345,7 +345,10 @@ const SkateMapPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isLocating, setIsLocating] = useState(false);
   const [isPermissionDialogOpen, setIsPermissionDialogOpen] = useState(false);
-  const [locErrorType, setLocErrorType] = useState<'permission_denied' | 'timeout' | 'unavailable' | 'unknown'>('permission_denied');
+  const [locErrorType, setLocErrorType] = useState<
+    'permission_denied' | 'timeout' | 'unavailable' | 'unknown' | 'outside_gyor'
+  >('permission_denied');
+  const [isOutsideGyorDetected, setIsOutsideGyorDetected] = useState(false);
 
   // Keep state accessible to Leaflet event listeners
   const isAddingPinRef = useRef(isAddingPin);
@@ -749,7 +752,6 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
 
     const handleSuccess = (latitude: number, longitude: number, isApproximate = false) => {
       setIsLocating(false);
-      setIsPermissionDialogOpen(false);
 
       // Verify if user is inside Győr bounds
       const isInsideGyor =
@@ -759,18 +761,32 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
         longitude <= GYOR_BOUNDS[1][1];
 
       if (!isInsideGyor) {
+        // Remove existing user marker if any
+        if (userLocationMarkerRef.current && mapInstanceRef.current) {
+          mapInstanceRef.current.removeLayer(userLocationMarkerRef.current);
+          userLocationMarkerRef.current = null;
+        }
+
+        setIsOutsideGyorDetected(true);
+        setLocErrorType('outside_gyor');
+        setIsPermissionDialogOpen(true);
+
         toast.warning(
           isApproximate
             ? 'Hozzávetőleges helyzet: A tartózkodási helyed Győr határain kívül esik.'
             : 'A tartózkodási helyed Győr határain kívül esik.'
         );
-      } else {
-        toast.success(
-          isApproximate
-            ? 'Helyzeted beazonosítva (hálózati pozíció).'
-            : 'Helyzeted sikeresen beazonosítva!'
-        );
+        return;
       }
+
+      setIsOutsideGyorDetected(false);
+      setIsPermissionDialogOpen(false);
+
+      toast.success(
+        isApproximate
+          ? 'Helyzeted beazonosítva (hálózati pozíció).'
+          : 'Helyzeted sikeresen beazonosítva!'
+      );
 
       if (mapInstanceRef.current) {
         if (userLocationMarkerRef.current) {
@@ -798,9 +814,7 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
           userLocationMarkerRef.current = userMarker;
         }
 
-        if (isInsideGyor) {
-          mapInstanceRef.current.flyTo([latitude, longitude], 16, { duration: 1.2 });
-        }
+        mapInstanceRef.current.flyTo([latitude, longitude], 16, { duration: 1.2 });
       }
     };
 
@@ -962,6 +976,23 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
                     </div>
                   </PopoverContent>
                 </Popover>
+
+                {/* Expansion Info Button - ONLY shown when out-of-Győr position was detected */}
+                {isOutsideGyorDetected && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLocErrorType('outside_gyor');
+                      setIsPermissionDialogOpen(true);
+                    }}
+                    className="cursor-pointer inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 active:scale-95 transition-all shadow-sm focus:outline-none animate-in fade-in duration-300"
+                    aria-label="Információ a bővítésről"
+                    title="A helyzeted Győr határain kívül esik - Kattints a tájékoztatóért!"
+                  >
+                    <Info className="w-3 h-3 text-amber-400" />
+                    <span>Győr Határ Infó</span>
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -1160,6 +1191,22 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
       <div className="absolute bottom-24 right-4 sm:right-6 z-20 flex flex-col items-end gap-3 pointer-events-auto">
         {/* Iránytű és Saját helyzet egymás mellett (az iránytű mellett jobb oldalon a saját helyzet) */}
         <div className="flex items-center gap-2.5">
+          {/* Out of Győr info button if location was detected outside */}
+          {isOutsideGyorDetected && (
+            <Button
+              size="icon"
+              onClick={() => {
+                setLocErrorType('outside_gyor');
+                setIsPermissionDialogOpen(true);
+              }}
+              aria-label="Információ a Győr-határról és bővítésről"
+              className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 backdrop-blur-xl text-amber-300 hover:text-white hover:bg-amber-500/30 shadow-xl transition-all hover:scale-105 active:scale-95 animate-in fade-in zoom-in duration-300"
+              title="A helyzeted Győrön kívül esik - Kattints a tájékoztatóért!"
+            >
+              <Info className="w-5 h-5 text-amber-400" />
+            </Button>
+          )}
+
           {/* Recenter Button (Iránytű) */}
           <Button
             size="icon"
@@ -1243,6 +1290,7 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
           setIsPermissionDialogOpen(false);
           requestUserLocation();
         }}
+        onRecenter={handleRecenter}
         isLoading={isLocating}
         errorType={locErrorType}
       />
