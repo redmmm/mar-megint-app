@@ -756,8 +756,8 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
   return null;
 };
 
-  // Handle Geolocation: "Show My Location" with fast standard + immediate IP fallback
-  const requestUserLocation = () => {
+  // Handle Geolocation: "Show My Location" with native browser prompt respect + desktop IP fallback
+  const requestUserLocation = async () => {
     if (!navigator.geolocation) {
       toast.error('A böngésződ nem támogatja a helymeghatározást.');
       return;
@@ -833,66 +833,73 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
       }
     };
 
-    // Step 1: Fast standard location (enableHighAccuracy: false) - short 3s timeout
+    // Check if permission is already explicitly denied in the browser settings
+    try {
+      if (navigator.permissions && navigator.permissions.query) {
+        const permStatus = await navigator.permissions.query({ name: 'geolocation' });
+        if (permStatus.state === 'denied') {
+          setIsLocating(false);
+          setLocErrorType('permission_denied');
+          setIsPermissionDialogOpen(true);
+          return;
+        }
+      }
+    } catch (e) {
+      // Permissions API not supported or query failed, continue to standard request
+    }
+
+    // Call native browser geolocation with a generous 20s timeout so the user has time
+    // to see the native prompt ("Engedélyezés" / "Elutasítás") and make their choice!
     navigator.geolocation.getCurrentPosition(
       (position) => {
         handleSuccess(position.coords.latitude, position.coords.longitude);
       },
-      async (fastError) => {
-        console.warn('Fast geolocation attempt failed:', fastError);
+      async (geoError) => {
+        console.warn('Browser geolocation attempt failed:', geoError);
 
-        // Step 2: On desktop PCs without GPS/Wi-Fi or when OS restricts hardware location,
-        // immediately try IP Geolocation fallback before showing any error dialog!
-        const ipLocation = await fetchIpLocation();
-        if (ipLocation) {
-          handleSuccess(ipLocation.lat, ipLocation.lng, true);
-          return;
-        }
-
-        // If IP fallback also failed, check browser permission state
-        let isBrowserPermissionGranted = false;
+        // Check permission state after user responded
+        let isUserDenied = geoError.code === geoError.PERMISSION_DENIED;
         try {
           if (navigator.permissions && navigator.permissions.query) {
-            const status = await navigator.permissions.query({ name: 'geolocation' });
-            if (status.state === 'granted') {
-              isBrowserPermissionGranted = true;
+            const permStatus = await navigator.permissions.query({ name: 'geolocation' });
+            if (permStatus.state === 'denied') {
+              isUserDenied = true;
+            } else if (permStatus.state === 'granted') {
+              isUserDenied = false;
             }
           }
         } catch (e) {
-          // Permissions API not supported or failed
+          // ignore
         }
 
-        // If user explicitly denied browser permission (and it's not granted), show permission dialog
-        if (fastError.code === fastError.PERMISSION_DENIED && !isBrowserPermissionGranted) {
+        // If the user explicitly clicked "Elutasítás" / Blocked permission, RESPECT their choice!
+        // Do NOT use IP fallback.
+        if (isUserDenied) {
           setIsLocating(false);
           setLocErrorType('permission_denied');
           setIsPermissionDialogOpen(true);
           return;
         }
 
-        // Step 3: High accuracy GPS attempt with short timeout (in case device is mobile with GPS)
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            handleSuccess(pos.coords.latitude, pos.coords.longitude);
-          },
-          (gpsError) => {
-            console.warn('High-accuracy geolocation failed:', gpsError);
+        // If user gave permission (granted), but device/OS couldn't provide GPS coordinates
+        // (common on desktop PCs without GPS hardware or Wi-Fi positioning):
+        // Fall back to multi-service IP Geolocation
+        const ipLocation = await fetchIpLocation();
+        if (ipLocation) {
+          handleSuccess(ipLocation.lat, ipLocation.lng, true);
+          return;
+        }
 
-            // If all attempts failed
-            setIsLocating(false);
-            setLocErrorType(
-              gpsError.code === gpsError.PERMISSION_DENIED && !isBrowserPermissionGranted
-                ? 'permission_denied'
-                : gpsError.code === gpsError.TIMEOUT
-                ? 'timeout'
-                : 'unavailable'
-            );
-            setIsPermissionDialogOpen(true);
-          },
-          { enableHighAccuracy: true, timeout: 3000, maximumAge: 60000 }
+        // If even IP fallback failed, display the failure dialog
+        setIsLocating(false);
+        setLocErrorType(
+          geoError.code === geoError.TIMEOUT
+            ? 'timeout'
+            : 'unavailable'
         );
+        setIsPermissionDialogOpen(true);
       },
-      { enableHighAccuracy: false, timeout: 3000, maximumAge: 120000 }
+      { enableHighAccuracy: false, timeout: 20000, maximumAge: 60000 }
     );
   };
 
