@@ -701,7 +701,7 @@ const SkateMapPage: React.FC = () => {
 const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> => {
   // Service 1: ipwho.is (very accurate for Hungarian cities, returns Győr directly)
   try {
-    const res = await fetch('https://ipwho.is/');
+    const res = await fetch('https://ipwho.is/', { signal: AbortSignal.timeout(3000) });
     if (res.ok) {
       const data = await res.json();
       if (data && data.success && typeof data.latitude === 'number' && typeof data.longitude === 'number') {
@@ -712,9 +712,24 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
     console.warn('ipwho.is failed, trying next:', e);
   }
 
-  // Service 2: freeipapi.com
+  // Service 2: geojs.io (fast, accurate city-level lookup, CORS enabled)
   try {
-    const res = await fetch('https://freeipapi.com/api/json');
+    const res = await fetch('https://get.geojs.io/v1/ip/geo.json', { signal: AbortSignal.timeout(3000) });
+    if (res.ok) {
+      const data = await res.json();
+      const lat = typeof data.latitude === 'number' ? data.latitude : parseFloat(data.latitude);
+      const lng = typeof data.longitude === 'number' ? data.longitude : parseFloat(data.longitude);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        return { lat, lng };
+      }
+    }
+  } catch (e) {
+    console.warn('geojs.io failed, trying next:', e);
+  }
+
+  // Service 3: freeipapi.com
+  try {
+    const res = await fetch('https://freeipapi.com/api/json', { signal: AbortSignal.timeout(3000) });
     if (res.ok) {
       const data = await res.json();
       if (data && typeof data.latitude === 'number' && typeof data.longitude === 'number') {
@@ -725,9 +740,9 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
     console.warn('freeipapi failed, trying next:', e);
   }
 
-  // Service 3: ipapi.co
+  // Service 4: ipapi.co
   try {
-    const res = await fetch('https://ipapi.co/json/');
+    const res = await fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout(3000) });
     if (res.ok) {
       const data = await res.json();
       if (data && typeof data.latitude === 'number' && typeof data.longitude === 'number') {
@@ -826,18 +841,32 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
       async (fastError) => {
         console.warn('Fast geolocation attempt failed:', fastError);
 
-        // If user explicitly denied browser permission, show permission dialog
-        if (fastError.code === fastError.PERMISSION_DENIED) {
-          setIsLocating(false);
-          setLocErrorType('permission_denied');
-          setIsPermissionDialogOpen(true);
-          return;
-        }
-
-        // Step 2: On desktop PCs without GPS/Wi-Fi, immediately try IP Geolocation fallback
+        // Step 2: On desktop PCs without GPS/Wi-Fi or when OS restricts hardware location,
+        // immediately try IP Geolocation fallback before showing any error dialog!
         const ipLocation = await fetchIpLocation();
         if (ipLocation) {
           handleSuccess(ipLocation.lat, ipLocation.lng, true);
+          return;
+        }
+
+        // If IP fallback also failed, check browser permission state
+        let isBrowserPermissionGranted = false;
+        try {
+          if (navigator.permissions && navigator.permissions.query) {
+            const status = await navigator.permissions.query({ name: 'geolocation' });
+            if (status.state === 'granted') {
+              isBrowserPermissionGranted = true;
+            }
+          }
+        } catch (e) {
+          // Permissions API not supported or failed
+        }
+
+        // If user explicitly denied browser permission (and it's not granted), show permission dialog
+        if (fastError.code === fastError.PERMISSION_DENIED && !isBrowserPermissionGranted) {
+          setIsLocating(false);
+          setLocErrorType('permission_denied');
+          setIsPermissionDialogOpen(true);
           return;
         }
 
@@ -852,11 +881,11 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
             // If all attempts failed
             setIsLocating(false);
             setLocErrorType(
-              gpsError.code === gpsError.TIMEOUT
+              gpsError.code === gpsError.PERMISSION_DENIED && !isBrowserPermissionGranted
+                ? 'permission_denied'
+                : gpsError.code === gpsError.TIMEOUT
                 ? 'timeout'
-                : gpsError.code === gpsError.POSITION_UNAVAILABLE
-                ? 'unavailable'
-                : 'unknown'
+                : 'unavailable'
             );
             setIsPermissionDialogOpen(true);
           },
