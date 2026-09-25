@@ -1260,7 +1260,7 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
         {/* Add Spot Button */}
         <Button
           onClick={handleStartAddSpot}
-          className="h-12 px-5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold shadow-xl shadow-emerald-600/30 flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
+          className="h-12 px-5 rounded-2xl bg-neutral-950/80 border border-white/10 backdrop-blur-xl text-white font-semibold shadow-xl flex items-center gap-2 transition-all hover:scale-105 active:scale-95 hover:bg-neutral-900 hover:border-white/20"
         >
           <Plus className="w-5 h-5" />
           <span className="text-sm font-bold">Új Spot</span>
