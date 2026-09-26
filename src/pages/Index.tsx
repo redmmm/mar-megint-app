@@ -6,10 +6,10 @@ import { useSEO } from '@/hooks/useSEO';
 
 const Index = () => {
   useSEO({
-    title: 'Győr Skate Map & Már megint? Hub | Győri Gördeszkás Térkép és Közösség',
-    description: 'A hivatalos Győr Skate Map és Már megint? Hub. Fedezd fel Győr legjobb gördeszkás helyeit, street spotjait, skateparkjait, a legújabb videókat és gördeszkás időjárást!',
-    keywords: 'győr skatemap, győri skate map, skatemap győr, győr gördeszka, győri skatepark, skate spotok győr, már megint, már megint játszunk, marmegint hub',
-    ogTitle: 'Győr Skate Map & Már megint? Hub | Győri Gördeszkás Térkép',
+    title: 'Már Megint Hub & Győr Skate Map | Győri Gördeszkás Térkép és Közösség',
+    description: 'A hivatalos Már Megint Hub és Győr Skate Map. Fedezd fel Győr legjobb gördeszkás helyeit, street spotjait, skateparkjait, a legújabb videókat és gördeszkás időjárást!',
+    keywords: 'már megint hub, győr skatemap, győri skate map, skatemap győr, győr gördeszka, győri skatepark, skate spotok győr, már megint, már megint játszunk, marmegint hub',
+    ogTitle: 'Már Megint Hub & Győr Skate Map | Győri Gördeszkás Térkép',
   });
 
   return (
@@ -27,7 +27,7 @@ const Index = () => {
       </div>
 
       {/* Visually Hidden SEO Heading for Google Crawlers */}
-      <h1 className="sr-only">Győr Skate Map &amp; Már megint? Hub - Hivatalos Győri Gördeszkás Térkép</h1>
+      <h1 className="sr-only">Már Megint Hub &amp; Győr Skate Map - Hivatalos Győri Gördeszkás Térkép</h1>
 
       {/* Centered Container with Fixed Height */}
       <main className="relative z-10 w-full max-w-6xl px-4">
