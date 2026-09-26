@@ -116,7 +116,7 @@ const ChannelDashboard = () => {
             ) : videos && videos.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {videos.slice(0, 6).map((video, idx) => (
-                  <div key={video.id} className="animate-fade-in" style={{ animationDelay: `${0.1 * idx}s` }}>
+                  <div key={video.id} className="animate-fade-in w-full min-w-0" style={{ animationDelay: `${0.1 * idx}s` }}>
                     <VideoCard video={video} variant={variant} />
                   </div>
                 ))}
@@ -143,15 +143,16 @@ const ChannelDashboard = () => {
               </div>
 
               {newsLoading ? (
-                <div className="premium-glass flex items-center justify-center py-12">
+                <div className="bg-neutral-950/70 border border-white/10 rounded-[2rem] backdrop-blur-xl flex items-center justify-center py-12">
                   <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
                 </div>
               ) : (
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
                   {news.map((post, idx) => (
-                    <div key={post.id} className="animate-fade-in" style={{ animationDelay: `${0.1 * idx}s` }}>
+                    <div key={post.id} className="animate-fade-in w-full min-w-0 h-full" style={{ animationDelay: `${0.1 * idx}s` }}>
                       <NewsCard
                         post={post}
+                        showTag
                         onClick={() => setSelectedNews(post)}
                       />
                     </div>
