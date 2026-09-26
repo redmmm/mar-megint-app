@@ -1,8 +1,11 @@
 interface PremiumBackgroundProps {
   withParticles?: boolean;
+  variant?: 'default' | 'neutral';
 }
 
-const PremiumBackground = ({ withParticles = false }: PremiumBackgroundProps) => {
+const PremiumBackground = ({ withParticles = false, variant = 'default' }: PremiumBackgroundProps) => {
+  const isNeutral = variant === 'neutral';
+
   return (
     <div className="fixed inset-0 z-0 overflow-hidden bg-background">
       {/* Deep radial gradient base */}
@@ -13,49 +16,57 @@ const PremiumBackground = ({ withParticles = false }: PremiumBackgroundProps) =>
         }}
       />
 
-      {/* Green orb - left side */}
+      {/* Orb 1 - left side (Neutral or Green) */}
       <div
         className="absolute w-[600px] h-[600px] rounded-full animate-orb-drift"
         style={{
           left: '10%',
           top: '20%',
-          background: 'radial-gradient(circle, hsl(142 70% 45% / 0.15) 0%, hsl(142 70% 45% / 0.05) 40%, transparent 70%)',
+          background: isNeutral
+            ? 'radial-gradient(circle, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 40%, transparent 70%)'
+            : 'radial-gradient(circle, hsl(142 70% 45% / 0.15) 0%, hsl(142 70% 45% / 0.05) 40%, transparent 70%)',
           filter: 'blur(80px)',
         }}
       />
 
-      {/* Red orb - right side */}
+      {/* Orb 2 - right side (Neutral or Red) */}
       <div
         className="absolute w-[500px] h-[500px] rounded-full animate-orb-drift"
         style={{
           right: '10%',
           bottom: '20%',
-          background: 'radial-gradient(circle, hsl(0 85% 60% / 0.15) 0%, hsl(0 85% 60% / 0.05) 40%, transparent 70%)',
+          background: isNeutral
+            ? 'radial-gradient(circle, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 40%, transparent 70%)'
+            : 'radial-gradient(circle, hsl(0 85% 60% / 0.15) 0%, hsl(0 85% 60% / 0.05) 40%, transparent 70%)',
           filter: 'blur(80px)',
           animationDelay: '-12s',
           animationDirection: 'reverse',
         }}
       />
 
-      {/* Secondary smaller green orb */}
+      {/* Secondary smaller orb - left */}
       <div
         className="absolute w-[300px] h-[300px] rounded-full animate-orb-drift"
         style={{
           left: '30%',
           bottom: '10%',
-          background: 'radial-gradient(circle, hsl(142 70% 50% / 0.1) 0%, transparent 60%)',
+          background: isNeutral
+            ? 'radial-gradient(circle, rgba(255, 255, 255, 0.03) 0%, transparent 60%)'
+            : 'radial-gradient(circle, hsl(142 70% 50% / 0.1) 0%, transparent 60%)',
           filter: 'blur(60px)',
           animationDelay: '-8s',
         }}
       />
 
-      {/* Secondary smaller red orb */}
+      {/* Secondary smaller orb - right */}
       <div
         className="absolute w-[350px] h-[350px] rounded-full animate-orb-drift"
         style={{
           right: '25%',
           top: '10%',
-          background: 'radial-gradient(circle, hsl(0 85% 55% / 0.1) 0%, transparent 60%)',
+          background: isNeutral
+            ? 'radial-gradient(circle, rgba(255, 255, 255, 0.03) 0%, transparent 60%)'
+            : 'radial-gradient(circle, hsl(0 85% 55% / 0.1) 0%, transparent 60%)',
           filter: 'blur(60px)',
           animationDelay: '-18s',
           animationDirection: 'reverse',

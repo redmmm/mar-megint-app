@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import SpotlightCard from '@/components/SpotlightCard';
 import marmegintLogo from '/marmegint-logo.jpg';
 import jatszunkLogo from '/jatszunk-logo.png';
 
@@ -16,69 +17,86 @@ export const ChannelCard = ({ name, slug, variant, description }: ChannelCardPro
 
   const emoji = variant === 'a' ? '🛹' : '🎮';
   
+  // Left (IRL): #5c9884 | Right (gameplay): #b0223b
+  const isA = variant === 'a';
+  const spotlightColor = isA ? 'rgba(92, 152, 132, 0.35)' : 'rgba(176, 34, 59, 0.35)';
+
   return (
-    <button
+    <SpotlightCard
+      spotlightColor={spotlightColor}
       onClick={() => navigate(`/channel/${slug}`)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          navigate(`/channel/${slug}`);
+        }
+      }}
       className={cn(
-        'group relative w-full h-full min-h-[50vh] md:min-h-[80vh] overflow-hidden',
-        'flex flex-col items-center justify-center p-8 md:p-12 lg:p-16',
-        'transition-all duration-500 focus:outline-none',
-        variant === 'a'
-          ? 'premium-glass-green hover:glow-green'
-          : 'premium-glass-red hover:glow-red'
+        'group cursor-pointer select-none w-full h-full min-h-[460px] md:min-h-full',
+        'flex flex-col items-center justify-center p-8 md:p-12 lg:p-14 text-center',
+        'rounded-[2rem] border border-white/10',
+        'bg-neutral-950/70 backdrop-blur-xl',
+        'transition-all duration-500 focus:outline-none focus-visible:ring-2',
+        isA
+          ? 'hover:border-[#5c9884]/60 hover:shadow-[0_0_60px_rgba(92,152,132,0.25)] focus-visible:ring-[#5c9884]/60'
+          : 'hover:border-[#b0223b]/60 hover:shadow-[0_0_60px_rgba(176,34,59,0.25)] focus-visible:ring-[#b0223b]/60'
       )}
     >
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center text-center">
+      <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
         {/* Profile Image */}
-        <img
-          src={variant === 'a' ? marmegintLogo : jatszunkLogo}
-          alt={variant === 'a' ? 'Már megint Logo' : 'Már megint játszunk Logo'}
-          className="w-20 h-20 rounded-full border-2 border-white/20 shadow-lg object-cover mb-4"
-        />
+        <div className="relative mb-5">
+          <img
+            src={isA ? marmegintLogo : jatszunkLogo}
+            alt={isA ? 'Már megint Logo' : 'Már megint játszunk Logo'}
+            className={cn(
+              'w-24 h-24 rounded-full border-2 border-white/20 shadow-2xl object-cover transition-all duration-500 group-hover:scale-105',
+              isA
+                ? 'group-hover:border-[#5c9884] group-hover:shadow-[0_0_30px_rgba(92,152,132,0.5)]'
+                : 'group-hover:border-[#b0223b] group-hover:shadow-[0_0_30px_rgba(176,34,59,0.5)]'
+            )}
+          />
+        </div>
 
-        {/* Channel indicator */}
-        <div className={cn(
-          'inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium mb-8',
-          variant === 'a'
-            ? 'bg-primary/20 text-primary'
-            : 'bg-secondary/20 text-secondary'
-        )}>
-          <span className="text-lg">{emoji}</span>
+        {/* Channel indicator badge */}
+        <div
+          className={cn(
+            'inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wider mb-6 transition-all duration-300',
+            isA
+              ? 'bg-[#5c9884]/15 text-[#a8d3c5] border border-[#5c9884]/30 group-hover:bg-[#5c9884]/25 group-hover:border-[#5c9884]/60 group-hover:text-white'
+              : 'bg-[#b0223b]/15 text-[#f5a1af] border border-[#b0223b]/30 group-hover:bg-[#b0223b]/25 group-hover:border-[#b0223b]/60 group-hover:text-white'
+          )}
+        >
+          <span className="text-base">{emoji}</span>
           <span>CSATORNA</span>
         </div>
 
-        {/* Title - Giant typography */}
-        <h2 className={cn(
-          'text-2xl md:text-3xl font-bold text-center mb-6',
-          'text-gradient'
-        )}>
+        {/* Title */}
+        <h2 className="text-2xl sm:text-3xl md:text-3xl lg:text-4xl font-black text-center mb-4 tracking-tight text-white drop-shadow-sm">
           {name}
         </h2>
 
-        <p className="text-muted-foreground text-base md:text-lg mb-10 max-w-md mx-auto">
+        {/* Description */}
+        <p className="text-neutral-400 text-sm md:text-base leading-relaxed mb-8 max-w-sm mx-auto">
           {description}
         </p>
 
-        {/* CTA */}
-        <div className={cn(
-          'inline-flex items-center gap-3 px-6 py-3 rounded-full text-sm font-semibold',
-          'transition-all duration-300 group-hover:gap-4',
-          variant === 'a'
-            ? 'bg-primary/20 text-primary group-hover:bg-primary group-hover:text-primary-foreground'
-            : 'bg-secondary/20 text-secondary group-hover:bg-secondary group-hover:text-secondary-foreground'
-        )}>
+        {/* CTA Button */}
+        <div
+          className={cn(
+            'inline-flex items-center gap-2.5 px-6 py-3 rounded-full text-sm font-bold tracking-wide transition-all duration-300 group-hover:gap-3.5 shadow-lg',
+            'bg-white/10 text-white border border-white/15 backdrop-blur-md',
+            isA
+              ? 'group-hover:bg-[#5c9884] group-hover:text-white group-hover:border-[#5c9884] group-hover:shadow-[0_0_35px_rgba(92,152,132,0.7)]'
+              : 'group-hover:bg-[#b0223b] group-hover:text-white group-hover:border-[#b0223b] group-hover:shadow-[0_0_35px_rgba(176,34,59,0.7)]'
+          )}
+        >
           <span>Belépés</span>
-          <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+          <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
         </div>
       </div>
-      
-      {/* Background glow */}
-      <div className={cn(
-        'absolute -bottom-1/4 -left-1/4 w-1/2 h-1/2 rounded-full blur-3xl',
-        'opacity-0 group-hover:opacity-20 transition-opacity duration-700',
-        variant === 'a' ? 'bg-primary' : 'bg-secondary'
-      )} />
-    </button>
+    </SpotlightCard>
   );
 };

@@ -25,18 +25,18 @@ export const NewsModal = ({ post, onClose }: NewsModalProps) => {
       className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
       onClick={handleBackdropClick}
     >
-      <div className="relative max-w-2xl w-full max-h-[90vh] overflow-hidden bg-neutral-900/95 border border-white/10 rounded-2xl shadow-2xl">
+      <div className="relative max-w-2xl w-full max-h-[90vh] overflow-hidden bg-neutral-950/95 border border-white/15 rounded-[2rem] shadow-2xl backdrop-blur-2xl">
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70 transition-colors"
+          className="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-black/60 border border-white/15 flex items-center justify-center text-white hover:bg-white/20 transition-all cursor-pointer"
         >
           <X className="w-4 h-4" />
         </button>
 
         {/* Header Image */}
         {post.image_url && (
-          <div className="w-full h-64 overflow-hidden">
+          <div className="w-full h-64 sm:h-72 overflow-hidden border-b border-white/10">
             <img
               src={post.image_url}
               alt={post.title}
@@ -46,18 +46,18 @@ export const NewsModal = ({ post, onClose }: NewsModalProps) => {
         )}
 
         {/* Content */}
-        <div className="p-8 overflow-y-auto max-h-[calc(90vh-16rem)]">
+        <div className="p-6 sm:p-8 overflow-y-auto max-h-[calc(90vh-16rem)]">
           {/* Metadata */}
           <div className="flex items-center gap-3 mb-4">
             <span className={cn(
-              'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium',
+              'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold tracking-wide',
               variant === 'a'
-                ? 'bg-primary/20 text-primary'
-                : 'bg-secondary/20 text-secondary'
+                ? 'bg-[#5c9884]/15 text-[#a8d3c5] border border-[#5c9884]/30'
+                : 'bg-[#b0223b]/15 text-[#f5a1af] border border-[#b0223b]/30'
             )}>
               {channelName}
             </span>
-            <span className="text-gray-400 text-sm">
+            <span className="text-neutral-400 text-xs">
               {formatDistanceToNow(new Date(post.created_at), {
                 addSuffix: true,
                 locale: hu

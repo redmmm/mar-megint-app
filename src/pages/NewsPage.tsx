@@ -22,36 +22,38 @@ const NewsPage = () => {
 
   return (
     <div className="min-h-screen relative">
-      <PremiumBackground />
+      {/* Neutral non-coloured atmospheric background */}
+      <PremiumBackground variant="neutral" />
       
-      <main className="relative z-10 pt-8 pb-24 px-4">
+      <main className="relative z-10 pt-10 pb-28 px-4 sm:px-6">
         <div className="container mx-auto max-w-7xl">
           {/* Header */}
-          <div className="mb-12 animate-fade-in">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-accent text-accent-foreground mb-6">
-              <Newspaper className="w-4 h-4" />
-              <span>HÍREK</span>
+          <div className="mb-10 animate-fade-in flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+            <div>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-white drop-shadow-sm mb-3">
+                Hírek
+              </h1>
+              <p className="text-neutral-400 text-base md:text-lg max-w-xl">
+                A legfrissebb hírek és bejelentések mindkét csatornáról
+              </p>
             </div>
-            <h1 className="text-4xl md:text-6xl font-black tracking-tight text-gradient mb-4">
-              Hírek
-            </h1>
-            <p className="text-muted-foreground text-lg max-w-xl mb-8">
-              A legfrissebb hírek és bejelentések mindkét csatornáról
-            </p>
             
-            {/* Filter */}
-            <FilterTabs value={filter} onChange={setFilter} />
+            {/* Filter Tabs */}
+            <div className="shrink-0">
+              <FilterTabs value={filter} onChange={setFilter} />
+            </div>
           </div>
           
           {/* News Grid */}
           {isLoading ? (
-            <div className="premium-glass flex items-center justify-center py-20">
-              <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+            <div className="bg-neutral-950/70 border border-white/10 rounded-[2rem] backdrop-blur-xl flex flex-col items-center justify-center py-24 gap-3">
+              <Loader2 className="w-8 h-8 animate-spin text-neutral-400" />
+              <span className="text-neutral-400 text-sm font-medium">Hírek betöltése...</span>
             </div>
           ) : news && news.length > 0 ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {news.map((post, idx) => (
-                <div key={post.id} className="animate-fade-in" style={{ animationDelay: `${0.05 * idx}s` }}>
+                <div key={post.id} className="animate-fade-in h-full" style={{ animationDelay: `${0.04 * idx}s` }}>
                   <NewsCard
                     post={post}
                     showTag
@@ -61,9 +63,10 @@ const NewsPage = () => {
               ))}
             </div>
           ) : (
-            <div className="premium-glass text-center py-20 text-muted-foreground">
-              <Newspaper className="w-16 h-16 mx-auto mb-4 opacity-50" />
-              <p className="text-lg">Nincsenek hírek a kiválasztott szűrőhöz</p>
+            <div className="bg-neutral-950/70 border border-white/10 rounded-[2rem] backdrop-blur-xl text-center py-24 text-neutral-400">
+              <Newspaper className="w-14 h-14 mx-auto mb-4 opacity-40 text-neutral-300" />
+              <p className="text-lg font-semibold text-neutral-300">Nincsenek hírek a kiválasztott szűrőhöz</p>
+              <p className="text-sm text-neutral-500 mt-1">Próbálj másik kategóriát választani a fenti szűrőben.</p>
             </div>
           )}
         </div>

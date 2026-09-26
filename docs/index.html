@@ -155,43 +155,46 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
       />
     </noscript>
-    <script type="module" crossorigin src="./assets/index-B-SnUMw7.js"></script>
-    <link rel="modulepreload" crossorigin href="./assets/vendor-icons-BgGsQ1JP.js">
-    <link rel="stylesheet" crossorigin href="./assets/index-D5sFXjkt.css">
+    <script type="module" crossorigin src="./assets/index-DZv-OmIo.js"></script>
+    <link rel="modulepreload" crossorigin href="./assets/vendor-icons-BVv1CTbC.js">
+    <link rel="stylesheet" crossorigin href="./assets/index-BCkplG8P.css">
   </head>
 
   <body>
     <!-- React Root with Crawlable Semantic Fallback for Search Engine Crawlers -->
+    <!-- SEO fallback is visually hidden via sr-only/clip technique so it never flashes, but crawlers still read it -->
     <div id="root">
-      <header style="padding: 20px; font-family: sans-serif; text-align: center;">
-        <h1>Győr Skate Map &amp; Már megint? Hivatalos Hub</h1>
-        <p>Interaktív gördeszkás térkép Győr városában és a Már megint?, Már megint játszunk? csatornák hivatalos platformja.</p>
-      </header>
-      <main style="max-width: 900px; margin: 0 auto; padding: 20px; font-family: sans-serif; line-height: 1.6;">
-        <section>
-          <h2>Győri Gördeszkás Helyek és Skatepark Térkép (Győr Skate Map)</h2>
-          <p>
-            Keresd meg a legjobb győri skate spotokat! A Győr Skate Map interaktív térképén megtalálod Győr legnépszerűbb és legújabb gördeszkás helyeit:
-            skateparkok, padkák (ledges), korlátok (rails), lépcsők (stairs), gap-ek és sík terepek (flatground).
-            Győri deszkások és extrémsport-kedvelők által beküldött, folyamatosan frissülő közösségi spot adatbázis és időjárás-előrejelzés.
-          </p>
-          <nav>
-            <ul>
-              <li><a href="#/skatemap">Győr Skate Map megnyitása</a></li>
-              <li><a href="#/channel/marmegint">Már megint? csatorna videók és hírek (Skate &amp; Vlogs)</a></li>
-              <li><a href="#/channel/jatszunk">Már megint játszunk? gameplay videók</a></li>
-              <li><a href="#/weather">Gördeszkás Időjárás Győr</a></li>
-              <li><a href="#/news">Friss hírek és bejelentések</a></li>
-            </ul>
-          </nav>
-        </section>
-        <section>
-          <h2>Már megint? és Már megint játszunk?</h2>
-          <p>
-            A Már megint? csatorna skate, IRL és vlog tartalmai, valamint a Már megint játszunk? gaming és gameplay videói egy helyen.
-          </p>
-        </section>
-      </main>
+      <div style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;" aria-hidden="true">
+        <header>
+          <h1>Győr Skate Map &amp; Már megint? Hivatalos Hub</h1>
+          <p>Interaktív gördeszkás térkép Győr városában és a Már megint?, Már megint játszunk? csatornák hivatalos platformja.</p>
+        </header>
+        <main>
+          <section>
+            <h2>Győri Gördeszkás Helyek és Skatepark Térkép (Győr Skate Map)</h2>
+            <p>
+              Keresd meg a legjobb győri skate spotokat! A Győr Skate Map interaktív térképén megtalálod Győr legnépszerűbb és legújabb gördeszkás helyeit:
+              skateparkok, padkák (ledges), korlátok (rails), lépcsők (stairs), gap-ek és sík terepek (flatground).
+              Győri deszkások és extrémsport-kedvelők által beküldött, folyamatosan frissülő közösségi spot adatbázis és időjárás-előrejelzés.
+            </p>
+            <nav>
+              <ul>
+                <li><a href="#/skatemap">Győr Skate Map megnyitása</a></li>
+                <li><a href="#/channel/marmegint">Már megint? csatorna videók és hírek (Skate &amp; Vlogs)</a></li>
+                <li><a href="#/channel/jatszunk">Már megint játszunk? gameplay videók</a></li>
+                <li><a href="#/weather">Gördeszkás Időjárás Győr</a></li>
+                <li><a href="#/news">Friss hírek és bejelentések</a></li>
+              </ul>
+            </nav>
+          </section>
+          <section>
+            <h2>Már megint? és Már megint játszunk?</h2>
+            <p>
+              A Már megint? csatorna skate, IRL és vlog tartalmai, valamint a Már megint játszunk? gaming és gameplay videói egy helyen.
+            </p>
+          </section>
+        </main>
+      </div>
     </div>
   </body>
 </html>
