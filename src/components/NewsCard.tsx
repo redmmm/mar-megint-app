@@ -22,21 +22,14 @@ export const NewsCard = ({ post, showTag = false, tall = false, onClick }: NewsC
       spotlightColor={spotlightColor}
       onClick={onClick}
       role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onClick();
-        }
-      }}
       className={cn(
-        'group cursor-pointer select-none overflow-hidden h-full flex flex-col justify-between',
+        'group cursor-pointer select-none overflow-hidden w-full min-w-0 h-full flex flex-col justify-between touch-manipulation',
         'rounded-[2rem] border border-white/10',
         'bg-neutral-950/70 backdrop-blur-xl',
-        'transition-all duration-500 focus:outline-none focus-visible:ring-2',
+        'transition-all duration-300 focus:outline-none focus-visible:ring-2',
         isA
-          ? 'hover:border-[#5c9884]/60 hover:shadow-[0_0_50px_rgba(92,152,132,0.22)] focus-visible:ring-[#5c9884]/60'
-          : 'hover:border-[#b0223b]/60 hover:shadow-[0_0_50px_rgba(176,34,59,0.22)] focus-visible:ring-[#b0223b]/60',
+          ? 'md:hover:border-[#5c9884]/60 md:hover:shadow-[0_0_50px_rgba(92,152,132,0.22)] focus-visible:ring-[#5c9884]/60'
+          : 'md:hover:border-[#b0223b]/60 md:hover:shadow-[0_0_50px_rgba(176,34,59,0.22)] focus-visible:ring-[#b0223b]/60',
         tall && 'md:row-span-2'
       )}
     >
@@ -51,13 +44,14 @@ export const NewsCard = ({ post, showTag = false, tall = false, onClick }: NewsC
           <img
             src={post.image_url}
             alt={post.title}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            className="w-full h-full object-cover transition-transform duration-700 md:group-hover:scale-105"
+            loading="lazy"
           />
         </div>
       )}
 
       {/* Content */}
-      <div className={cn('relative z-10 p-6 flex flex-col flex-1 justify-between', !post.image_url && 'pt-7')}>
+      <div className={cn('relative z-10 p-5 sm:p-6 flex flex-col flex-1 justify-between', !post.image_url && 'pt-6 sm:pt-7')}>
         <div>
           {/* Tags & Date */}
           <div className="flex items-center flex-wrap gap-2.5 mb-3.5">
@@ -89,7 +83,7 @@ export const NewsCard = ({ post, showTag = false, tall = false, onClick }: NewsC
           <h3
             className={cn(
               'font-black mb-2.5 line-clamp-2 text-white tracking-tight drop-shadow-sm transition-colors duration-300',
-              isA ? 'group-hover:text-[#c4e5dc]' : 'group-hover:text-[#fcc2cc]',
+              isA ? 'md:group-hover:text-[#c4e5dc]' : 'md:group-hover:text-[#fcc2cc]',
               tall ? 'text-xl md:text-2xl' : 'text-lg md:text-xl'
             )}
           >
@@ -108,9 +102,9 @@ export const NewsCard = ({ post, showTag = false, tall = false, onClick }: NewsC
         </div>
 
         {/* Read More link */}
-        <div className="mt-5 pt-3.5 border-t border-white/10 flex items-center justify-between text-xs font-bold text-neutral-300 group-hover:text-white transition-colors">
+        <div className="mt-5 pt-3.5 border-t border-white/10 flex items-center justify-between text-xs font-bold text-neutral-300 md:group-hover:text-white transition-colors">
           <span>Elolvasom</span>
-          <span className="transform transition-transform duration-300 group-hover:translate-x-1">→</span>
+          <span className="transform transition-transform duration-300 md:group-hover:translate-x-1">→</span>
         </div>
       </div>
     </SpotlightCard>

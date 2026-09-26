@@ -51,9 +51,9 @@ const NewsPage = () => {
               <span className="text-neutral-400 text-sm font-medium">Hírek betöltése...</span>
             </div>
           ) : news && news.length > 0 ? (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
               {news.map((post, idx) => (
-                <div key={post.id} className="animate-fade-in h-full" style={{ animationDelay: `${0.04 * idx}s` }}>
+                <div key={post.id} className="animate-fade-in w-full min-w-0 h-full" style={{ animationDelay: `${0.04 * idx}s` }}>
                   <NewsCard
                     post={post}
                     showTag
