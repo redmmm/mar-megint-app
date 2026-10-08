@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { NewsCard } from '@/components/NewsCard';
 import { NewsModal } from '@/components/NewsModal';
 import { FilterTabs, FilterValue } from '@/components/FilterTabs';
-import FloatingNav from '@/components/FloatingNav';
 import PremiumBackground from '@/components/PremiumBackground';
 import { useNews, NewsPost } from '@/hooks/useNews';
 import { useSEO } from '@/hooks/useSEO';
@@ -79,8 +78,6 @@ const NewsPage = () => {
           onClose={() => setSelectedPost(null)}
         />
       )}
-
-      <FloatingNav />
     </div>
   );
 };

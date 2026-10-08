@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HashRouter, Routes, Route } from "react-router-dom";
 import PageTransition from "@/components/PageTransition";
+import FloatingNav from "@/components/FloatingNav";
 
 // Code-split page components for fast initial load and minimal bundle transfer
 const Index = lazy(() => import("./pages/Index"));
@@ -49,6 +50,7 @@ const App = () => (
                 </Routes>
               </PageTransition>
             </Suspense>
+            <FloatingNav />
           </main>
         </HashRouter>
       </div>

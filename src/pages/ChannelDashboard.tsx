@@ -2,7 +2,6 @@ import { useParams, Navigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { VideoCard } from '@/components/VideoCard';
 import { NewVideosBadge } from '@/components/NewVideosBadge';
-import FloatingNav from '@/components/FloatingNav';
 import PremiumBackground from '@/components/PremiumBackground';
 import { useYouTubeVideos } from '@/hooks/useYouTubeData';
 import { CHANNELS, ChannelTag } from '@/lib/youtube';
@@ -88,8 +87,6 @@ const ChannelDashboard = () => {
         </div>
       </main>
       
-      <FloatingNav />
-
       {/* New videos notification */}
       {hasNewVideos && (
         <NewVideosBadge onClick={handleNewVideosClick} />

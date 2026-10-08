@@ -1,5 +1,4 @@
 import DotGrid from '@/components/DotGrid';
-import FloatingNav from '@/components/FloatingNav';
 import { WeatherCheck } from '@/components/WeatherCheck';
 import { useSEO } from '@/hooks/useSEO';
 
@@ -33,8 +32,6 @@ const WeatherPage = () => {
         {/* Weather Check Card */}
         <WeatherCheck />
       </main>
-
-      <FloatingNav />
     </div>
   );
 };

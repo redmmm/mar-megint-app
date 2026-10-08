@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { Header } from '@/components/Header';
-import FloatingNav from '@/components/FloatingNav';
 import PremiumBackground from '@/components/PremiumBackground';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -362,8 +361,6 @@ const AdminDashboard = () => {
           </div>
         </div>
       </main>
-      
-      <FloatingNav />
     </div>
   );
 };

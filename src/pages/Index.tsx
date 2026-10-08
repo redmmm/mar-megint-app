@@ -1,6 +1,5 @@
 import { ChannelCard } from '@/components/ChannelCard';
 import DotGrid from '@/components/DotGrid';
-import FloatingNav from '@/components/FloatingNav';
 import { Footer } from '@/components/Footer';
 import { useSEO } from '@/hooks/useSEO';
 
@@ -54,7 +53,6 @@ const Index = () => {
         </div>
       </main>
 
-      <FloatingNav />
       <Footer />
     </div>
   );

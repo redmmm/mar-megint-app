@@ -5,6 +5,12 @@ import { cn } from '@/lib/utils';
 const FloatingNav = () => {
   const location = useLocation();
 
+  // Hide on auth/admin screens
+  const isHidden = location.pathname.startsWith('/login') || location.pathname.startsWith('/admin');
+  if (isHidden) {
+    return null;
+  }
+
   const navItems = [
     { to: '/', icon: Home, label: 'Home' },
     { to: '/news', icon: Newspaper, label: 'Hírek' },
@@ -13,7 +19,10 @@ const FloatingNav = () => {
   ];
 
   return (
-    <nav className="floating-nav bottom-6">
+    <nav
+      className="floating-nav"
+      style={{ bottom: 'max(1.5rem, calc(env(safe-area-inset-bottom, 0px) + 0.75rem))' }}
+    >
       <div className="flex items-center gap-1">
         {navItems.map(({ to, icon: Icon, label }) => {
           const isActive = location.pathname === to || 

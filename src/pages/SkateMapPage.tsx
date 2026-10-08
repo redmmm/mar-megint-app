@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import FloatingNav from '@/components/FloatingNav';
 import { useSEO } from '@/hooks/useSEO';
 import { SpotDetailDrawer } from '@/components/skatemap/SpotDetailDrawer';
 import { SpotSubmissionModal } from '@/components/skatemap/SpotSubmissionModal';
@@ -1317,9 +1316,6 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
 
       {/* Scheduled Apple-Style Event Notification Popup */}
       <EventNotificationBanner />
-
-      {/* Site Floating Navigation */}
-      <FloatingNav />
     </div>
   );
 };

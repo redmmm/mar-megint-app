@@ -124,11 +124,9 @@ const PageTransition: React.FC<PageTransitionProps> = ({ children }) => {
       };
     }
 
-    // Idle
-    return {
-      opacity: 1,
-      transform: 'translateX(0px) scale(1)',
-    };
+    // Idle: remove transform and willChange completely so fixed-position descendants
+    // are not captured by a transformed containing block on mobile devices
+    return {};
   };
 
   // Clone Routes with the displayLocation so it keeps showing previous page during exit
