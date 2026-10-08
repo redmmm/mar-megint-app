@@ -68,7 +68,7 @@ export const EventNotificationBanner: React.FC = () => {
         setCurrentEvent(null);
         setIsDismissing(false);
       }
-    }, 250);
+    }, 320);
   };
 
   if (!currentEvent) return null;
@@ -78,7 +78,7 @@ export const EventNotificationBanner: React.FC = () => {
       role="region"
       aria-label="Esemény értesítés"
       className={cn(
-        "fixed bottom-24 left-4 sm:left-6 z-20 pointer-events-auto max-w-sm sm:max-w-md w-[calc(100%-2rem)] sm:w-auto transition-all duration-300 ease-out",
+        "fixed bottom-24 left-4 sm:left-6 z-20 pointer-events-auto max-w-sm sm:max-w-md w-[calc(100%-2rem)] sm:w-auto transition-all duration-450",
         isVisible && !isDismissing
           ? "opacity-100 translate-y-0 scale-100"
           : "opacity-0 -translate-y-3 sm:-translate-y-4 scale-95 pointer-events-none"
@@ -89,7 +89,7 @@ export const EventNotificationBanner: React.FC = () => {
         <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none" />
 
         {/* Icon / Emoji Badge */}
-        <div className="w-10 h-10 rounded-xl bg-white/[0.08] border border-white/10 flex items-center justify-center shrink-0 text-xl select-none shadow-inner">
+        <div className="w-10 h-10 rounded-xl bg-white/[0.08] border border-white/10 flex items-center justify-center shrink-0 text-xl select-none shadow-inner transition-transform duration-350 group-hover:scale-105">
           {currentEvent.icon || '🏆'}
         </div>
 
@@ -110,7 +110,7 @@ export const EventNotificationBanner: React.FC = () => {
               <Button
                 asChild
                 size="sm"
-                className="h-7 px-3 text-[11px] font-bold bg-white/10 hover:bg-white/20 text-white border border-white/15 rounded-xl gap-1.5 shadow-sm transition-all hover:scale-[1.02] active:scale-95"
+                className="h-7 px-3 text-[11px] font-bold bg-white/10 hover:bg-white/20 text-white border border-white/15 rounded-xl gap-1.5 shadow-sm transition-all duration-350 hover:scale-[1.02] active:scale-95"
               >
                 <a
                   href={currentEvent.link_url}
@@ -131,7 +131,7 @@ export const EventNotificationBanner: React.FC = () => {
           onClick={handleDismiss}
           aria-label="Értesítés bezárása"
           title="Bezárás"
-          className="absolute top-3 right-3 w-6 h-6 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 text-neutral-400 hover:text-white flex items-center justify-center transition-colors active:scale-90 cursor-pointer"
+          className="absolute top-3 right-3 w-6 h-6 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 text-neutral-400 hover:text-white flex items-center justify-center transition-all duration-300 hover:rotate-90 active:scale-90 cursor-pointer"
         >
           <X className="w-3.5 h-3.5" />
         </button>

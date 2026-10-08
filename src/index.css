@@ -81,6 +81,13 @@
     --chart-3: 45 100% 55%;
     --chart-4: 180 60% 50%;
     --chart-5: 265 60% 55%;
+
+    /* ─── Apple-style S-curve easing tokens ─── */
+    --ease-apple:        cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    --ease-apple-smooth: cubic-bezier(0.4,  0,    0.2,  1);
+    --ease-apple-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --ease-apple-in:     cubic-bezier(0.42, 0,    1,    1);
+    --ease-apple-out:    cubic-bezier(0,    0,    0.58, 1);
   }
 
   .dark {
@@ -132,12 +139,16 @@
 @layer base {
   * {
     @apply border-border;
+    /* Global Apple-style smooth transition — applies to all properties that 
+       elements animate via Tailwind's transition-* utilities */
+    transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   }
 
   body {
     @apply bg-black text-foreground font-sans antialiased;
   }
 }
+
 
 @layer components {
   /* True Liquid Glass Material */
@@ -147,7 +158,8 @@
   }
 
   .premium-glass-hover {
-    @apply transition-all duration-300 ease-out;
+    @apply transition-all duration-350;
+    transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   }
 
   .premium-glass-hover:hover {
@@ -244,6 +256,68 @@
   }
 }
 
+/* ─── Global tailwindcss-animate easing override ─────────────────────────────
+   tailwindcss-animate uses --tw-enter-* and --tw-exit-* CSS variables for
+   its data-[state=open/closed] animations. We override the timing function
+   globally so ALL Radix UI components (Dialog, Sheet, DropdownMenu, etc.)
+   animate with Apple S-curve easing instead of the default ease-in-out.
+   ─────────────────────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  --tw-ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Radix animate-in / animate-out use these properties */
+[data-state] {
+  animation-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+[data-state="closed"] {
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ─── Staggered fade-in-up for grid items ─────────────────────────────────── */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+/* ─── Smooth scale-in for modals and popovers ─────────────────────────────── */
+@keyframes smooth-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes smooth-scale-out {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.96) translateY(6px);
+  }
+}
+
+.animate-smooth-scale-in {
+  animation: smooth-scale-in 0.42s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
 /* Transforms standard OSM light tiles into a dark mode theme */
 .map-dark-tiles {
   filter: invert(100%) hue-rotate(180deg) brightness(85%) contrast(120%);
@@ -258,7 +332,7 @@
   filter: drop-shadow(0px 0px 8px #10b981) drop-shadow(0px 0px 16px #10b981) drop-shadow(0px 0px 24px #00f3ff);
   stroke-linecap: round;
   stroke-linejoin: round;
-  animation: gyor-border-pulse 4s ease-in-out infinite alternate;
+  animation: gyor-border-pulse 4s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
 }
 
 .gyor-inner-core path {
@@ -305,7 +379,7 @@
   height: 36px;
   background: rgba(0, 243, 255, 0.35);
   border-radius: 50%;
-  animation: user-loc-pulse 2s infinite ease-out;
+  animation: user-loc-pulse 2s infinite cubic-bezier(0.25, 0.46, 0.45, 0.94);
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%) scale(0.35);
@@ -325,7 +399,7 @@
 
 /* Search Result Pin Animation */
 .search-result-marker {
-  animation: search-pin-bounce 0.6s ease-out;
+  animation: search-pin-bounce 0.65s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 @keyframes search-pin-bounce {
@@ -333,12 +407,12 @@
     transform: translateY(-20px);
     opacity: 0;
   }
-  50% {
+  55% {
     transform: translateY(0);
     opacity: 1;
   }
   75% {
-    transform: translateY(-6px);
+    transform: translateY(-5px);
   }
   100% {
     transform: translateY(0);

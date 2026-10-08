@@ -81,7 +81,7 @@ export const WeatherCheck = () => {
     const emoji = weatherData.canSkate ? '🛹' : weatherData.conditionText.includes('havazik') ? '❄️' : '🌧️';
 
     return (
-      <div className="flex items-center justify-center w-full">
+      <div className="flex items-center justify-center w-full animate-fade-in-up">
         <SpotlightCard
           spotlightColor="rgba(255, 255, 255, 0.12)"
           className="w-full max-w-lg mx-auto rounded-[2rem] border border-white/10 hover:border-white/20 bg-neutral-950/70 backdrop-blur-xl p-8 sm:p-12 text-center transition-all duration-500 hover:shadow-[0_0_60px_rgba(255,255,255,0.08)]"
@@ -115,7 +115,7 @@ export const WeatherCheck = () => {
             {/* Reset Button (Liquid Glass) */}
             <button
               onClick={handleReset}
-              className="mt-6 px-6 py-2.5 premium-glass premium-glass-hover text-white rounded-full text-sm font-bold shadow-md active:scale-95 cursor-pointer"
+              className="mt-6 px-6 py-2.5 premium-glass premium-glass-hover text-white rounded-full text-sm font-bold shadow-md hover:scale-105 active:scale-95 transition-all duration-350 cursor-pointer"
             >
               Új ellenőrzés
             </button>
@@ -125,13 +125,13 @@ export const WeatherCheck = () => {
               {!showSearch ? (
                 <button
                   onClick={() => setShowSearch(true)}
-                  className="w-full px-4 py-2.5 premium-glass premium-glass-hover text-neutral-200 hover:text-white rounded-xl flex items-center justify-center gap-2 text-sm font-semibold cursor-pointer"
+                  className="w-full px-4 py-2.5 premium-glass premium-glass-hover text-neutral-200 hover:text-white rounded-xl flex items-center justify-center gap-2 text-sm font-semibold transition-all duration-350 hover:scale-[1.02] active:scale-95 cursor-pointer"
                 >
                   <Search className="w-4 h-4" />
                   <span>Város keresése</span>
                 </button>
               ) : (
-                <div className="relative">
+                <div className="relative animate-in fade-in zoom-in-95 duration-350">
                   <div className="relative">
                     <input
                       type="text"
@@ -140,7 +140,7 @@ export const WeatherCheck = () => {
                       value={searchQuery}
                       onChange={(e) => handleSearchChange(e.target.value)}
                       placeholder="Város keresése..."
-                      className="w-full p-3 pr-10 bg-neutral-900/90 border border-white/20 text-white placeholder:text-neutral-400 rounded-xl focus:border-white/40 focus:bg-neutral-800/95 focus:outline-none text-sm transition-all shadow-inner"
+                      className="w-full p-3 pr-10 bg-neutral-900/90 border border-white/20 text-white placeholder:text-neutral-400 rounded-xl focus:border-white/40 focus:bg-neutral-800/95 focus:outline-none text-sm transition-all duration-350 shadow-inner"
                     />
                     <button
                       onClick={() => {
@@ -148,7 +148,8 @@ export const WeatherCheck = () => {
                         setSearchQuery('');
                         setSearchResults([]);
                       }}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-neutral-400 hover:text-white transition-colors"
+                      aria-label="Keresés bezárása"
+                      className="absolute right-2.5 top-1/2 transform -translate-y-1/2 p-1 rounded-full text-neutral-400 hover:text-white hover:bg-white/10 transition-all duration-300 hover:rotate-90 active:scale-90 cursor-pointer"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -156,7 +157,7 @@ export const WeatherCheck = () => {
 
                   {/* Search Results Dropdown */}
                   {(searchResults.length > 0 || isSearching) && (
-                    <div className="absolute top-full left-0 right-0 mt-1.5 bg-neutral-900/95 border border-white/15 rounded-xl shadow-2xl z-20 max-h-48 overflow-y-auto backdrop-blur-xl">
+                    <div className="absolute top-full left-0 right-0 mt-1.5 bg-neutral-900/95 border border-white/15 rounded-xl shadow-2xl z-20 max-h-48 overflow-y-auto backdrop-blur-xl animate-in fade-in slide-in-from-top-2 duration-300">
                       {isSearching ? (
                         <div className="px-4 py-3 text-sm text-neutral-400 flex items-center gap-2">
                           <Loader2 className="w-4 h-4 animate-spin text-white" />
@@ -167,7 +168,7 @@ export const WeatherCheck = () => {
                           <button
                             key={index}
                             onClick={() => handleCitySelect(city)}
-                            className="w-full px-4 py-2.5 text-left text-neutral-200 hover:text-white hover:bg-white/10 transition-colors first:rounded-t-xl last:rounded-b-xl text-sm cursor-pointer"
+                            className="w-full px-4 py-2.5 text-left text-neutral-200 hover:text-white hover:bg-white/10 transition-colors duration-300 first:rounded-t-xl last:rounded-b-xl text-sm active:scale-[0.99] cursor-pointer"
                           >
                             <span>{city.name}</span>
                           </button>
@@ -193,14 +194,14 @@ export const WeatherCheck = () => {
   const isLoading = weatherState === 'loading';
 
   return (
-    <div className="flex items-center justify-center w-full">
+    <div className="flex items-center justify-center w-full animate-fade-in-up">
       <SpotlightCard
         spotlightColor="rgba(255, 255, 255, 0.12)"
         className="w-full max-w-lg mx-auto rounded-[2rem] border border-white/10 hover:border-white/20 bg-neutral-950/70 backdrop-blur-xl p-8 sm:p-12 text-center transition-all duration-500 hover:shadow-[0_0_60px_rgba(255,255,255,0.08)]"
       >
         <div className="relative z-10 flex flex-col items-center gap-6 w-full text-center">
           {/* Top Emoji Icon */}
-          <div className="w-16 h-16 rounded-full premium-glass flex items-center justify-center text-3xl shadow-inner text-white">
+          <div className="w-16 h-16 rounded-full premium-glass flex items-center justify-center text-3xl shadow-inner text-white transition-transform duration-350 hover:scale-110">
             {isLoading ? <Loader2 className="w-7 h-7 text-white animate-spin" /> : '🌤️'}
           </div>
 
@@ -219,7 +220,7 @@ export const WeatherCheck = () => {
 
           {/* Error Message if any */}
           {error && (
-            <p className="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 px-4 py-2 rounded-xl">
+            <p className="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 px-4 py-2 rounded-xl animate-in fade-in slide-in-from-top-2 duration-300">
               {error}
             </p>
           )}
@@ -234,7 +235,7 @@ export const WeatherCheck = () => {
             ) : (
               <button
                 onClick={handleCheckWeather}
-                className="inline-flex items-center justify-center px-8 py-3.5 premium-glass premium-glass-hover text-white rounded-full text-base sm:text-lg font-bold tracking-wide transition-all shadow-lg focus:outline-none focus:ring-2 focus:ring-white/40 active:scale-95 cursor-pointer"
+                className="inline-flex items-center justify-center px-8 py-3.5 premium-glass premium-glass-hover text-white rounded-full text-base sm:text-lg font-bold tracking-wide transition-all duration-350 shadow-lg hover:scale-105 focus:outline-none focus:ring-2 focus:ring-white/40 active:scale-95 cursor-pointer"
               >
                 Kattints az ellenőrzéshez
               </button>

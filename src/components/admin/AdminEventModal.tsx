@@ -331,14 +331,14 @@ export const AdminEventModal: React.FC<AdminEventModalProps> = ({
               variant="outline"
               onClick={onClose}
               disabled={isSubmitting}
-              className="h-9 px-3 text-xs border-white/10"
+              className="h-9 px-3 text-xs border-white/10 transition-all duration-350 hover:scale-[1.02] active:scale-95"
             >
               Mégse
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting || !title.trim() || !message.trim()}
-              className="h-9 px-4 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30"
+              className="h-9 px-4 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30 transition-all duration-350 hover:scale-[1.02] active:scale-95"
             >
               {isSubmitting ? (
                 <>

@@ -54,7 +54,7 @@ const ChannelDashboard = () => {
         <div className="container mx-auto max-w-7xl">
           {/* Section: Latest Videos */}
           <section>
-            <div className="flex items-center gap-3 mb-6">
+            <div className="flex items-center gap-3 mb-6 animate-fade-in-up">
               <div className="premium-glass p-2.5 rounded-full inline-flex items-center justify-center text-white">
                 <Video className="w-5 h-5" />
               </div>
@@ -73,7 +73,7 @@ const ChannelDashboard = () => {
             ) : videos && videos.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {videos.slice(0, 6).map((video, idx) => (
-                  <div key={video.id} className="animate-fade-in w-full min-w-0" style={{ animationDelay: `${0.1 * idx}s` }}>
+                  <div key={video.id} className="animate-fade-in-up w-full min-w-0" style={{ animationDelay: `${0.07 * idx}s` }}>
                     <VideoCard video={video} variant={variant} />
                   </div>
                 ))}

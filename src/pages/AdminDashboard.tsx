@@ -268,13 +268,13 @@ const AdminDashboard = () => {
                   </div>
                   
                   <div className="flex gap-2 pt-2">
-                    <Button type="submit" className="flex-1 rounded-xl" disabled={createNews.isPending || updateNews.isPending}>
+                    <Button type="submit" className="flex-1 rounded-xl transition-all duration-350 hover:scale-[1.02] active:scale-95" disabled={createNews.isPending || updateNews.isPending}>
                       {(createNews.isPending || updateNews.isPending) && (
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       )}
                       {editingPost ? 'Mentés' : 'Létrehozás'}
                     </Button>
-                    <Button type="button" variant="outline" onClick={resetForm} className="rounded-xl">
+                    <Button type="button" variant="outline" onClick={resetForm} className="rounded-xl transition-all duration-350 hover:scale-[1.02] active:scale-95">
                       Mégse
                     </Button>
                   </div>
@@ -295,7 +295,7 @@ const AdminDashboard = () => {
                   {news.map((post, idx) => (
                     <div 
                       key={post.id} 
-                      className="premium-glass p-4 animate-fade-in"
+                      className="premium-glass p-4 animate-fade-in-up"
                       style={{ animationDelay: `${0.05 * idx}s` }}
                     >
                       <div className="flex gap-4">

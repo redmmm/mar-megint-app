@@ -417,7 +417,8 @@ export const SpotSubmissionModal: React.FC<SpotSubmissionModalProps> = ({
                     <button
                       type="button"
                       onClick={() => handleRemoveImage(idx)}
-                      className="absolute top-1.5 right-1.5 p-1 rounded-full bg-black/70 text-white opacity-90 hover:opacity-100 hover:bg-red-600 transition-all"
+                      aria-label="Kép eltávolítása"
+                      className="absolute top-1.5 right-1.5 p-1 rounded-full bg-black/70 text-white opacity-90 hover:opacity-100 hover:bg-red-600 transition-all duration-300 hover:rotate-90 active:scale-90"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -427,9 +428,9 @@ export const SpotSubmissionModal: React.FC<SpotSubmissionModalProps> = ({
             )}
 
             {images.length < 2 && (
-              <label className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-white/20 hover:border-white/40 rounded-xl cursor-pointer bg-neutral-950/50 hover:bg-neutral-950/80 transition text-center group">
+              <label className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-white/20 hover:border-white/40 rounded-xl cursor-pointer bg-neutral-950/50 hover:bg-neutral-950/80 transition-all duration-350 hover:scale-[1.01] active:scale-[0.99] text-center group">
                 <div className="flex items-center gap-2 text-xs font-medium text-neutral-200">
-                  <Upload className="w-4 h-4 text-white group-hover:scale-110 transition-transform" />
+                  <Upload className="w-4 h-4 text-white group-hover:scale-110 transition-transform duration-350" />
                   <span>{isUploading ? statusText || 'Kép feldolgozása...' : `Kép kiválasztása (${images.length}/2)`}</span>
                 </div>
                 <span className="text-[10px] text-neutral-400 mt-1">
@@ -472,14 +473,14 @@ export const SpotSubmissionModal: React.FC<SpotSubmissionModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="h-10 px-4 text-xs font-semibold rounded-xl bg-neutral-900/80 hover:bg-neutral-800/80 text-neutral-300 hover:text-white border border-white/15 backdrop-blur-xl transition-all cursor-pointer"
+              className="h-10 px-4 text-xs font-semibold rounded-xl bg-neutral-900/80 hover:bg-neutral-800/80 text-neutral-300 hover:text-white border border-white/15 backdrop-blur-xl transition-all duration-350 hover:scale-[1.02] active:scale-95 cursor-pointer"
             >
               Mégse
             </button>
             <button
               type="submit"
               disabled={isSubmitting || isUploading}
-              className="h-10 px-5 text-xs font-semibold rounded-xl bg-neutral-900/80 hover:bg-neutral-800/80 text-white border border-white/20 backdrop-blur-xl shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+              className="h-10 px-5 text-xs font-semibold rounded-xl bg-neutral-900/80 hover:bg-neutral-800/80 text-white border border-white/20 backdrop-blur-xl shadow-xl transition-all duration-350 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
             >
               {isSubmitting ? (
                 <>

@@ -102,7 +102,7 @@ export const LocationPermissionDialog: React.FC<LocationPermissionDialogProps> =
               <button
                 type="button"
                 onClick={onClose}
-                className="h-9 px-4 text-xs font-medium text-neutral-300 hover:text-white rounded-xl bg-neutral-900/80 hover:bg-neutral-800/80 border border-white/15 backdrop-blur-xl transition cursor-pointer"
+                className="h-9 px-4 text-xs font-semibold text-neutral-300 hover:text-white rounded-xl bg-neutral-900/80 hover:bg-neutral-800/80 border border-white/15 backdrop-blur-xl transition-all duration-350 hover:scale-[1.02] active:scale-95 cursor-pointer"
               >
                 Bezárás
               </button>
@@ -113,7 +113,7 @@ export const LocationPermissionDialog: React.FC<LocationPermissionDialogProps> =
                     onClose();
                     onRecenter();
                   }}
-                  className="h-9 px-4 text-xs font-semibold text-white rounded-xl bg-neutral-900/80 hover:bg-neutral-800/80 border border-white/25 backdrop-blur-xl shadow-xl transition-all flex items-center gap-1.5 cursor-pointer"
+                  className="h-9 px-4 text-xs font-semibold text-white rounded-xl bg-neutral-900/80 hover:bg-neutral-800/80 border border-white/25 backdrop-blur-xl shadow-xl transition-all duration-350 hover:scale-[1.02] active:scale-95 flex items-center gap-1.5 cursor-pointer"
                 >
                   <Compass className="w-3.5 h-3.5 text-white" />
                   Vissza Győr központjához
@@ -125,7 +125,7 @@ export const LocationPermissionDialog: React.FC<LocationPermissionDialogProps> =
               <button
                 type="button"
                 onClick={onClose}
-                className="h-9 px-4 text-xs font-medium text-neutral-300 hover:text-white rounded-xl bg-neutral-900/80 hover:bg-neutral-800/80 border border-white/15 backdrop-blur-xl transition cursor-pointer"
+                className="h-9 px-4 text-xs font-semibold text-neutral-300 hover:text-white rounded-xl bg-neutral-900/80 hover:bg-neutral-800/80 border border-white/15 backdrop-blur-xl transition-all duration-350 hover:scale-[1.02] active:scale-95 cursor-pointer"
               >
                 Mégse
               </button>
@@ -133,7 +133,7 @@ export const LocationPermissionDialog: React.FC<LocationPermissionDialogProps> =
                 type="button"
                 onClick={onRetry}
                 disabled={isLoading}
-                className="h-9 px-4 text-xs font-semibold text-white rounded-xl bg-neutral-900/80 hover:bg-neutral-800/80 border border-white/25 backdrop-blur-xl shadow-xl transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                className="h-9 px-4 text-xs font-semibold text-white rounded-xl bg-neutral-900/80 hover:bg-neutral-800/80 border border-white/25 backdrop-blur-xl shadow-xl transition-all duration-350 hover:scale-[1.02] active:scale-95 flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
                 Újrapróbálkozás

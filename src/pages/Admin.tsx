@@ -362,7 +362,7 @@ const Admin = ({ defaultTab }: AdminProps) => {
             </div>
 
             <div className="flex gap-3 pt-4">
-              <Button type="submit" disabled={isSubmitting} className="flex-1">
+              <Button type="submit" disabled={isSubmitting} className="flex-1 transition-all duration-350 hover:scale-[1.02] active:scale-95">
                 {isSubmitting ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -372,8 +372,8 @@ const Admin = ({ defaultTab }: AdminProps) => {
                   editingPost ? 'Update Post' : 'Create Post'
                 )}
               </Button>
-              <Button type="button" variant="outline" onClick={closeDialog}>
-                Cancel
+              <Button type="button" variant="outline" onClick={closeDialog} className="transition-all duration-350 hover:scale-[1.02] active:scale-95">
+                Mégse
               </Button>
             </div>
           </form>

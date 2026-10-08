@@ -28,7 +28,7 @@ const NewsPage = () => {
       <main className="relative z-10 pt-10 pb-28 px-4 sm:px-6">
         <div className="container mx-auto max-w-7xl">
           {/* Header */}
-          <div className="mb-10 animate-fade-in flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+          <div className="mb-10 animate-fade-in-up flex flex-col md:flex-row md:items-end md:justify-between gap-6">
             <div>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-white drop-shadow-sm mb-3">
                 Hírek
@@ -53,7 +53,7 @@ const NewsPage = () => {
           ) : news && news.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
               {news.map((post, idx) => (
-                <div key={post.id} className="animate-fade-in w-full min-w-0 h-full" style={{ animationDelay: `${0.04 * idx}s` }}>
+                <div key={post.id} className="animate-fade-in-up w-full min-w-0 h-full" style={{ animationDelay: `${0.05 * idx}s` }}>
                   <NewsCard
                     post={post}
                     showTag

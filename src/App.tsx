@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HashRouter, Routes, Route } from "react-router-dom";
+import PageTransition from "@/components/PageTransition";
 
 // Code-split page components for fast initial load and minimal bundle transfer
 const Index = lazy(() => import("./pages/Index"));
@@ -32,19 +33,21 @@ const App = () => (
         <HashRouter>
           <main role="main" className="min-h-screen">
             <Suspense fallback={<PageLoader />}>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/channel/:slug" element={<ChannelDashboard />} />
-                <Route path="/news" element={<NewsPage />} />
-                <Route path="/weather" element={<WeatherPage />} />
-                <Route path="/skatemap" element={<SkateMapPage />} />
-                <Route path="/skate-map" element={<SkateMapPage />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/admin" element={<Admin />} />
-                <Route path="/admin/skatemap" element={<Admin defaultTab="skatemap" />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+              <PageTransition>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/channel/:slug" element={<ChannelDashboard />} />
+                  <Route path="/news" element={<NewsPage />} />
+                  <Route path="/weather" element={<WeatherPage />} />
+                  <Route path="/skatemap" element={<SkateMapPage />} />
+                  <Route path="/skate-map" element={<SkateMapPage />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/admin" element={<Admin />} />
+                  <Route path="/admin/skatemap" element={<Admin defaultTab="skatemap" />} />
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </PageTransition>
             </Suspense>
           </main>
         </HashRouter>

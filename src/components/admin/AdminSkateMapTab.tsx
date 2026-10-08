@@ -1218,19 +1218,19 @@ export const AdminSkateMapTab: React.FC = () => {
               )}
             </div>
 
-            <DialogFooter className="pt-3">
+            <DialogFooter className="pt-3 gap-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setIsEditDialogOpen(false)}
-                className="border-white/10"
+                className="border-white/10 transition-all duration-350 hover:scale-[1.02] active:scale-95"
               >
                 Mégse
               </Button>
               <Button
                 type="submit"
                 disabled={isSavingEdit || isUploadingImage}
-                className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium"
+                className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition-all duration-350 hover:scale-[1.02] active:scale-95"
               >
                 {isSavingEdit ? (
                   <>

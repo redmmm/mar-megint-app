@@ -24,7 +24,7 @@ export const FilterTabs = ({ value, onChange }: FilterTabsProps) => {
             key={filter.value}
             onClick={() => onChange(filter.value)}
             className={cn(
-              'px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all duration-300 cursor-pointer active:scale-95',
+              'px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all duration-350 cursor-pointer active:scale-95',
               isActive
                 ? filter.value === 'marmegint'
                   ? 'bg-[#5c9884] text-white shadow-[0_0_20px_rgba(92,152,132,0.4)]'

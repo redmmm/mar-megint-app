@@ -33,7 +33,7 @@ const Index = () => {
       <main className="relative z-10 w-full max-w-6xl px-4">
         <div className="min-h-[70vh] md:h-[70vh] grid md:grid-cols-2 gap-8">
           {/* Left Panel - Már megint? */}
-          <div className="h-full animate-fade-in" style={{ animationDelay: '0.1s' }}>
+          <div className="h-full animate-fade-in-up" style={{ animationDelay: '0.08s' }}>
             <ChannelCard
               name="Már megint?"
               slug="marmegint"
@@ -43,7 +43,7 @@ const Index = () => {
           </div>
 
           {/* Right Panel - Már megint játszunk? */}
-          <div className="h-full animate-fade-in" style={{ animationDelay: '0.2s' }}>
+          <div className="h-full animate-fade-in-up" style={{ animationDelay: '0.18s' }}>
             <ChannelCard
               name="Már megint játszunk?"
               slug="jatszunk"

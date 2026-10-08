@@ -93,7 +93,7 @@ export const SpotDetailDrawer: React.FC<SpotDetailDrawerProps> = ({ spot, isOpen
               onClick={() => setIsReportModalOpen(true)}
               title="Probléma jelentése (anonim)"
               aria-label="Probléma jelentése"
-              className="w-8 h-8 rounded-xl bg-black/80 border border-orange-500/40 hover:border-orange-400 text-orange-400 hover:text-orange-300 transition-colors flex items-center justify-center active:scale-90 cursor-pointer"
+              className="w-8 h-8 rounded-xl bg-black/80 border border-orange-500/40 hover:border-orange-400 text-orange-400 hover:text-orange-300 transition-colors duration-350 flex items-center justify-center active:scale-90 cursor-pointer"
             >
               <AlertTriangle className="w-4 h-4 text-orange-400" />
             </button>
@@ -162,7 +162,7 @@ export const SpotDetailDrawer: React.FC<SpotDetailDrawerProps> = ({ spot, isOpen
               <button
                 type="button"
                 onClick={handleCopyCoords}
-                className="h-8 px-2.5 rounded-lg text-xs text-neutral-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 flex items-center transition-all cursor-pointer"
+                className="h-8 px-2.5 rounded-lg text-xs text-neutral-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 flex items-center transition-all duration-350 cursor-pointer"
               >
                 {copied ? <Check className="w-3.5 h-3.5 text-white mr-1" /> : <Copy className="w-3.5 h-3.5 mr-1" />}
                 {copied ? 'Másolva' : 'Másolás'}
@@ -177,7 +177,7 @@ export const SpotDetailDrawer: React.FC<SpotDetailDrawerProps> = ({ spot, isOpen
             href={googleMapsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full h-12 rounded-2xl bg-neutral-900/80 hover:bg-neutral-800/80 backdrop-blur-xl border border-white/20 text-white font-medium shadow-xl flex items-center justify-center transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+            className="w-full h-12 rounded-2xl bg-neutral-900/80 hover:bg-neutral-800/80 backdrop-blur-xl border border-white/20 text-white font-medium shadow-xl flex items-center justify-center transition-all duration-350 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
           >
             <Navigation className="w-4 h-4 mr-2 text-white" />
             Útvonaltervezés (Google Maps)

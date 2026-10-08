@@ -26,7 +26,7 @@ export const NewsCard = ({ post, showTag = false, tall = false, onClick }: NewsC
         'group cursor-pointer select-none overflow-hidden w-full min-w-0 h-full flex flex-col justify-between touch-manipulation',
         'rounded-[2rem] border border-white/10',
         'bg-neutral-950/70 backdrop-blur-xl',
-        'transition-all duration-300 focus:outline-none focus-visible:ring-2',
+        'transition-all duration-450 focus:outline-none focus-visible:ring-2',
         isA
           ? 'md:hover:border-[#5c9884]/60 md:hover:shadow-[0_0_50px_rgba(92,152,132,0.22)] focus-visible:ring-[#5c9884]/60'
           : 'md:hover:border-[#b0223b]/60 md:hover:shadow-[0_0_50px_rgba(176,34,59,0.22)] focus-visible:ring-[#b0223b]/60',
@@ -44,7 +44,7 @@ export const NewsCard = ({ post, showTag = false, tall = false, onClick }: NewsC
           <img
             src={post.image_url}
             alt={post.title}
-            className="w-full h-full object-cover transition-transform duration-700 md:group-hover:scale-105"
+            className="w-full h-full object-cover transition-transform duration-650 md:group-hover:scale-105"
             loading="lazy"
           />
         </div>
@@ -56,7 +56,7 @@ export const NewsCard = ({ post, showTag = false, tall = false, onClick }: NewsC
           {/* Tags & Date */}
           <div className="flex items-center flex-wrap gap-2.5 mb-3.5">
             {showTag && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold tracking-wide premium-glass text-white transition-all duration-300 group-hover:border-white/20">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold tracking-wide premium-glass text-white transition-all duration-350 group-hover:border-white/20">
                 <Tag className="w-3 h-3 text-neutral-300" />
                 <span>{channelName}</span>
               </span>
@@ -75,7 +75,7 @@ export const NewsCard = ({ post, showTag = false, tall = false, onClick }: NewsC
           {/* Title */}
           <h3
             className={cn(
-              'font-black mb-2.5 line-clamp-2 text-white tracking-tight drop-shadow-sm transition-colors duration-300',
+              'font-black mb-2.5 line-clamp-2 text-white tracking-tight drop-shadow-sm transition-colors duration-350',
               isA ? 'md:group-hover:text-[#c4e5dc]' : 'md:group-hover:text-[#fcc2cc]',
               tall ? 'text-xl md:text-2xl' : 'text-lg md:text-xl'
             )}
@@ -95,9 +95,9 @@ export const NewsCard = ({ post, showTag = false, tall = false, onClick }: NewsC
         </div>
 
         {/* Read More link */}
-        <div className="mt-5 pt-3.5 border-t border-white/10 flex items-center justify-between text-xs font-bold text-neutral-300 md:group-hover:text-white transition-colors">
+        <div className="mt-5 pt-3.5 border-t border-white/10 flex items-center justify-between text-xs font-bold text-neutral-300 md:group-hover:text-white transition-colors duration-350">
           <span>Elolvasom</span>
-          <span className="transform transition-transform duration-300 md:group-hover:translate-x-1">→</span>
+          <span className="transform transition-transform duration-350 md:group-hover:translate-x-1">→</span>
         </div>
       </div>
     </SpotlightCard>

@@ -60,7 +60,7 @@ export const ChannelCard = ({ name, slug, variant, description }: ChannelCardPro
         </div>
 
         {/* Channel indicator badge */}
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wider mb-6 premium-glass text-white transition-all duration-300 group-hover:border-white/20">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wider mb-6 premium-glass text-white transition-all duration-350 group-hover:border-white/20">
           <span className="text-base">{emoji}</span>
           <span>CSATORNA</span>
         </div>

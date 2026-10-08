@@ -34,13 +34,13 @@ export const VideoCard = ({ video, variant = 'a', featured = false }: VideoCardP
         <img
           src={video.thumbnail}
           alt={video.title}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          className="w-full h-full object-cover transition-transform duration-600 group-hover:scale-105"
         />
         
         {/* Play overlay */}
-        <div className="absolute inset-0 bg-background/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+        <div className="absolute inset-0 bg-background/60 opacity-0 group-hover:opacity-100 transition-opacity duration-350 flex items-center justify-center">
           <div className={cn(
-            'w-16 h-16 rounded-full flex items-center justify-center transition-transform duration-300 group-hover:scale-110',
+            'w-16 h-16 rounded-full flex items-center justify-center transition-transform duration-400 group-hover:scale-110',
             variant === 'a' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'
           )}>
             <Play className="w-7 h-7 ml-1" />

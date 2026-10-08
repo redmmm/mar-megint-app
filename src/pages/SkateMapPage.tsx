@@ -1198,7 +1198,7 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
             <button
               type="button"
               onClick={handleCancelAddPin}
-              className="h-7 px-2.5 text-xs border border-white/20 bg-white/10 hover:bg-white/20 text-white rounded-xl transition cursor-pointer font-medium"
+              className="h-7 px-3 text-xs border border-white/20 bg-white/10 hover:bg-white/25 text-white rounded-xl transition-all duration-350 hover:scale-105 active:scale-90 cursor-pointer font-semibold shadow-sm"
             >
               Mégse
             </button>

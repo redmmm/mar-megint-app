@@ -26,13 +26,14 @@ const FloatingNav = () => {
               to={to}
               aria-label={label}
               className={cn(
-                'flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300',
+                'flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-350 active:scale-90 hover:scale-105 cursor-pointer',
                 'hover:bg-accent/50',
-                isActive && 'bg-accent text-foreground'
+                isActive && 'bg-accent text-foreground shadow-md'
               )}
             >
               <Icon className={cn(
-                'w-4 h-4 transition-colors',
+                'w-4 h-4 transition-all duration-350',
+                isActive && 'scale-110',
                 isActive
                   ? (to === '/weather' ? 'text-blue-500' : (to === '/skatemap' ? 'text-emerald-400' : (Icon === Home ? 'text-white' : 'text-primary')))
                   : 'text-muted-foreground'

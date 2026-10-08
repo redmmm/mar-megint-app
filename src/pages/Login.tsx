@@ -44,20 +44,20 @@ const Login = () => {
       {/* Back to Home Button */}
       <Link
         to="/"
-        className="absolute top-8 left-8 flex items-center gap-2 z-50 text-white/60 hover:text-white transition-colors"
+        className="group absolute top-8 left-8 flex items-center gap-2 z-50 text-white/70 hover:text-white transition-all duration-350 hover:scale-105 active:scale-95 px-3 py-1.5 rounded-full premium-glass"
       >
-        <ArrowLeft className="w-5 h-5" />
-        <span>Back to Home</span>
+        <ArrowLeft className="w-4 h-4 transition-transform duration-350 group-hover:-translate-x-1" />
+        <span className="text-sm font-medium">Vissza a kezdőlapra</span>
       </Link>
 
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-background/80" />
       </div>
 
-      <div className="relative z-10 w-full max-w-md px-4">
+      <div className="relative z-10 w-full max-w-md px-4 animate-fade-in-up">
         <Card className="premium-glass border-border/10">
           <CardHeader className="text-center">
-            <div className="mx-auto mb-4 w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center">
+            <div className="mx-auto mb-4 w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center transition-transform duration-350 hover:scale-110">
               <LogIn className="w-6 h-6 text-primary" />
             </div>
             <CardTitle className="text-2xl font-bold text-gradient">
@@ -104,7 +104,7 @@ const Login = () => {
 
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full transition-all duration-350 hover:scale-[1.02] active:scale-95 cursor-pointer"
                 disabled={isLoading}
               >
                 {isLoading ? (

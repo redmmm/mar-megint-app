@@ -156,7 +156,7 @@ export const MapSearchOverlay: React.FC<MapSearchOverlayProps> = ({
     <div
       ref={containerRef}
       className={cn(
-        'relative w-full sm:transition-[width] sm:duration-300 sm:ease-out',
+        'relative w-full sm:transition-[width] sm:duration-450',
         isExpanded ? 'sm:w-80 md:w-96' : 'sm:w-52 md:w-60',
         className
       )}
@@ -165,7 +165,7 @@ export const MapSearchOverlay: React.FC<MapSearchOverlayProps> = ({
       <div className="relative flex items-center">
         <Search
           className={cn(
-            'absolute left-3 w-4 h-4 transition-colors pointer-events-none',
+            'absolute left-3 w-4 h-4 transition-colors duration-350 pointer-events-none',
             isExpanded ? 'text-white' : 'text-neutral-400'
           )}
         />
@@ -183,7 +183,7 @@ export const MapSearchOverlay: React.FC<MapSearchOverlayProps> = ({
           aria-label="Helyszín vagy utca keresése"
           placeholder="Keresés: városrész, utca..."
           className={cn(
-            'w-full h-10 pl-9 pr-9 rounded-xl bg-neutral-900/60 border border-white/10 backdrop-blur-xl text-base sm:text-xs text-white placeholder:text-neutral-400 focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20 transition-colors shadow-lg',
+            'w-full h-10 pl-9 pr-9 rounded-xl bg-neutral-900/60 border border-white/10 backdrop-blur-xl text-base sm:text-xs text-white placeholder:text-neutral-400 focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20 transition-all duration-350 shadow-lg',
             isExpanded && 'sm:border-white/30 sm:ring-white/20 sm:bg-neutral-900/80'
           )}
         />
@@ -195,7 +195,7 @@ export const MapSearchOverlay: React.FC<MapSearchOverlayProps> = ({
             type="button"
             onClick={handleClear}
             aria-label="Keresés törlése"
-            className="absolute right-2.5 p-1 rounded-full text-neutral-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="absolute right-2.5 p-1 rounded-full text-neutral-400 hover:text-white hover:bg-white/10 transition-all duration-300 hover:rotate-90 active:scale-90 cursor-pointer"
             title="Törlés"
           >
             <X className="w-3.5 h-3.5" />
@@ -205,7 +205,7 @@ export const MapSearchOverlay: React.FC<MapSearchOverlayProps> = ({
 
       {/* Autocomplete Dropdown */}
       {isOpen && (results.length > 0 || (!isLoading && query.trim().length >= 2)) && (
-        <div className="absolute top-12 left-0 right-0 z-50 rounded-2xl bg-neutral-950/85 border border-white/20 backdrop-blur-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150 max-h-[45vh] sm:max-h-64 flex flex-col">
+        <div className="absolute top-12 left-0 right-0 z-50 rounded-2xl bg-neutral-950/85 border border-white/20 backdrop-blur-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-350 max-h-[45vh] sm:max-h-64 flex flex-col">
           {results.length > 0 ? (
             <>
               <div className="p-1.5 space-y-1 overflow-y-auto max-h-40 sm:max-h-56 overscroll-contain">

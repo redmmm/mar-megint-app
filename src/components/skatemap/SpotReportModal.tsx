@@ -157,14 +157,14 @@ export const SpotReportModal: React.FC<SpotReportModalProps> = ({
               variant="outline"
               onClick={onClose}
               disabled={isSubmitting}
-              className="h-9 px-3 text-xs border-white/10 text-neutral-300 hover:bg-white/5"
+              className="h-9 px-3 text-xs border-white/10 text-neutral-300 hover:bg-white/5 active:scale-95 transition-all duration-350"
             >
               Mégse
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting || reason.trim().length < 5}
-              className="h-9 px-4 text-xs font-bold bg-gradient-to-r from-orange-500 via-rose-500 to-red-500 hover:from-orange-600 hover:via-rose-600 hover:to-red-600 text-white shadow-[0_0_20px_rgba(249,115,22,0.4)] hover:shadow-[0_0_25px_rgba(239,68,68,0.6)] border border-orange-400/40 transition-all flex items-center gap-1.5"
+              className="h-9 px-4 text-xs font-bold bg-gradient-to-r from-orange-500 via-rose-500 to-red-500 hover:from-orange-600 hover:via-rose-600 hover:to-red-600 text-white shadow-[0_0_20px_rgba(249,115,22,0.4)] hover:shadow-[0_0_25px_rgba(239,68,68,0.6)] border border-orange-400/40 transition-all duration-350 hover:scale-[1.02] active:scale-95 flex items-center gap-1.5"
             >
               {isSubmitting ? (
                 <>
