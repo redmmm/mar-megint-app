@@ -240,31 +240,7 @@ const SkateMapPage: React.FC = () => {
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
   const tempMarkerRef = useRef<L.Marker | null>(null);
   const userLocationMarkerRef = useRef<L.Marker | null>(null);
-  const userLocationCircleRef = useRef<L.Circle | null>(null);
-  const activeWatchIdRef = useRef<number | null>(null);
-  const locateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const refineTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const searchMarkerRef = useRef<L.Marker | null>(null);
-
-  // Helper to safely clear any active geolocation watcher and debounce/timeout timers
-  const clearActiveWatch = React.useCallback(() => {
-    if (activeWatchIdRef.current !== null && navigator.geolocation) {
-      try {
-        navigator.geolocation.clearWatch(activeWatchIdRef.current);
-      } catch (e) {
-        // ignore
-      }
-      activeWatchIdRef.current = null;
-    }
-    if (locateTimeoutRef.current !== null) {
-      clearTimeout(locateTimeoutRef.current);
-      locateTimeoutRef.current = null;
-    }
-    if (refineTimeoutRef.current !== null) {
-      clearTimeout(refineTimeoutRef.current);
-      refineTimeoutRef.current = null;
-    }
-  }, []);
 
   const [spots, setSpots] = useState<Spot[]>([]);
   // Single-select Spot Type: 'all' | 'skatepark' | 'street_spot' | 'skateshop'
@@ -549,7 +525,6 @@ const SkateMapPage: React.FC = () => {
 
     // Cleanup on unmount to prevent "Map container is already initialized" error
     return () => {
-      clearActiveWatch();
       map.remove();
       mapInstanceRef.current = null;
     };
@@ -779,8 +754,7 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
   return null;
 };
 
-  // Handle Geolocation: "Show My Location" with high accuracy (GPS/Wi-Fi triangulation),
-  // progressive refinement, and multi-tier fallbacks (Coarse -> IP Geolocation)
+  // Handle Geolocation: "Show My Location" with native browser prompt respect + desktop IP fallback
   const requestUserLocation = async () => {
     if (!navigator.geolocation) {
       toast.error('A böngésződ nem támogatja a helymeghatározást.');
@@ -788,14 +762,8 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
     }
 
     setIsLocating(true);
-    clearActiveWatch();
 
-    const handleSuccess = (
-      latitude: number,
-      longitude: number,
-      accuracy?: number,
-      isApproximate = false
-    ) => {
+    const handleSuccess = (latitude: number, longitude: number, isApproximate = false) => {
       setIsLocating(false);
 
       // Verify if user is inside Győr bounds
@@ -806,14 +774,10 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
         longitude <= GYOR_BOUNDS[1][1];
 
       if (!isInsideGyor) {
-        // Remove existing user marker & accuracy circle if any
+        // Remove existing user marker if any
         if (userLocationMarkerRef.current && mapInstanceRef.current) {
           mapInstanceRef.current.removeLayer(userLocationMarkerRef.current);
           userLocationMarkerRef.current = null;
-        }
-        if (userLocationCircleRef.current && mapInstanceRef.current) {
-          mapInstanceRef.current.removeLayer(userLocationCircleRef.current);
-          userLocationCircleRef.current = null;
         }
 
         setIsOutsideGyorDetected(true);
@@ -838,7 +802,6 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
       );
 
       if (mapInstanceRef.current) {
-        // 1. User pin marker
         if (userLocationMarkerRef.current) {
           userLocationMarkerRef.current.setLatLng([latitude, longitude]);
         } else {
@@ -864,182 +827,64 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
           userLocationMarkerRef.current = userMarker;
         }
 
-        // 2. Accuracy halo circle (shown if accuracy is known and reasonable <= 1500m)
-        if (accuracy && accuracy > 0 && accuracy <= 1500) {
-          if (userLocationCircleRef.current) {
-            userLocationCircleRef.current.setLatLng([latitude, longitude]);
-            userLocationCircleRef.current.setRadius(accuracy);
-          } else {
-            const circle = L.circle([latitude, longitude], {
-              radius: accuracy,
-              color: '#00f3ff',
-              weight: 1,
-              opacity: 0.35,
-              fillColor: '#00f3ff',
-              fillOpacity: 0.08,
-              interactive: false,
-            }).addTo(mapInstanceRef.current);
-            userLocationCircleRef.current = circle;
-          }
-        } else if (userLocationCircleRef.current && mapInstanceRef.current) {
-          mapInstanceRef.current.removeLayer(userLocationCircleRef.current);
-          userLocationCircleRef.current = null;
-        }
-
         mapInstanceRef.current.flyTo([latitude, longitude], 16, { duration: 1.2 });
       }
     };
 
-    // Stage 1: High-Accuracy Progressive Geolocation
-    // Uses watchPosition with enableHighAccuracy: true so Firefox and Chrome perform active
-    // Wi-Fi access point (BSSID) scanning instead of falling back to IP/ISP gateway locations.
-    const getHighAccuracyPosition = (): Promise<GeolocationPosition> => {
-      return new Promise((resolve, reject) => {
-        let bestPosition: GeolocationPosition | null = null;
-        let isResolved = false;
+    // Call native browser geolocation directly — this is the ONLY way to trigger the browser's
+    // native "Allow / Block" permission prompt. We use a generous 20s timeout so the user has
+    // plenty of time to see the prompt and make their choice.
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        handleSuccess(position.coords.latitude, position.coords.longitude);
+      },
+      async (geoError) => {
+        console.warn('Browser geolocation attempt failed:', geoError);
 
-        const finish = (pos: GeolocationPosition) => {
-          if (isResolved) return;
-          isResolved = true;
-          clearActiveWatch();
-          resolve(pos);
-        };
-
-        const fail = (err: any) => {
-          if (isResolved) return;
-          if (bestPosition) {
-            finish(bestPosition);
-            return;
-          }
-          isResolved = true;
-          clearActiveWatch();
-          reject(err);
-        };
-
-        // Generous 10-second safety timeout for satellite/Wi-Fi lock and user prompt response
-        locateTimeoutRef.current = setTimeout(() => {
-          if (bestPosition) {
-            finish(bestPosition);
-          } else {
-            fail({ code: 3, message: 'High accuracy geolocation timeout' });
-          }
-        }, 10000);
-
+        // Check permission state after user responded
+        let isUserDenied = geoError.code === geoError.PERMISSION_DENIED;
         try {
-          activeWatchIdRef.current = navigator.geolocation.watchPosition(
-            (pos) => {
-              const acc = pos.coords.accuracy;
-              if (!bestPosition || acc < bestPosition.coords.accuracy) {
-                bestPosition = pos;
-              }
-
-              // High-precision lock achieved (e.g. mobile GPS or fine Wi-Fi <= 30m) -> instant resolve
-              if (acc <= 30) {
-                finish(pos);
-                return;
-              }
-
-              // Otherwise start a brief 2.5s window to allow progressive refinement of Wi-Fi triangulation
-              if (!refineTimeoutRef.current) {
-                refineTimeoutRef.current = setTimeout(() => {
-                  if (bestPosition) {
-                    finish(bestPosition);
-                  }
-                }, 2500);
-              }
-            },
-            (err) => {
-              if (bestPosition) {
-                finish(bestPosition);
-              } else {
-                fail(err);
-              }
-            },
-            {
-              enableHighAccuracy: true,
-              timeout: 9500,
-              maximumAge: 0,
+          if (navigator.permissions && navigator.permissions.query) {
+            const permStatus = await navigator.permissions.query({ name: 'geolocation' });
+            if (permStatus.state === 'denied') {
+              isUserDenied = true;
+            } else if (permStatus.state === 'granted') {
+              isUserDenied = false;
             }
-          );
-        } catch (e) {
-          fail(e);
-        }
-      });
-    };
-
-    try {
-      const position = await getHighAccuracyPosition();
-      handleSuccess(
-        position.coords.latitude,
-        position.coords.longitude,
-        position.coords.accuracy,
-        false
-      );
-      return;
-    } catch (highAccError: any) {
-      console.warn('High-accuracy geolocation attempt failed, checking fallback:', highAccError);
-
-      // Check permission state: if the user explicitly clicked "Elutasítás" (denied), RESPECT their choice!
-      let isUserDenied = highAccError?.code === 1; // PERMISSION_DENIED
-      try {
-        if (navigator.permissions && navigator.permissions.query) {
-          const permStatus = await navigator.permissions.query({ name: 'geolocation' });
-          if (permStatus.state === 'denied') {
-            isUserDenied = true;
-          } else if (permStatus.state === 'granted') {
-            isUserDenied = false;
           }
+        } catch (e) {
+          // ignore
         }
-      } catch (e) {
-        // ignore
-      }
 
-      if (isUserDenied) {
+        // If the user explicitly clicked "Elutasítás" / Blocked permission, RESPECT their choice!
+        // Do NOT use IP fallback.
+        if (isUserDenied) {
+          setIsLocating(false);
+          setLocErrorType('permission_denied');
+          setIsPermissionDialogOpen(true);
+          return;
+        }
+
+        // If user gave permission (granted), but device/OS couldn't provide GPS coordinates
+        // (common on desktop PCs without GPS hardware or Wi-Fi positioning):
+        // Fall back to multi-service IP Geolocation
+        const ipLocation = await fetchIpLocation();
+        if (ipLocation) {
+          handleSuccess(ipLocation.lat, ipLocation.lng, true);
+          return;
+        }
+
+        // If even IP fallback failed, display the failure dialog
         setIsLocating(false);
-        setLocErrorType('permission_denied');
-        setIsPermissionDialogOpen(true);
-        return;
-      }
-
-      // Stage 2: Coarse browser geolocation fallback
-      // For desktop devices without Wi-Fi scanning hardware or when GPS is temporarily unavailable
-      try {
-        const coarsePos = await new Promise<GeolocationPosition>((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(
-            resolve,
-            reject,
-            { enableHighAccuracy: false, timeout: 6000, maximumAge: 30000 }
-          );
-        });
-
-        handleSuccess(
-          coarsePos.coords.latitude,
-          coarsePos.coords.longitude,
-          coarsePos.coords.accuracy,
-          false
+        setLocErrorType(
+          geoError.code === geoError.TIMEOUT
+            ? 'timeout'
+            : 'unavailable'
         );
-        return;
-      } catch (coarseError) {
-        console.warn('Coarse browser geolocation also failed:', coarseError);
-      }
-
-      // Stage 3: Multi-service IP Geolocation fallback
-      // If user granted permission, but OS couldn't provide any coordinates (e.g. desktop PC with Ethernet only)
-      const ipLocation = await fetchIpLocation();
-      if (ipLocation) {
-        handleSuccess(ipLocation.lat, ipLocation.lng, undefined, true);
-        return;
-      }
-
-      // All methods failed
-      setIsLocating(false);
-      setLocErrorType(
-        highAccError?.code === 3
-          ? 'timeout'
-          : 'unavailable'
-      );
-      setIsPermissionDialogOpen(true);
-    }
+        setIsPermissionDialogOpen(true);
+      },
+      { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 }
+    );
   };
 
   // Handle resetting map view to Győr center
