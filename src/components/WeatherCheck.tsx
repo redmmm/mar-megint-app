@@ -78,13 +78,13 @@ export const WeatherCheck = () => {
 
   // Result state
   if (weatherState === 'result' && weatherData) {
-    const emoji = weatherData.canSkate ? '🛹' : '🌧️';
+    const emoji = weatherData.canSkate ? '🛹' : weatherData.conditionText.includes('havazik') ? '❄️' : '🌧️';
 
     return (
       <div className="flex items-center justify-center w-full">
         <SpotlightCard
-          spotlightColor="rgba(108, 108, 108, 0.35)"
-          className="w-full max-w-lg mx-auto rounded-[2rem] border border-white/10 hover:border-[#6c6c6c]/60 bg-neutral-950/70 backdrop-blur-xl p-8 sm:p-12 text-center transition-all duration-500 hover:shadow-[0_0_60px_rgba(108,108,108,0.25)]"
+          spotlightColor="rgba(255, 255, 255, 0.12)"
+          className="w-full max-w-lg mx-auto rounded-[2rem] border border-white/10 hover:border-white/20 bg-neutral-950/70 backdrop-blur-xl p-8 sm:p-12 text-center transition-all duration-500 hover:shadow-[0_0_60px_rgba(255,255,255,0.08)]"
         >
           <div className="relative z-10 flex flex-col items-center w-full text-center">
             {/* Temperature Display */}
@@ -112,10 +112,10 @@ export const WeatherCheck = () => {
               {weatherData.conditionText}
             </p>
 
-            {/* Reset Button (Grey & White) */}
+            {/* Reset Button (Liquid Glass) */}
             <button
               onClick={handleReset}
-              className="mt-6 px-6 py-2.5 bg-white/10 hover:bg-[#6c6c6c] text-white border border-white/15 rounded-full transition-all text-sm font-bold shadow-md hover:shadow-[0_0_20px_rgba(108,108,108,0.5)] active:scale-95 cursor-pointer"
+              className="mt-6 px-6 py-2.5 premium-glass premium-glass-hover text-white rounded-full text-sm font-bold shadow-md active:scale-95 cursor-pointer"
             >
               Új ellenőrzés
             </button>
@@ -125,7 +125,7 @@ export const WeatherCheck = () => {
               {!showSearch ? (
                 <button
                   onClick={() => setShowSearch(true)}
-                  className="w-full px-4 py-2.5 bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white border border-white/10 rounded-xl transition-all flex items-center justify-center gap-2 text-sm font-semibold cursor-pointer"
+                  className="w-full px-4 py-2.5 premium-glass premium-glass-hover text-neutral-200 hover:text-white rounded-xl flex items-center justify-center gap-2 text-sm font-semibold cursor-pointer"
                 >
                   <Search className="w-4 h-4" />
                   <span>Város keresése</span>
@@ -135,10 +135,12 @@ export const WeatherCheck = () => {
                   <div className="relative">
                     <input
                       type="text"
+                      autoComplete="off"
+                      spellCheck={false}
                       value={searchQuery}
                       onChange={(e) => handleSearchChange(e.target.value)}
                       placeholder="Város keresése..."
-                      className="w-full p-3 pr-10 bg-white/10 border border-white/20 text-white placeholder:text-neutral-400 rounded-xl focus:bg-white/15 focus:border-[#6c6c6c] focus:outline-none text-sm transition-all"
+                      className="w-full p-3 pr-10 bg-neutral-900/90 border border-white/20 text-white placeholder:text-neutral-400 rounded-xl focus:border-white/40 focus:bg-neutral-800/95 focus:outline-none text-sm transition-all shadow-inner"
                     />
                     <button
                       onClick={() => {
@@ -157,7 +159,7 @@ export const WeatherCheck = () => {
                     <div className="absolute top-full left-0 right-0 mt-1.5 bg-neutral-900/95 border border-white/15 rounded-xl shadow-2xl z-20 max-h-48 overflow-y-auto backdrop-blur-xl">
                       {isSearching ? (
                         <div className="px-4 py-3 text-sm text-neutral-400 flex items-center gap-2">
-                          <Loader2 className="w-4 h-4 animate-spin text-[#6c6c6c]" />
+                          <Loader2 className="w-4 h-4 animate-spin text-white" />
                           Keresés...
                         </div>
                       ) : (
@@ -178,7 +180,7 @@ export const WeatherCheck = () => {
             </div>
 
             {/* Legal / Info Text */}
-            <p className="mt-6 text-center text-[11px] text-neutral-500 leading-relaxed max-w-xs">
+            <p className="mt-6 text-center text-[11px] text-neutral-500 leading-relaxed max-w-xs mx-auto">
               A helyadatokat (GPS/IP) kizárólag a pontos időjárás megjelenítéséhez használjuk. Az oldal ingyenes és reklámmentes, adataidat nem tároljuk.
             </p>
           </div>
@@ -193,13 +195,13 @@ export const WeatherCheck = () => {
   return (
     <div className="flex items-center justify-center w-full">
       <SpotlightCard
-        spotlightColor="rgba(108, 108, 108, 0.35)"
-        className="w-full max-w-lg mx-auto rounded-[2rem] border border-white/10 hover:border-[#6c6c6c]/60 bg-neutral-950/70 backdrop-blur-xl p-8 sm:p-12 text-center transition-all duration-500 hover:shadow-[0_0_60px_rgba(108,108,108,0.25)]"
+        spotlightColor="rgba(255, 255, 255, 0.12)"
+        className="w-full max-w-lg mx-auto rounded-[2rem] border border-white/10 hover:border-white/20 bg-neutral-950/70 backdrop-blur-xl p-8 sm:p-12 text-center transition-all duration-500 hover:shadow-[0_0_60px_rgba(255,255,255,0.08)]"
       >
         <div className="relative z-10 flex flex-col items-center gap-6 w-full text-center">
           {/* Top Emoji Icon */}
-          <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-3xl shadow-inner">
-            {isLoading ? <Loader2 className="w-7 h-7 text-[#6c6c6c] animate-spin" /> : '🌤️'}
+          <div className="w-16 h-16 rounded-full premium-glass flex items-center justify-center text-3xl shadow-inner text-white">
+            {isLoading ? <Loader2 className="w-7 h-7 text-white animate-spin" /> : '🌤️'}
           </div>
 
           {/* Title */}
@@ -222,21 +224,26 @@ export const WeatherCheck = () => {
             </p>
           )}
 
-          {/* Action Button - Grey and White (No green) */}
-          <div className="mt-2 w-full flex justify-center">
+          {/* Action Button */}
+          <div className="mt-2 w-full flex flex-col items-center">
             {isLoading ? (
-              <div className="inline-flex items-center gap-2.5 px-8 py-3.5 bg-white/5 border border-white/10 text-neutral-300 rounded-full text-base sm:text-lg font-medium backdrop-blur-md shadow-md">
-                <Loader2 className="w-5 h-5 animate-spin text-[#6c6c6c]" />
+              <div className="inline-flex items-center gap-2.5 px-8 py-3.5 premium-glass text-neutral-300 rounded-full text-base sm:text-lg font-medium shadow-md">
+                <Loader2 className="w-5 h-5 animate-spin text-white" />
                 <span>Időjárás adatok lekérése...</span>
               </div>
             ) : (
               <button
                 onClick={handleCheckWeather}
-                className="inline-flex items-center justify-center px-8 py-3.5 bg-white/10 text-white border border-white/15 rounded-full text-base sm:text-lg font-bold tracking-wide hover:bg-[#6c6c6c] hover:border-[#6c6c6c] hover:text-white transition-all shadow-lg hover:shadow-[0_0_30px_rgba(108,108,108,0.6)] focus:outline-none focus:ring-2 focus:ring-[#6c6c6c]/60 active:scale-95 cursor-pointer"
+                className="inline-flex items-center justify-center px-8 py-3.5 premium-glass premium-glass-hover text-white rounded-full text-base sm:text-lg font-bold tracking-wide transition-all shadow-lg focus:outline-none focus:ring-2 focus:ring-white/40 active:scale-95 cursor-pointer"
               >
                 Kattints az ellenőrzéshez
               </button>
             )}
+
+            {/* Legal / Privacy Info Text shown BEFORE granting location permission */}
+            <p className="mt-5 text-center text-[11px] text-neutral-500 leading-relaxed max-w-xs mx-auto">
+              A helyadatokat (GPS/IP) kizárólag a pontos időjárás megjelenítéséhez használjuk. Az oldal ingyenes és reklámmentes, adataidat nem tároljuk.
+            </p>
           </div>
         </div>
       </SpotlightCard>

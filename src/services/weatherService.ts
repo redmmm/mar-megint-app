@@ -194,13 +194,24 @@ export const getWeatherData = async (lat: number, lon: number): Promise<{ temper
 
 // Determine if weather conditions are suitable for skating
 export const checkSkateConditions = (temperature: number, weatherCode: number): WeatherData => {
-  // WMO Weather Codes 51+ indicate precipitation (rain, snow, etc.)
+  // WMO Weather Codes 51+ indicate precipitation (rain, snow, thunderstorm, etc.)
   const hasPrecipitation = weatherCode >= 51;
-  const isSnow = weatherCode >= 71 && weatherCode <= 86; // Snow codes
+
+  // Snow codes: 71, 73, 75 (snow fall), 77 (snow grains), 85, 86 (snow showers)
+  // Note: 80, 81, 82 are rain showers (záporeső), NOT snow!
+  // Also sanity check with temperature: cannot snow if well above freezing
+  const isSnow = ((weatherCode >= 71 && weatherCode <= 77) || weatherCode === 85 || weatherCode === 86) && temperature <= 3;
+  const isThunderstorm = weatherCode === 95 || weatherCode === 96 || weatherCode === 99;
 
   // Precipitation is the #1 dealbreaker
   if (hasPrecipitation) {
-    const precipitationType = isSnow ? 'havazik' : 'esik';
+    let precipitationType = 'esik';
+    if (isSnow) {
+      precipitationType = 'havazik';
+    } else if (isThunderstorm) {
+      precipitationType = 'vihar van';
+    }
+
     return {
       temp: temperature,
       conditionText: `Nincs deszkás idő, mert ${precipitationType}.`,
@@ -355,7 +366,7 @@ export const searchHungarianCities = async (query: string): Promise<HungarianCit
       return [];
     }
 
-    return data.results.map((result: any) => ({
+    return data.results.map((result: { name: string; latitude: number; longitude: number }) => ({
       name: result.name,
       latitude: result.latitude,
       longitude: result.longitude,

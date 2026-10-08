@@ -1,5 +1,5 @@
+import DotGrid from '@/components/DotGrid';
 import FloatingNav from '@/components/FloatingNav';
-import PremiumBackground from '@/components/PremiumBackground';
 import { WeatherCheck } from '@/components/WeatherCheck';
 import { useSEO } from '@/hooks/useSEO';
 
@@ -12,9 +12,19 @@ const WeatherPage = () => {
   });
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center">
-      {/* Non-coloured atmospheric background (no green or red tints) */}
-      <PremiumBackground variant="neutral" />
+    <div className="min-h-screen relative flex items-center justify-center bg-black">
+      {/* Interactive DotGrid Background (White) */}
+      <div className="fixed inset-0 z-0 w-full h-full pointer-events-none">
+        <DotGrid
+          dotSize={3}
+          gap={18}
+          proximity={110}
+          shockRadius={220}
+          shockStrength={4}
+          returnDuration={1.2}
+          colorScheme="white"
+        />
+      </div>
 
       {/* Visually hidden h1 for SEO & accessibility */}
       <h1 className="sr-only">Gördeszkás Időjárás Győr - Már megint?</h1>

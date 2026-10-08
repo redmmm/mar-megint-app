@@ -56,15 +56,8 @@ export const NewsCard = ({ post, showTag = false, tall = false, onClick }: NewsC
           {/* Tags & Date */}
           <div className="flex items-center flex-wrap gap-2.5 mb-3.5">
             {showTag && (
-              <span
-                className={cn(
-                  'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold tracking-wide transition-all duration-300',
-                  isA
-                    ? 'bg-[#5c9884]/15 text-[#a8d3c5] border border-[#5c9884]/30'
-                    : 'bg-[#b0223b]/15 text-[#f5a1af] border border-[#b0223b]/30'
-                )}
-              >
-                <Tag className="w-3 h-3" />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold tracking-wide premium-glass text-white transition-all duration-300 group-hover:border-white/20">
+                <Tag className="w-3 h-3 text-neutral-300" />
                 <span>{channelName}</span>
               </span>
             )}

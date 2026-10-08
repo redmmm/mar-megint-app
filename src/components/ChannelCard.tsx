@@ -1,5 +1,4 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import SpotlightCard from '@/components/SpotlightCard';
 import marmegintLogo from '/marmegint-logo.jpg';
@@ -52,7 +51,7 @@ export const ChannelCard = ({ name, slug, variant, description }: ChannelCardPro
             src={isA ? marmegintLogo : jatszunkLogo}
             alt={isA ? 'Már megint Logo' : 'Már megint játszunk Logo'}
             className={cn(
-              'w-24 h-24 rounded-full border-2 border-white/20 shadow-2xl object-cover transition-all duration-500 group-hover:scale-105',
+              'w-24 h-24 rounded-full border-2 border-white/20 shadow-2xl object-cover transition-all duration-500',
               isA
                 ? 'group-hover:border-[#5c9884] group-hover:shadow-[0_0_30px_rgba(92,152,132,0.5)]'
                 : 'group-hover:border-[#b0223b] group-hover:shadow-[0_0_30px_rgba(176,34,59,0.5)]'
@@ -61,14 +60,7 @@ export const ChannelCard = ({ name, slug, variant, description }: ChannelCardPro
         </div>
 
         {/* Channel indicator badge */}
-        <div
-          className={cn(
-            'inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wider mb-6 transition-all duration-300',
-            isA
-              ? 'bg-[#5c9884]/15 text-[#a8d3c5] border border-[#5c9884]/30 group-hover:bg-[#5c9884]/25 group-hover:border-[#5c9884]/60 group-hover:text-white'
-              : 'bg-[#b0223b]/15 text-[#f5a1af] border border-[#b0223b]/30 group-hover:bg-[#b0223b]/25 group-hover:border-[#b0223b]/60 group-hover:text-white'
-          )}
-        >
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wider mb-6 premium-glass text-white transition-all duration-300 group-hover:border-white/20">
           <span className="text-base">{emoji}</span>
           <span>CSATORNA</span>
         </div>
@@ -79,23 +71,9 @@ export const ChannelCard = ({ name, slug, variant, description }: ChannelCardPro
         </h2>
 
         {/* Description */}
-        <p className="text-neutral-400 text-sm md:text-base leading-relaxed mb-8 max-w-sm mx-auto">
+        <p className="text-neutral-400 text-sm md:text-base leading-relaxed max-w-sm mx-auto">
           {description}
         </p>
-
-        {/* CTA Button */}
-        <div
-          className={cn(
-            'inline-flex items-center gap-2.5 px-6 py-3 rounded-full text-sm font-bold tracking-wide transition-all duration-300 group-hover:gap-3.5 shadow-lg',
-            'bg-white/10 text-white border border-white/15 backdrop-blur-md',
-            isA
-              ? 'group-hover:bg-[#5c9884] group-hover:text-white group-hover:border-[#5c9884] group-hover:shadow-[0_0_35px_rgba(92,152,132,0.7)]'
-              : 'group-hover:bg-[#b0223b] group-hover:text-white group-hover:border-[#b0223b] group-hover:shadow-[0_0_35px_rgba(176,34,59,0.7)]'
-          )}
-        >
-          <span>Belépés</span>
-          <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-        </div>
       </div>
     </SpotlightCard>
   );

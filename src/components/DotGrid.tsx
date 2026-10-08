@@ -4,9 +4,9 @@ import { gsap } from 'gsap';
 
 import './DotGrid.css';
 
-const throttle = <T extends (...args: any[]) => void>(func: T, limit: number): ((...args: Parameters<T>) => void) => {
+const throttle = <T extends (...args: unknown[]) => void>(func: T, limit: number): ((...args: Parameters<T>) => void) => {
   let lastCall = 0;
-  return function (this: any, ...args: Parameters<T>) {
+  return function (this: unknown, ...args: Parameters<T>) {
     const now = performance.now();
     if (now - lastCall >= limit) {
       lastCall = now;
@@ -27,6 +27,8 @@ interface DotGridProps {
   returnDuration?: number;
   className?: string;
   style?: React.CSSProperties;
+  colorScheme?: 'default' | 'deep-blue' | 'white';
+  dotColor?: { r: number; g: number; b: number };
 }
 
 interface Dot {
@@ -47,7 +49,9 @@ const DotGrid: React.FC<DotGridProps> = ({
   maxSpeed = 5000,
   returnDuration = 1.5,
   className = '',
-  style
+  style,
+  colorScheme = 'default',
+  dotColor,
 }) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -133,15 +137,27 @@ const DotGrid: React.FC<DotGridProps> = ({
         const dy = dot.cy - py;
         const dsq = dx * dx + dy * dy;
 
-        // Custom green (left) and red (right) styling to match the site theme
-        const isLeft = dot.cx < width / 2;
-        const rgb = isLeft ? { r: 34, g: 195, b: 94 } : { r: 240, g: 66, b: 66 };
+        // Color selection: white, deep-blue, or default split (green on left, red on right)
+        let rgb: { r: number; g: number; b: number };
+        if (dotColor) {
+          rgb = dotColor;
+        } else if (colorScheme === 'white') {
+          rgb = { r: 255, g: 255, b: 255 };
+        } else if (colorScheme === 'deep-blue') {
+          rgb = { r: 35, g: 95, b: 215 };
+        } else {
+          const isLeft = dot.cx < width / 2;
+          rgb = isLeft ? { r: 34, g: 195, b: 94 } : { r: 240, g: 66, b: 66 };
+        }
 
-        let fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.15)`;
+        const baseAlpha = colorScheme === 'white' ? 0.15 : 0.15;
+        const maxAlpha = colorScheme === 'white' ? 0.8 : 0.8;
+
+        let fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${baseAlpha})`;
         if (dsq <= proxSq) {
           const dist = Math.sqrt(dsq);
           const t = 1 - dist / proximity;
-          const alpha = 0.15 + (0.8 - 0.15) * t;
+          const alpha = baseAlpha + (maxAlpha - baseAlpha) * t;
           fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`;
         }
 
@@ -157,14 +173,16 @@ const DotGrid: React.FC<DotGridProps> = ({
 
     draw();
     return () => cancelAnimationFrame(rafId);
-  }, [proximity, circlePath]);
+  }, [proximity, circlePath, colorScheme, dotColor]);
 
   useEffect(() => {
     buildGrid();
     let ro: ResizeObserver | null = null;
     if (typeof window !== 'undefined' && 'ResizeObserver' in window) {
       ro = new ResizeObserver(buildGrid);
-      wrapperRef.current && ro.observe(wrapperRef.current);
+      if (wrapperRef.current) {
+        ro.observe(wrapperRef.current);
+      }
     } else {
       window.addEventListener('resize', buildGrid);
     }
