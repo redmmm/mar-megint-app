@@ -7,7 +7,6 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { MapPinOff, RefreshCw, Compass, Info } from 'lucide-react';
 
 interface LocationPermissionDialogProps {
@@ -32,7 +31,7 @@ export const LocationPermissionDialog: React.FC<LocationPermissionDialogProps> =
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[440px] bg-background/95 backdrop-blur-xl border border-white/10 text-foreground">
+      <DialogContent className="sm:max-w-[440px] bg-neutral-950/80 backdrop-blur-2xl border border-white/15 text-foreground">
         <DialogHeader className="space-y-3">
           <div
             className={`w-12 h-12 rounded-2xl border flex items-center justify-center mx-auto sm:mx-0 ${
@@ -78,7 +77,7 @@ export const LocationPermissionDialog: React.FC<LocationPermissionDialogProps> =
           </div>
         ) : (
           <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/5 text-[11px] text-neutral-300 space-y-2">
-            <p className="font-semibold text-emerald-400">
+            <p className="font-semibold text-white">
               {isPermissionDenied ? 'Megoldás böngészőben:' : 'Gyakori ok és megoldás:'}
             </p>
             {isPermissionDenied ? (
@@ -100,47 +99,45 @@ export const LocationPermissionDialog: React.FC<LocationPermissionDialogProps> =
         <DialogFooter className="pt-2 gap-2 sm:gap-2 sm:justify-end">
           {isOutsideGyor ? (
             <>
-              <Button
+              <button
                 type="button"
-                variant="outline"
                 onClick={onClose}
-                className="border-white/10 hover:bg-white/5 text-xs text-white"
+                className="h-9 px-4 text-xs font-medium text-neutral-300 hover:text-white rounded-xl bg-neutral-900/80 hover:bg-neutral-800/80 border border-white/15 backdrop-blur-xl transition cursor-pointer"
               >
                 Bezárás
-              </Button>
+              </button>
               {onRecenter && (
-                <Button
+                <button
                   type="button"
                   onClick={() => {
                     onClose();
                     onRecenter();
                   }}
-                  className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold gap-1.5 shadow-lg shadow-emerald-600/20"
+                  className="h-9 px-4 text-xs font-semibold text-white rounded-xl bg-neutral-900/80 hover:bg-neutral-800/80 border border-white/25 backdrop-blur-xl shadow-xl transition-all flex items-center gap-1.5 cursor-pointer"
                 >
-                  <Compass className="w-3.5 h-3.5" />
+                  <Compass className="w-3.5 h-3.5 text-white" />
                   Vissza Győr központjához
-                </Button>
+                </button>
               )}
             </>
           ) : (
             <>
-              <Button
+              <button
                 type="button"
-                variant="outline"
                 onClick={onClose}
-                className="border-white/10 hover:bg-white/5 text-xs"
+                className="h-9 px-4 text-xs font-medium text-neutral-300 hover:text-white rounded-xl bg-neutral-900/80 hover:bg-neutral-800/80 border border-white/15 backdrop-blur-xl transition cursor-pointer"
               >
                 Mégse
-              </Button>
-              <Button
+              </button>
+              <button
                 type="button"
                 onClick={onRetry}
                 disabled={isLoading}
-                className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold gap-1.5 shadow-lg shadow-emerald-600/20"
+                className="h-9 px-4 text-xs font-semibold text-white rounded-xl bg-neutral-900/80 hover:bg-neutral-800/80 border border-white/25 backdrop-blur-xl shadow-xl transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
                 Újrapróbálkozás
-              </Button>
+              </button>
             </>
           )}
         </DialogFooter>

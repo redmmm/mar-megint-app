@@ -166,7 +166,7 @@ export const MapSearchOverlay: React.FC<MapSearchOverlayProps> = ({
         <Search
           className={cn(
             'absolute left-3 w-4 h-4 transition-colors pointer-events-none',
-            isExpanded ? 'text-emerald-400' : 'text-neutral-400'
+            isExpanded ? 'text-white' : 'text-neutral-400'
           )}
         />
         <input
@@ -183,13 +183,13 @@ export const MapSearchOverlay: React.FC<MapSearchOverlayProps> = ({
           aria-label="Helyszín vagy utca keresése"
           placeholder="Keresés: városrész, utca..."
           className={cn(
-            'w-full h-10 pl-9 pr-9 rounded-xl bg-neutral-900/80 border border-white/10 backdrop-blur-xl text-base sm:text-xs text-white placeholder:text-neutral-400 focus:outline-none focus:border-emerald-400/50 focus:ring-1 focus:ring-emerald-400/30 transition-colors shadow-lg',
-            isExpanded && 'sm:border-emerald-500/50 sm:ring-emerald-500/20 sm:bg-neutral-900/95'
+            'w-full h-10 pl-9 pr-9 rounded-xl bg-neutral-900/60 border border-white/10 backdrop-blur-xl text-base sm:text-xs text-white placeholder:text-neutral-400 focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20 transition-colors shadow-lg',
+            isExpanded && 'sm:border-white/30 sm:ring-white/20 sm:bg-neutral-900/80'
           )}
         />
 
         {isLoading ? (
-          <Loader2 className="absolute right-3 w-4 h-4 text-emerald-400 animate-spin pointer-events-none" />
+          <Loader2 className="absolute right-3 w-4 h-4 text-white animate-spin pointer-events-none" />
         ) : query ? (
           <button
             type="button"
@@ -205,7 +205,7 @@ export const MapSearchOverlay: React.FC<MapSearchOverlayProps> = ({
 
       {/* Autocomplete Dropdown */}
       {isOpen && (results.length > 0 || (!isLoading && query.trim().length >= 2)) && (
-        <div className="absolute top-12 left-0 right-0 z-50 rounded-2xl bg-neutral-950/95 border border-emerald-500/30 backdrop-blur-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150 max-h-[45vh] sm:max-h-64 flex flex-col">
+        <div className="absolute top-12 left-0 right-0 z-50 rounded-2xl bg-neutral-950/85 border border-white/20 backdrop-blur-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150 max-h-[45vh] sm:max-h-64 flex flex-col">
           {results.length > 0 ? (
             <>
               <div className="p-1.5 space-y-1 overflow-y-auto max-h-40 sm:max-h-56 overscroll-contain">
@@ -220,9 +220,9 @@ export const MapSearchOverlay: React.FC<MapSearchOverlayProps> = ({
                       onClick={() => handleSelect(item)}
                       onMouseEnter={() => setSelectedIndex(idx)}
                       className={cn(
-                        'group w-full text-left p-2.5 sm:p-2 rounded-xl flex items-center justify-between gap-3 text-xs transition-all cursor-pointer active:bg-emerald-500/25',
+                        'group w-full text-left p-2.5 sm:p-2 rounded-xl flex items-center justify-between gap-3 text-xs transition-all cursor-pointer',
                         isSelected
-                          ? 'bg-gradient-to-r from-emerald-500/25 to-emerald-500/10 border border-emerald-500/40 text-white shadow-md'
+                          ? 'premium-glass border-white/30 text-white shadow-md'
                           : 'border border-transparent text-neutral-300 hover:bg-white/5 hover:text-white'
                       )}
                     >
@@ -231,19 +231,14 @@ export const MapSearchOverlay: React.FC<MapSearchOverlayProps> = ({
                           className={cn(
                             'w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors',
                             isSelected
-                              ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/40'
-                              : 'bg-white/5 text-neutral-400 group-hover:text-emerald-400 group-hover:bg-emerald-500/10'
+                              ? 'premium-glass text-white border border-white/20'
+                              : 'bg-white/5 text-neutral-400 group-hover:text-white group-hover:bg-white/10'
                           )}
                         >
                           <MapPin className="w-3.5 h-3.5" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p
-                            className={cn(
-                              'font-semibold truncate transition-colors',
-                              isSelected ? 'text-emerald-200' : 'text-white'
-                            )}
-                          >
+                          <p className="font-semibold truncate text-white">
                             {main}
                           </p>
                           {secondary && (
@@ -259,7 +254,7 @@ export const MapSearchOverlay: React.FC<MapSearchOverlayProps> = ({
                         className={cn(
                           'shrink-0 flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-lg transition-all',
                           isSelected
-                            ? 'opacity-100 bg-emerald-500 text-neutral-950 shadow-sm'
+                            ? 'opacity-100 premium-glass text-white border border-white/20 shadow-sm'
                             : 'opacity-0 group-hover:opacity-70 text-neutral-400 bg-white/5'
                         )}
                       >

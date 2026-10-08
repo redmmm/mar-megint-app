@@ -7,7 +7,6 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -236,14 +235,14 @@ export const SpotSubmissionModal: React.FC<SpotSubmissionModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto bg-background/95 backdrop-blur-xl border border-white/10 text-foreground">
+      <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto bg-neutral-950/80 backdrop-blur-2xl border border-white/15 text-foreground">
         <DialogHeader>
           <div className="flex items-center gap-2 mb-1">
-            <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-              <MapPin className="w-5 h-5" />
+            <div className="p-2 rounded-xl premium-glass border border-white/20 text-white">
+              <MapPin className="w-5 h-5 text-white" />
             </div>
             <div>
-              <DialogTitle className="text-xl font-bold">Új Győri Spot Beküldése</DialogTitle>
+              <DialogTitle className="text-xl font-bold text-white">Új Győri Spot Beküldése</DialogTitle>
               <DialogDescription className="text-xs text-neutral-400">
                 Oszd meg a kedvenc skate helyedet a közösséggel.
               </DialogDescription>
@@ -261,7 +260,7 @@ export const SpotSubmissionModal: React.FC<SpotSubmissionModalProps> = ({
           {/* Spot Title */}
           <div className="space-y-1.5">
             <Label htmlFor="spot-title" className="text-xs font-semibold uppercase text-neutral-300">
-              Spot Neve <span className="text-emerald-400">*</span>
+              Spot Neve <span className="text-white/60">*</span>
             </Label>
             <Input
               id="spot-title"
@@ -276,7 +275,7 @@ export const SpotSubmissionModal: React.FC<SpotSubmissionModalProps> = ({
           {/* Spot Type Selector */}
           <div className="space-y-1.5">
             <Label className="text-xs font-semibold uppercase text-neutral-300">
-              Spot Típusa <span className="text-emerald-400">*</span>
+              Spot Típusa <span className="text-white/60">*</span>
             </Label>
             <div className="grid grid-cols-3 gap-2">
               <button
@@ -285,7 +284,7 @@ export const SpotSubmissionModal: React.FC<SpotSubmissionModalProps> = ({
                 className={cn(
                   "flex flex-col sm:flex-row items-center justify-center gap-1.5 p-2.5 rounded-xl border text-xs font-semibold transition-all text-center",
                   spotType === 'skatepark'
-                    ? "bg-emerald-500/20 border-emerald-500 text-emerald-400 shadow-lg shadow-emerald-500/10"
+                    ? "premium-glass border-white/30 text-white font-semibold shadow-md"
                     : "bg-white/[0.03] border-white/10 text-neutral-400 hover:bg-white/[0.06] hover:text-white"
                 )}
               >
@@ -297,7 +296,7 @@ export const SpotSubmissionModal: React.FC<SpotSubmissionModalProps> = ({
                 className={cn(
                   "flex flex-col sm:flex-row items-center justify-center gap-1.5 p-2.5 rounded-xl border text-xs font-semibold transition-all text-center",
                   spotType === 'street_spot'
-                    ? "bg-emerald-500/20 border-emerald-500 text-emerald-400 shadow-lg shadow-emerald-500/10"
+                    ? "premium-glass border-white/30 text-white font-semibold shadow-md"
                     : "bg-white/[0.03] border-white/10 text-neutral-400 hover:bg-white/[0.06] hover:text-white"
                 )}
               >
@@ -309,7 +308,7 @@ export const SpotSubmissionModal: React.FC<SpotSubmissionModalProps> = ({
                 className={cn(
                   "flex flex-col sm:flex-row items-center justify-center gap-1.5 p-2.5 rounded-xl border text-xs font-semibold transition-all text-center",
                   spotType === 'skateshop'
-                    ? "bg-amber-500/20 border-amber-500 text-amber-400 shadow-lg shadow-amber-500/10"
+                    ? "premium-glass border-white/30 text-white font-semibold shadow-md"
                     : "bg-white/[0.03] border-white/10 text-neutral-400 hover:bg-white/[0.06] hover:text-white"
                 )}
               >
@@ -340,7 +339,7 @@ export const SpotSubmissionModal: React.FC<SpotSubmissionModalProps> = ({
                       className={cn(
                         "flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-lg border text-xs font-medium transition-all text-center",
                         isSelected
-                          ? "bg-emerald-500/20 border-emerald-400 text-emerald-400 font-semibold shadow-sm"
+                          ? "premium-glass border-white/30 text-white font-semibold shadow-md"
                           : "bg-white/[0.03] border-white/10 text-neutral-400 hover:text-neutral-200 hover:bg-white/[0.06]"
                       )}
                     >
@@ -428,9 +427,9 @@ export const SpotSubmissionModal: React.FC<SpotSubmissionModalProps> = ({
             )}
 
             {images.length < 2 && (
-              <label className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-white/15 hover:border-emerald-500/50 rounded-xl cursor-pointer bg-neutral-950/50 hover:bg-neutral-950 transition text-center group">
+              <label className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-white/20 hover:border-white/40 rounded-xl cursor-pointer bg-neutral-950/50 hover:bg-neutral-950/80 transition text-center group">
                 <div className="flex items-center gap-2 text-xs font-medium text-neutral-200">
-                  <Upload className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
+                  <Upload className="w-4 h-4 text-white group-hover:scale-110 transition-transform" />
                   <span>{isUploading ? statusText || 'Kép feldolgozása...' : `Kép kiválasztása (${images.length}/2)`}</span>
                 </div>
                 <span className="text-[10px] text-neutral-400 mt-1">
@@ -451,7 +450,7 @@ export const SpotSubmissionModal: React.FC<SpotSubmissionModalProps> = ({
           {/* Bot Protection Challenge */}
           <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 space-y-2">
             <div className="flex items-center gap-2 text-xs font-medium text-neutral-300">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <ShieldCheck className="w-4 h-4 text-white" />
               <span>Biztonsági ellenőrzés</span>
             </div>
             <div className="flex items-center gap-3">
@@ -469,36 +468,35 @@ export const SpotSubmissionModal: React.FC<SpotSubmissionModalProps> = ({
             </div>
           </div>
 
-          <DialogFooter className="pt-1 gap-2 sm:gap-0">
-            <Button
+          <DialogFooter className="pt-1 gap-2 sm:gap-2">
+            <button
               type="button"
-              variant="outline"
               onClick={onClose}
-              className="border-white/10 hover:bg-white/5"
+              className="h-10 px-4 text-xs font-semibold rounded-xl bg-neutral-900/80 hover:bg-neutral-800/80 text-neutral-300 hover:text-white border border-white/15 backdrop-blur-xl transition-all cursor-pointer"
             >
               Mégse
-            </Button>
-            <Button
+            </button>
+            <button
               type="submit"
               disabled={isSubmitting || isUploading}
-              className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium gap-2 shadow-lg shadow-emerald-600/20"
+              className="h-10 px-5 text-xs font-semibold rounded-xl bg-neutral-900/80 hover:bg-neutral-800/80 text-white border border-white/20 backdrop-blur-xl shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin text-white" />
                   Beküldés...
                 </>
               ) : (
                 'Spot beküldése'
               )}
-            </Button>
+            </button>
           </DialogFooter>
 
           {/* Anonymous & Admin Review Notice */}
-          <div className="flex items-center justify-center gap-2 p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-[11px] text-emerald-200/90 text-center">
-            <Info className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+          <div className="flex items-center justify-center gap-2 p-2.5 rounded-xl premium-glass border border-white/15 text-[11px] text-neutral-300 text-center">
+            <Info className="w-3.5 h-3.5 text-white/80 shrink-0" />
             <span>
-              A beküldés teljesen <strong className="text-emerald-300">anonim</strong>, a spot admin jóváhagyás után jelenik meg.
+              A beküldés teljesen <strong className="text-white">anonim</strong>, a spot admin jóváhagyás után jelenik meg.
             </span>
           </div>
         </form>

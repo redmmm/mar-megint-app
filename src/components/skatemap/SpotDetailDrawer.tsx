@@ -14,8 +14,6 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@/components/ui/carousel';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { MapPin, Navigation, Copy, Check, ExternalLink, Image as ImageIcon, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -47,7 +45,7 @@ export const SpotDetailDrawer: React.FC<SpotDetailDrawerProps> = ({ spot, isOpen
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <SheetContent
         side="right"
-        className="w-full sm:max-w-md p-0 bg-background/95 backdrop-blur-xl border-l border-white/10 flex flex-col h-full overflow-hidden text-foreground"
+        className="w-full sm:max-w-md p-0 bg-neutral-950/80 backdrop-blur-2xl border-l border-white/10 flex flex-col h-full overflow-hidden text-foreground"
       >
         {/* Spot Image Carousel or Cover */}
         <div className="relative w-full aspect-video bg-neutral-900 border-b border-white/10 shrink-0">
@@ -85,19 +83,9 @@ export const SpotDetailDrawer: React.FC<SpotDetailDrawerProps> = ({ spot, isOpen
           )}
 
           <div className="absolute top-3 left-3 z-10 flex flex-col items-start gap-2">
-            <Badge
-              variant="outline"
-              className={cn(
-                "backdrop-blur-md font-semibold px-2.5 py-1 text-xs shadow-md",
-                spot.spot_type === 'skatepark'
-                  ? "bg-black/60 border-emerald-500/40 text-emerald-400"
-                  : spot.spot_type === 'skateshop'
-                  ? "bg-black/60 border-amber-500/40 text-amber-400"
-                  : "bg-black/60 border-cyan-500/40 text-cyan-400"
-              )}
-            >
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-neutral-900/80 backdrop-blur-xl border border-white/20 text-white shadow-md">
               {spot.spot_type === 'skatepark' ? '🛹 Skatepark' : spot.spot_type === 'skateshop' ? '🏪 Skateshop' : '🏙️ Street spot'}
-            </Badge>
+            </span>
 
             {/* Still orange icon-only REPORT button under the tag (no glow, no pulse) */}
             <button
@@ -119,18 +107,9 @@ export const SpotDetailDrawer: React.FC<SpotDetailDrawerProps> = ({ spot, isOpen
               {spot.title}
             </SheetTitle>
             <div className="flex flex-wrap items-center gap-1.5 pt-1">
-              <Badge
-                className={cn(
-                  "text-xs font-semibold",
-                  spot.spot_type === 'skatepark'
-                    ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
-                    : spot.spot_type === 'skateshop'
-                    ? "bg-amber-500/20 text-amber-400 border-amber-500/30"
-                    : "bg-cyan-500/20 text-cyan-400 border-cyan-500/30"
-                )}
-              >
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-neutral-900/80 backdrop-blur-xl border border-white/20 text-white shadow-sm">
                 {spot.spot_type === 'skatepark' ? '🛹 Skatepark' : spot.spot_type === 'skateshop' ? '🏪 Skateshop' : '🏙️ Street spot'}
-              </Badge>
+              </span>
               {spot.features && spot.features.map((feat) => {
                 const featureLabels: Record<string, string> = {
                   rail: '🦯 Korlát',
@@ -140,9 +119,12 @@ export const SpotDetailDrawer: React.FC<SpotDetailDrawerProps> = ({ spot, isOpen
                   flatground: '🛹 Flatground',
                 };
                 return (
-                  <Badge key={feat} variant="outline" className="border-white/15 bg-white/5 text-neutral-300 text-xs font-normal">
+                  <span
+                    key={feat}
+                    className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-normal bg-neutral-900/60 backdrop-blur-md border border-white/10 text-neutral-300"
+                  >
                     {featureLabels[feat] || feat}
-                  </Badge>
+                  </span>
                 );
               })}
             </div>
@@ -172,39 +154,35 @@ export const SpotDetailDrawer: React.FC<SpotDetailDrawerProps> = ({ spot, isOpen
             </h4>
             <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.03] border border-white/5 text-sm">
               <div className="flex items-center gap-2 text-neutral-300 font-mono text-xs">
-                <MapPin className="w-4 h-4 text-emerald-400 shrink-0" />
+                <MapPin className="w-4 h-4 text-white shrink-0" />
                 <span>
                   {spot.latitude.toFixed(6)}, {spot.longitude.toFixed(6)}
                 </span>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
+              <button
+                type="button"
                 onClick={handleCopyCoords}
-                className="h-8 px-2.5 text-xs text-neutral-300 hover:text-white hover:bg-white/10"
+                className="h-8 px-2.5 rounded-lg text-xs text-neutral-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 flex items-center transition-all cursor-pointer"
               >
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-400 mr-1" /> : <Copy className="w-3.5 h-3.5 mr-1" />}
+                {copied ? <Check className="w-3.5 h-3.5 text-white mr-1" /> : <Copy className="w-3.5 h-3.5 mr-1" />}
                 {copied ? 'Másolva' : 'Másolás'}
-              </Button>
+              </button>
             </div>
           </div>
         </div>
 
         {/* Footer Actions */}
-        <div className="p-4 border-t border-white/10 bg-background/80 backdrop-blur-md flex gap-3">
-          <Button
-            asChild
-            className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-medium shadow-lg shadow-emerald-600/20"
+        <div className="p-4 border-t border-white/10 bg-neutral-950/80 backdrop-blur-xl flex">
+          <a
+            href={googleMapsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full h-12 rounded-2xl bg-neutral-900/80 hover:bg-neutral-800/80 backdrop-blur-xl border border-white/20 text-white font-medium shadow-xl flex items-center justify-center transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
           >
-            <a href={googleMapsUrl} target="_blank" rel="noopener noreferrer">
-              <Navigation className="w-4 h-4 mr-2" />
-              Útvonaltervezés (Google Maps)
-              <ExternalLink className="w-3.5 h-3.5 ml-1 opacity-70" />
-            </a>
-          </Button>
-          <Button variant="outline" onClick={onClose} className="border-white/10 hover:bg-white/5">
-            Bezárás
-          </Button>
+            <Navigation className="w-4 h-4 mr-2 text-white" />
+            Útvonaltervezés (Google Maps)
+            <ExternalLink className="w-3.5 h-3.5 ml-1.5 opacity-70" />
+          </a>
         </div>
 
         {/* Spot Report Modal Dialog */}

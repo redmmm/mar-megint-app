@@ -11,7 +11,6 @@ import { EventNotificationBanner } from '@/components/skatemap/EventNotification
 import { getSpots } from '@/services/spotService';
 import { supabase } from '@/integrations/supabase/client';
 import { Spot } from '@/types/spot';
-import { Button } from '@/components/ui/button';
 import { MapPin, Plus, Compass, Loader2, Info, Locate, ShieldCheck, Dices, X } from 'lucide-react';
 import {
   Popover,
@@ -921,10 +920,10 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
     <div className="relative w-full h-screen h-[100dvh] overflow-hidden bg-neutral-950">
       {/* Top Glass Header & Search Overlay */}
       <header className="absolute top-4 left-4 right-4 sm:right-auto z-20 pointer-events-auto flex flex-col gap-2 max-w-full sm:max-w-4xl">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3 p-2.5 sm:px-4 sm:py-2.5 rounded-2xl bg-neutral-950/75 border border-white/10 backdrop-blur-xl shadow-2xl">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3 p-2.5 sm:px-4 sm:py-2.5 rounded-2xl bg-neutral-950/60 border border-white/15 backdrop-blur-2xl shadow-2xl">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
-              <MapPin className="w-4 h-4" />
+            <div className="w-9 h-9 rounded-xl premium-glass flex items-center justify-center text-white shrink-0">
+              <MapPin className="w-4 h-4 text-white" />
             </div>
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
@@ -932,7 +931,7 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
                   Győr Skate Map
                   <span className="sr-only"> - Győri Gördeszkás Helyek, Skateparkok és Street Spotok</span>
                 </h1>
-                <span className="inline-flex items-center justify-center min-w-[56px] text-center text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shadow-sm">
+                <span className="inline-flex items-center justify-center min-w-[56px] text-center text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full premium-glass text-white shadow-sm">
                   {randomSpotId
                     ? `1 / ${spots.length} spot`
                     : spotTypeFilter !== 'all' || selectedFeatures.length > 0
@@ -985,7 +984,7 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
                     className="max-w-[290px] bg-neutral-900/95 border border-white/15 text-neutral-200 text-xs p-3.5 backdrop-blur-xl shadow-2xl rounded-2xl space-y-2 z-50"
                   >
                     <p className="font-bold text-white flex items-center gap-1.5 text-xs">
-                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                      <ShieldCheck className="w-3.5 h-3.5 text-white" />
                       Adatfelhasználási tájékoztató
                     </p>
                     <p className="text-[11px] text-neutral-300 leading-relaxed">
@@ -1034,7 +1033,7 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
                 className={cn(
                   "px-2.5 py-1 rounded-full text-xs font-medium transition-all shrink-0 cursor-pointer",
                   spotTypeFilter === 'all' && !randomSpotId
-                    ? "bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 shadow-sm font-semibold"
+                    ? "premium-glass text-white border-white/30 font-semibold shadow-md"
                     : "text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent"
                 )}
               >
@@ -1047,7 +1046,7 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
                 className={cn(
                   "px-2.5 py-1 rounded-full text-xs font-medium transition-all shrink-0 cursor-pointer",
                   spotTypeFilter === 'skatepark' && !randomSpotId
-                    ? "bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 shadow-sm font-semibold"
+                    ? "premium-glass text-white border-white/30 font-semibold shadow-md"
                     : "text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent"
                 )}
               >
@@ -1060,7 +1059,7 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
                 className={cn(
                   "px-2.5 py-1 rounded-full text-xs font-medium transition-all shrink-0 cursor-pointer",
                   spotTypeFilter === 'street_spot' && !randomSpotId
-                    ? "bg-cyan-500/25 text-cyan-300 border border-cyan-500/40 shadow-sm font-semibold"
+                    ? "premium-glass text-white border-white/30 font-semibold shadow-md"
                     : "text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent"
                 )}
               >
@@ -1073,13 +1072,12 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
                 className={cn(
                   "px-2.5 py-1 rounded-full text-xs font-medium transition-all shrink-0 cursor-pointer",
                   spotTypeFilter === 'skateshop' && !randomSpotId
-                    ? "bg-amber-500/25 text-amber-300 border border-amber-500/40 shadow-sm font-semibold"
+                    ? "premium-glass text-white border-white/30 font-semibold shadow-md"
                     : "text-neutral-400 hover:text-white hover:bg-white/5 border border-transparent"
                 )}
               >
                 🏪 Skateshop
               </button>
-
             </div>
 
             {/* Row 2: RANDOM directly under Összes + Multi-select Features (Scrollable & visibly clipped) */}
@@ -1103,11 +1101,11 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
                   className={cn(
                     "px-2.5 py-1 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5",
                     randomSpotId
-                      ? "bg-purple-600/40 text-purple-200 border border-purple-400 shadow-[0_0_12px_rgba(168,85,247,0.4)] ring-1 ring-purple-400/50"
+                      ? "premium-glass text-white border-white/30 font-semibold shadow-md"
                       : "text-neutral-400 hover:text-white hover:bg-white/5 border border-white/5"
                   )}
                 >
-                  <Dices className={cn("w-3.5 h-3.5", randomSpotId ? "text-purple-300" : "text-neutral-400")} />
+                  <Dices className={cn("w-3.5 h-3.5", randomSpotId ? "text-white" : "text-neutral-400")} />
                   <span>RANDOM</span>
                 </button>
 
@@ -1123,12 +1121,12 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
                       className={cn(
                         "px-2.5 py-1 rounded-full text-xs font-medium transition-all shrink-0 cursor-pointer flex items-center gap-1",
                         isSelected
-                          ? "bg-emerald-500/25 text-emerald-300 border border-emerald-400 shadow-sm font-semibold ring-1 ring-emerald-400/40"
+                          ? "premium-glass text-white border-white/30 font-semibold shadow-md"
                           : "text-neutral-400 hover:text-white hover:bg-white/5 border border-white/5"
                       )}
                     >
                       {isSelected && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
                       )}
                       <span>{feat.emoji}</span>
                       <span>{feat.label}</span>
@@ -1148,12 +1146,12 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
                       className={cn(
                         "px-2.5 py-1 rounded-full text-xs font-medium transition-all shrink-0 cursor-pointer flex items-center gap-1",
                         isSelected
-                          ? "bg-emerald-500/25 text-emerald-300 border border-emerald-400 shadow-sm font-semibold ring-1 ring-emerald-400/40"
+                          ? "premium-glass text-white border-white/30 font-semibold shadow-md"
                           : "text-neutral-400 hover:text-white hover:bg-white/5 border border-white/5"
                       )}
                     >
                       {isSelected && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
                       )}
                       <span>🏷️</span>
                       <span className="capitalize">{feat}</span>
@@ -1167,7 +1165,7 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
                     type="button"
                     onClick={() => setSelectedFeatures([])}
                     title="Kiválasztott elemek törlése"
-                    className="px-2 py-1 rounded-full text-[10px] font-medium text-neutral-400 hover:text-rose-400 hover:bg-rose-500/15 border border-white/10 shrink-0 cursor-pointer flex items-center gap-1 transition-all"
+                    className="px-2 py-1 rounded-full text-[10px] font-medium text-neutral-400 hover:text-white hover:bg-white/10 border border-white/10 shrink-0 cursor-pointer flex items-center gap-1 transition-all"
                   >
                     <X className="w-3 h-3" />
                     <span>Törlés ({selectedFeatures.length})</span>
@@ -1192,19 +1190,18 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
       {/* Pin Drop Mode Banner */}
       {isAddingPin && (
         <div className="absolute top-24 left-1/2 -translate-x-1/2 z-30 pointer-events-auto animate-in fade-in slide-in-from-top-4 duration-300">
-          <div className="flex items-center gap-3 px-5 py-3 rounded-2xl bg-emerald-950/90 border border-emerald-500/40 backdrop-blur-xl shadow-2xl text-white">
-            <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+          <div className="flex items-center gap-3 px-5 py-3 rounded-2xl bg-neutral-950/75 border border-white/20 backdrop-blur-2xl shadow-2xl text-white premium-glass">
+            <div className="w-2.5 h-2.5 rounded-full bg-white animate-ping" />
             <span className="text-xs sm:text-sm font-semibold">
               Kattints a térképen Győr területére!
             </span>
-            <Button
-              size="sm"
-              variant="outline"
+            <button
+              type="button"
               onClick={handleCancelAddPin}
-              className="h-7 px-2.5 text-xs border-white/20 bg-white/10 hover:bg-white/20 text-white"
+              className="h-7 px-2.5 text-xs border border-white/20 bg-white/10 hover:bg-white/20 text-white rounded-xl transition cursor-pointer font-medium"
             >
               Mégse
-            </Button>
+            </button>
           </div>
         </div>
       )}
@@ -1215,56 +1212,57 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
         <div className="flex items-center gap-2.5">
           {/* Out of Győr info button if location was detected outside */}
           {isOutsideGyorDetected && (
-            <Button
-              size="icon"
+            <button
+              type="button"
               onClick={() => {
                 setLocErrorType('outside_gyor');
                 setIsPermissionDialogOpen(true);
               }}
               aria-label="Információ a Győr-határról és bővítésről"
-              className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 backdrop-blur-xl text-amber-300 hover:text-white hover:bg-amber-500/30 shadow-xl transition-all hover:scale-105 active:scale-95 animate-in fade-in zoom-in duration-300"
+              className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 backdrop-blur-xl text-amber-300 hover:text-white hover:bg-amber-500/30 shadow-xl transition-all hover:scale-105 active:scale-95 animate-in fade-in zoom-in duration-300 flex items-center justify-center cursor-pointer"
               title="A helyzeted Győrön kívül esik - Kattints a tájékoztatóért!"
             >
               <Info className="w-5 h-5 text-amber-400" />
-            </Button>
+            </button>
           )}
 
-          {/* Recenter Button (Iránytű) */}
-          <Button
-            size="icon"
+          {/* Recenter Button (Iránytű / Reset position) */}
+          <button
+            type="button"
             onClick={handleRecenter}
             aria-label="Vissza Győr központjához (Iránytű)"
-            className="w-12 h-12 rounded-2xl bg-neutral-950/80 border border-white/10 backdrop-blur-xl text-neutral-300 hover:text-white hover:bg-neutral-900 shadow-xl transition-all hover:scale-105 active:scale-95"
+            className="w-12 h-12 rounded-2xl bg-neutral-900/80 hover:bg-neutral-800/80 backdrop-blur-xl border border-white/20 text-white shadow-xl transition-all hover:scale-105 active:scale-95 flex items-center justify-center cursor-pointer"
             title="Vissza Győr központjához (Iránytű)"
           >
-            <Compass className="w-5 h-5" />
-          </Button>
+            <Compass className="w-5 h-5 text-white" />
+          </button>
 
           {/* Show My Location Button (Saját helyzet) - az iránytű mellett a jobb oldalon */}
-          <Button
-            size="icon"
+          <button
+            type="button"
             onClick={requestUserLocation}
             disabled={isLocating}
             aria-label="Saját helyzetem mutatása"
-            className="w-12 h-12 rounded-2xl bg-neutral-950/80 border border-white/10 backdrop-blur-xl text-neutral-300 hover:text-white hover:bg-neutral-900 shadow-xl transition-all hover:scale-105 active:scale-95"
+            className="w-12 h-12 rounded-2xl bg-neutral-900/80 hover:bg-neutral-800/80 backdrop-blur-xl border border-white/20 text-white shadow-xl transition-all hover:scale-105 active:scale-95 flex items-center justify-center disabled:opacity-50 cursor-pointer"
             title="Saját helyzetem mutatása"
           >
             {isLocating ? (
-              <Loader2 className="w-5 h-5 text-cyan-400 animate-spin" />
+              <Loader2 className="w-5 h-5 text-white animate-spin" />
             ) : (
-              <Locate className="w-5 h-5 text-cyan-400" />
+              <Locate className="w-5 h-5 text-white" />
             )}
-          </Button>
+          </button>
         </div>
 
         {/* Add Spot Button */}
-        <Button
+        <button
+          type="button"
           onClick={handleStartAddSpot}
-          className="h-12 px-5 rounded-2xl bg-neutral-950/80 border border-white/10 backdrop-blur-xl text-white font-semibold shadow-xl flex items-center gap-2 transition-all hover:scale-105 active:scale-95 hover:bg-neutral-900 hover:border-white/20"
+          className="h-12 px-5 rounded-2xl bg-neutral-900/80 hover:bg-neutral-800/80 backdrop-blur-xl border border-white/20 text-white font-semibold shadow-xl flex items-center gap-2 transition-all hover:scale-105 active:scale-95 cursor-pointer"
         >
-          <Plus className="w-5 h-5" />
+          <Plus className="w-5 h-5 text-white" />
           <span className="text-sm font-bold">Új Spot</span>
-        </Button>
+        </button>
       </div>
 
       {/* Leaflet Map Canvas */}
@@ -1277,8 +1275,8 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
       {/* Loading Overlay */}
       {isLoading && (
         <div className="absolute inset-0 z-10 bg-black/40 backdrop-blur-sm flex items-center justify-center pointer-events-none">
-          <div className="flex items-center gap-3 p-4 rounded-2xl bg-neutral-900/80 border border-white/10 text-white">
-            <Loader2 className="w-5 h-5 animate-spin text-emerald-400" />
+          <div className="flex items-center gap-3 p-4 rounded-2xl premium-glass border border-white/15 text-white backdrop-blur-xl">
+            <Loader2 className="w-5 h-5 animate-spin text-white" />
             <span className="text-sm font-medium">Győri spotok betöltése...</span>
           </div>
         </div>
