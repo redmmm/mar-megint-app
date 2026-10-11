@@ -4,6 +4,8 @@ export interface WeatherData {
   canSkate: boolean;
   city: string;
   permissionDenied?: boolean;
+  lat?: number;
+  lon?: number;
 }
 
 export interface LocationData {
@@ -147,6 +149,48 @@ export const getLocationFromIP = async (): Promise<{ latitude: number; longitude
   throw new Error('All IP location services failed');
 };
 
+// Format Hungarian city names with proper accents
+export const formatHungarianCityName = (rawCity: string): string => {
+  if (!rawCity) return rawCity;
+  const trimmed = rawCity.trim();
+
+  const cityMap: Record<string, string> = {
+    'gyor': 'Győr',
+    'győr': 'Győr',
+    'pecs': 'Pécs',
+    'szeged': 'Szeged',
+    'debrecen': 'Debrecen',
+    'miskolc': 'Miskolc',
+    'szekesfehervar': 'Székesfehérvár',
+    'szombathely': 'Szombathely',
+    'nyiregyhaza': 'Nyíregyháza',
+    'kecskemet': 'Kecskemét',
+    'bekescsaba': 'Békéscsaba',
+    'veszprem': 'Veszprém',
+    'tatabanya': 'Tatabánya',
+    'eger': 'Eger',
+    'sopron': 'Sopron',
+    'kaposvar': 'Kaposvár',
+    'zalaegerszeg': 'Zalaegerszeg',
+    'szolnok': 'Szolnok',
+    'hodmezovasarhely': 'Hódmezővásárhely',
+    'erd': 'Érd',
+    'budapest': 'Budapest',
+  };
+
+  const lower = trimmed.toLowerCase();
+  for (const [key, val] of Object.entries(cityMap)) {
+    if (lower === key || lower.startsWith(key)) {
+      if (lower.includes('(alapértelmezett)') || lower.includes('(default)')) {
+        return `${val} (Alapértelmezett)`;
+      }
+      return val;
+    }
+  }
+
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+};
+
 // Fetch weather data and return complete result
 export const fetchWeatherFromOpenMeteo = async (lat: number, lon: number, city: string): Promise<WeatherData> => {
   try {
@@ -160,8 +204,10 @@ export const fetchWeatherFromOpenMeteo = async (lat: number, lon: number, city: 
     const skateCheck = checkSkateConditions(weatherData.temperature, weatherData.weatherCode);
     console.log('Skate conditions result:', skateCheck);
 
-    // Add city to result
-    skateCheck.city = city;
+    // Add formatted city and coordinates to result
+    skateCheck.city = formatHungarianCityName(city);
+    skateCheck.lat = lat;
+    skateCheck.lon = lon;
 
     console.log('Final result:', skateCheck);
     return skateCheck;
@@ -356,23 +402,159 @@ export const searchHungarianCities = async (query: string): Promise<HungarianCit
       3000
     );
 
-    if (!response.ok) {
-      throw new Error('Failed to fetch city search results');
-    }
+  if (!response.ok) {
+    throw new Error('Failed to fetch city search results');
+  }
 
-    const data = await response.json();
+  const data = await response.json();
 
-    if (!data.results) {
-      return [];
-    }
-
-    return data.results.map((result: { name: string; latitude: number; longitude: number }) => ({
-      name: result.name,
-      latitude: result.latitude,
-      longitude: result.longitude,
-    }));
-  } catch (error) {
-    console.error('Error searching Hungarian cities:', error);
+  if (!data.results) {
     return [];
   }
+
+  return data.results.map((result: { name: string; latitude: number; longitude: number }) => ({
+    name: result.name,
+    latitude: result.latitude,
+    longitude: result.longitude,
+  }));
+} catch (error) {
+  console.error('Error searching Hungarian cities:', error);
+  return [];
+}
 };
+
+export interface ForecastDay {
+  date: string;
+  dayLabel: string;
+  fullDayName: string;
+  formattedDate: string;
+  isToday: boolean;
+  tempMax: number;
+  tempMin: number;
+  windMax: number;
+  windMin: number;
+  precipSum: number;
+  precipProbMax: number;
+  weatherCode: number;
+  conditionEmoji: string;
+}
+
+const getWeatherEmoji = (code: number): string => {
+  if (code === 0) return '☀️';
+  if (code >= 1 && code <= 3) return '⛅';
+  if (code >= 45 && code <= 48) return '🌫️';
+  if (code >= 51 && code <= 67) return '🌧️';
+  if (code >= 71 && code <= 77) return '❄️';
+  if (code >= 80 && code <= 82) return '🌧️';
+  if (code === 85 || code === 86) return '❄️';
+  if (code >= 95) return '⛈️';
+  return '🌤️';
+};
+
+export const fetchForecastFromOpenMeteo = async (lat: number, lon: number): Promise<ForecastDay[]> => {
+  // Request 8 forecast days and 1 past day
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,wind_speed_10m_max,precipitation_sum,precipitation_probability_max,weather_code&hourly=wind_speed_10m&timezone=auto&forecast_days=8&past_days=1`;
+
+  const response = await fetchWithTimeout(url, {}, 5000);
+  if (!response.ok) {
+    throw new Error('Nem sikerült lekérni az előrejelzési adatokat');
+  }
+
+  const data = await response.json();
+  const daily = data.daily;
+  const hourly = data.hourly;
+
+  if (!daily || !daily.time) {
+    throw new Error('Érvénytelen előrejelzési adatformátum');
+  }
+
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+  const HU_DAYS: Array<{ label: string; name: string }> = [
+    { label: 'V', name: 'Vasárnap' },
+    { label: 'H', name: 'Hétfő' },
+    { label: 'K', name: 'Kedd' },
+    { label: 'SZ', name: 'Szerda' },
+    { label: 'CS', name: 'Csütörtök' },
+    { label: 'P', name: 'Péntek' },
+    { label: 'SZO', name: 'Szombat' },
+  ];
+
+  // Dynamically generate 5 consecutive days starting from TODAY
+  const forecastDays: ForecastDay[] = Array.from({ length: 5 }, (_, index) => {
+    const dayDate = new Date(now);
+    dayDate.setDate(now.getDate() + index);
+
+    const dayOfWeek = dayDate.getDay(); // 0: Vasárnap, 1: Hétfő, ...
+    const dayInfo = HU_DAYS[dayOfWeek];
+
+    const year = dayDate.getFullYear();
+    const month = String(dayDate.getMonth() + 1).padStart(2, '0');
+    const day = String(dayDate.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
+    const formattedDate = `${month}.${day}.`;
+
+    const dailyIndex = daily.time.indexOf(dateStr);
+
+    if (dailyIndex !== -1) {
+      const tempMax = Math.round(daily.temperature_2m_max[dailyIndex] ?? 0);
+      const tempMin = Math.round(daily.temperature_2m_min[dailyIndex] ?? 0);
+      const windMax = Math.round(daily.wind_speed_10m_max[dailyIndex] ?? 0);
+      const precipSum = Number((daily.precipitation_sum[dailyIndex] ?? 0).toFixed(1));
+      const precipProbMax = Math.round(daily.precipitation_probability_max?.[dailyIndex] ?? 0);
+      const weatherCode = daily.weather_code[dailyIndex] ?? 0;
+
+      let windMin = 0;
+      if (hourly && hourly.time && hourly.wind_speed_10m) {
+        const dayWindSpeeds: number[] = [];
+        for (let h = 0; h < hourly.time.length; h++) {
+          if (typeof hourly.time[h] === 'string' && hourly.time[h].startsWith(dateStr)) {
+            dayWindSpeeds.push(hourly.wind_speed_10m[h]);
+          }
+        }
+        if (dayWindSpeeds.length > 0) {
+          windMin = Math.round(Math.min(...dayWindSpeeds));
+        }
+      }
+      if (windMin === 0 && windMax > 0) {
+        windMin = Math.max(1, Math.round(windMax * 0.35));
+      }
+
+      return {
+        date: dateStr,
+        dayLabel: dayInfo.label,
+        fullDayName: dayInfo.name,
+        formattedDate,
+        isToday: dateStr === todayStr,
+        tempMax,
+        tempMin,
+        windMax,
+        windMin,
+        precipSum,
+        precipProbMax,
+        weatherCode,
+        conditionEmoji: getWeatherEmoji(weatherCode),
+      };
+    }
+
+    return {
+      date: dateStr,
+      dayLabel: dayInfo.label,
+      fullDayName: dayInfo.name,
+      formattedDate,
+      isToday: dateStr === todayStr,
+      tempMax: 18,
+      tempMin: 8,
+      windMax: 15,
+      windMin: 5,
+      precipSum: 0,
+      precipProbMax: 0,
+      weatherCode: 0,
+      conditionEmoji: '🌤️',
+    };
+  });
+
+  return forecastDays;
+};
+

@@ -1,14 +1,32 @@
 import { useState } from 'react';
-import { Loader2, Search, X } from 'lucide-react';
+import { Loader2, Search, X, ArrowRight, ChevronLeft, Thermometer, Wind, CloudRain } from 'lucide-react';
 import SpotlightCard from './SpotlightCard';
-import { getSkateWeatherCheck, WeatherData, searchHungarianCities, HungarianCityResult, fetchWeatherFromOpenMeteo } from '@/services/weatherService';
+import {
+  getSkateWeatherCheck,
+  WeatherData,
+  searchHungarianCities,
+  HungarianCityResult,
+  fetchWeatherFromOpenMeteo,
+  fetchForecastFromOpenMeteo,
+  ForecastDay,
+  formatHungarianCityName,
+} from '@/services/weatherService';
 
 type WeatherState = 'initial' | 'loading' | 'result';
+type ViewMode = 'simple' | 'forecast';
+type ForecastMetric = 'temp' | 'wind' | 'rain';
 
 export const WeatherCheck = () => {
   const [weatherState, setWeatherState] = useState<WeatherState>('initial');
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Advanced Forecast State
+  const [viewMode, setViewMode] = useState<ViewMode>('simple');
+  const [forecastDays, setForecastDays] = useState<ForecastDay[] | null>(null);
+  const [isForecastLoading, setIsForecastLoading] = useState(false);
+  const [forecastError, setForecastError] = useState<string | null>(null);
+  const [forecastMetric, setForecastMetric] = useState<ForecastMetric>('temp');
 
   // Search functionality state
   const [searchQuery, setSearchQuery] = useState('');
@@ -18,6 +36,8 @@ export const WeatherCheck = () => {
 
   const handleCheckWeather = async () => {
     setWeatherState('loading');
+    setViewMode('simple');
+    setForecastDays(null);
     setError(null);
 
     try {
@@ -32,11 +52,31 @@ export const WeatherCheck = () => {
 
   const handleReset = () => {
     setWeatherState('initial');
+    setViewMode('simple');
     setWeatherData(null);
+    setForecastDays(null);
     setError(null);
     setShowSearch(false);
     setSearchQuery('');
     setSearchResults([]);
+  };
+
+  const handleOpenForecast = async () => {
+    setViewMode('forecast');
+    if (!forecastDays && weatherData) {
+      setIsForecastLoading(true);
+      setForecastError(null);
+      try {
+        const lat = weatherData.lat ?? 47.6875;
+        const lon = weatherData.lon ?? 17.6504;
+        const days = await fetchForecastFromOpenMeteo(lat, lon);
+        setForecastDays(days);
+      } catch (err) {
+        setForecastError(err instanceof Error ? err.message : 'Nem sikerült lekérni az előrejelzést');
+      } finally {
+        setIsForecastLoading(false);
+      }
+    }
   };
 
   // Search functionality
@@ -48,8 +88,8 @@ export const WeatherCheck = () => {
       try {
         const results = await searchHungarianCities(query);
         setSearchResults(results);
-      } catch (error) {
-        console.error('Search failed:', error);
+      } catch (searchErr) {
+        console.error('Search failed:', searchErr);
         setSearchResults([]);
       } finally {
         setIsSearching(false);
@@ -61,6 +101,8 @@ export const WeatherCheck = () => {
 
   const handleCitySelect = async (city: HungarianCityResult) => {
     setWeatherState('loading');
+    setViewMode('simple');
+    setForecastDays(null);
     setError(null);
     setSearchQuery('');
     setSearchResults([]);
@@ -84,107 +126,293 @@ export const WeatherCheck = () => {
       <div className="flex items-center justify-center w-full animate-fade-in-up">
         <SpotlightCard
           spotlightColor="rgba(255, 255, 255, 0.12)"
-          className="w-full max-w-lg mx-auto rounded-[2rem] border border-white/10 hover:border-white/20 bg-neutral-950/70 backdrop-blur-xl p-8 sm:p-12 text-center transition-all duration-500 hover:shadow-[0_0_60px_rgba(255,255,255,0.08)]"
+          className="w-full max-w-lg mx-auto rounded-[2rem] border border-white/10 hover:border-white/20 bg-neutral-950/70 backdrop-blur-xl p-8 sm:p-12 text-center transition-all duration-500 hover:shadow-[0_0_60px_rgba(255,255,255,0.08)] overflow-hidden"
         >
-          <div className="relative z-10 flex flex-col items-center w-full text-center">
-            {/* Temperature Display */}
-            <div className="flex items-center justify-center gap-3">
-              <span className="text-6xl sm:text-7xl font-black text-white drop-shadow-sm">
-                {Math.round(weatherData.temp)}°
-              </span>
-              <span className="text-3xl sm:text-4xl">{emoji}</span>
-            </div>
-
-            {/* City */}
-            <div className="flex flex-col items-center gap-1 mt-4">
-              <p className="text-sm font-semibold tracking-wide text-neutral-300">
-                {weatherData.city}
-              </p>
-              {weatherData.permissionDenied && (
-                <p className="text-xs text-amber-400 font-medium">
-                  Helyadatok visszautasítva. Alapértelmezett helyszín betöltve.
-                </p>
-              )}
-            </div>
-
-            {/* Message */}
-            <p className="text-lg sm:text-xl font-bold leading-relaxed text-white mt-4 max-w-md">
-              {weatherData.conditionText}
-            </p>
-
-            {/* Reset Button (Liquid Glass) */}
-            <button
-              onClick={handleReset}
-              className="mt-6 px-6 py-2.5 premium-glass premium-glass-hover text-white rounded-full text-sm font-bold shadow-md hover:scale-105 active:scale-95 transition-all duration-350 cursor-pointer"
+          {viewMode === 'simple' ? (
+            <div
+              key="simple-view"
+              className="relative z-10 flex flex-col items-center w-full text-center transition-all duration-450 [transition-timing-function:cubic-bezier(0.25,0.46,0.45,0.94)] animate-in fade-in slide-in-from-left-6"
             >
-              Új ellenőrzés
-            </button>
+              {/* Temperature Display */}
+              <div className="flex items-center justify-center gap-3">
+                <span className="text-6xl sm:text-7xl font-black text-white drop-shadow-sm">
+                  {Math.round(weatherData.temp)}°
+                </span>
+                <span className="text-3xl sm:text-4xl">{emoji}</span>
+              </div>
 
-            {/* Search Section */}
-            <div className="mt-6 w-full max-w-sm">
-              {!showSearch ? (
+              {/* City */}
+              <div className="flex flex-col items-center gap-1 mt-4">
+                <p className="text-sm font-semibold tracking-wide text-neutral-300">
+                  {formatHungarianCityName(weatherData.city)}
+                </p>
+                {weatherData.permissionDenied && (
+                  <p className="text-xs text-amber-400 font-medium">
+                    Helyadatok visszautasítva. Alapértelmezett helyszín betöltve.
+                  </p>
+                )}
+              </div>
+
+              {/* Message */}
+              <p className="text-lg sm:text-xl font-bold leading-relaxed text-white mt-4 max-w-md">
+                {weatherData.conditionText}
+              </p>
+
+              {/* Action Buttons: Left = Új ellenőrzés, Right = Előrejelzés */}
+              <div className="mt-6 w-full max-w-sm flex items-center justify-between gap-3">
                 <button
-                  onClick={() => setShowSearch(true)}
-                  className="w-full px-4 py-2.5 premium-glass premium-glass-hover text-neutral-200 hover:text-white rounded-xl flex items-center justify-center gap-2 text-sm font-semibold transition-all duration-350 hover:scale-[1.02] active:scale-95 cursor-pointer"
+                  onClick={handleReset}
+                  className="flex-1 px-4 py-2.5 premium-glass premium-glass-hover text-white rounded-full text-sm font-bold shadow-md hover:scale-105 active:scale-95 transition-all duration-350 cursor-pointer text-center"
                 >
-                  <Search className="w-4 h-4" />
-                  <span>Város keresése</span>
+                  Új ellenőrzés
                 </button>
-              ) : (
-                <div className="relative animate-in fade-in zoom-in-95 duration-350">
-                  <div className="relative">
-                    <input
-                      type="text"
-                      autoComplete="off"
-                      spellCheck={false}
-                      value={searchQuery}
-                      onChange={(e) => handleSearchChange(e.target.value)}
-                      placeholder="Város keresése..."
-                      className="w-full p-3 pr-10 bg-neutral-900/90 border border-white/20 text-white placeholder:text-neutral-400 rounded-xl focus:border-white/40 focus:bg-neutral-800/95 focus:outline-none text-sm transition-all duration-350 shadow-inner"
-                    />
-                    <button
-                      onClick={() => {
-                        setShowSearch(false);
-                        setSearchQuery('');
-                        setSearchResults([]);
-                      }}
-                      aria-label="Keresés bezárása"
-                      className="absolute right-2.5 top-1/2 transform -translate-y-1/2 p-1 rounded-full text-neutral-400 hover:text-white hover:bg-white/10 transition-all duration-300 hover:rotate-90 active:scale-90 cursor-pointer"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
+                <button
+                  onClick={handleOpenForecast}
+                  className="flex-1 px-4 py-2.5 premium-glass premium-glass-hover text-white rounded-full text-sm font-bold shadow-md hover:scale-105 active:scale-95 transition-all duration-350 cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <span>Előrejelzés</span>
+                  <ArrowRight className="w-4 h-4 text-white" />
+                </button>
+              </div>
 
-                  {/* Search Results Dropdown */}
-                  {(searchResults.length > 0 || isSearching) && (
-                    <div className="absolute top-full left-0 right-0 mt-1.5 bg-neutral-900/95 border border-white/15 rounded-xl shadow-2xl z-20 max-h-48 overflow-y-auto backdrop-blur-xl animate-in fade-in slide-in-from-top-2 duration-300">
-                      {isSearching ? (
-                        <div className="px-4 py-3 text-sm text-neutral-400 flex items-center gap-2">
-                          <Loader2 className="w-4 h-4 animate-spin text-white" />
-                          Keresés...
-                        </div>
-                      ) : (
-                        searchResults.map((city, index) => (
-                          <button
-                            key={index}
-                            onClick={() => handleCitySelect(city)}
-                            className="w-full px-4 py-2.5 text-left text-neutral-200 hover:text-white hover:bg-white/10 transition-colors duration-300 first:rounded-t-xl last:rounded-b-xl text-sm active:scale-[0.99] cursor-pointer"
-                          >
-                            <span>{city.name}</span>
-                          </button>
-                        ))
-                      )}
+              {/* Search Section */}
+              <div className="mt-6 w-full max-w-sm">
+                {!showSearch ? (
+                  <button
+                    onClick={() => setShowSearch(true)}
+                    className="w-full px-4 py-2.5 premium-glass premium-glass-hover text-neutral-200 hover:text-white rounded-xl flex items-center justify-center gap-2 text-sm font-semibold transition-all duration-350 hover:scale-[1.02] active:scale-95 cursor-pointer"
+                  >
+                    <Search className="w-4 h-4" />
+                    <span>Város keresése</span>
+                  </button>
+                ) : (
+                  <div className="relative animate-in fade-in zoom-in-95 duration-350">
+                    <div className="relative">
+                      <input
+                        type="text"
+                        autoComplete="off"
+                        spellCheck={false}
+                        value={searchQuery}
+                        onChange={(e) => handleSearchChange(e.target.value)}
+                        placeholder="Város keresése..."
+                        className="w-full p-3 pr-10 bg-neutral-900/90 border border-white/20 text-white placeholder:text-neutral-400 rounded-xl focus:border-white/40 focus:bg-neutral-800/95 focus:outline-none text-sm transition-all duration-350 shadow-inner"
+                      />
+                      <button
+                        onClick={() => {
+                          setShowSearch(false);
+                          setSearchQuery('');
+                          setSearchResults([]);
+                        }}
+                        aria-label="Keresés bezárása"
+                        className="absolute right-2.5 top-1/2 transform -translate-y-1/2 p-1 rounded-full text-neutral-400 hover:text-white hover:bg-white/10 transition-all duration-300 hover:rotate-90 active:scale-90 cursor-pointer"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
                     </div>
-                  )}
+
+                    {/* Search Results Dropdown */}
+                    {(searchResults.length > 0 || isSearching) && (
+                      <div className="absolute top-full left-0 right-0 mt-1.5 bg-neutral-900/95 border border-white/15 rounded-xl shadow-2xl z-20 max-h-48 overflow-y-auto backdrop-blur-xl animate-in fade-in slide-in-from-top-2 duration-300">
+                        {isSearching ? (
+                          <div className="px-4 py-3 text-sm text-neutral-400 flex items-center gap-2">
+                            <Loader2 className="w-4 h-4 animate-spin text-white" />
+                            Keresés...
+                          </div>
+                        ) : (
+                          searchResults.map((city, index) => (
+                            <button
+                              key={index}
+                              onClick={() => handleCitySelect(city)}
+                              className="w-full px-4 py-2.5 text-left text-neutral-200 hover:text-white hover:bg-white/10 transition-colors duration-300 first:rounded-t-xl last:rounded-b-xl text-sm active:scale-[0.99] cursor-pointer"
+                            >
+                              <span>{city.name}</span>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Legal / Info Text */}
+              <p className="mt-6 text-center text-[11px] text-neutral-500 leading-relaxed max-w-xs mx-auto">
+                A helyadatokat (GPS/IP) kizárólag a pontos időjárás megjelenítéséhez használjuk. Az oldal ingyenes és reklámmentes, adataidat nem tároljuk.
+              </p>
+            </div>
+          ) : (
+            <div
+              key="forecast-view"
+              className="relative z-10 flex flex-col items-center w-full text-center transition-all duration-450 [transition-timing-function:cubic-bezier(0.25,0.46,0.45,0.94)] animate-in fade-in slide-in-from-right-6"
+            >
+              {/* Header: Back Button, Centered Title & City Info */}
+              <div className="w-full grid grid-cols-3 items-center pb-3 border-b border-white/10">
+                <div className="flex justify-start">
+                  <button
+                    onClick={() => setViewMode('simple')}
+                    className="px-3.5 py-1.5 premium-glass premium-glass-hover text-white rounded-full text-xs font-semibold shadow-sm hover:scale-105 active:scale-95 transition-all duration-350 cursor-pointer flex items-center gap-1.5"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5 text-white" />
+                    <span>Vissza</span>
+                  </button>
+                </div>
+
+                <div className="flex justify-center text-center">
+                  <h3 className="text-base sm:text-lg font-black text-white tracking-tight drop-shadow-sm whitespace-nowrap">
+                    Előrejelzés
+                  </h3>
+                </div>
+
+                <div className="flex justify-end text-right">
+                  <p className="text-xs font-bold text-neutral-200 tracking-wide truncate max-w-[110px] sm:max-w-[150px]">
+                    {formatHungarianCityName(weatherData.city)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Metric Selector Tabs */}
+              <div className="mt-4 w-full flex items-center p-1 rounded-2xl bg-white/[0.04] border border-white/10 backdrop-blur-md">
+                <button
+                  onClick={() => setForecastMetric('temp')}
+                  className={`flex-1 py-1.5 px-2 rounded-xl text-xs font-bold transition-all duration-350 flex items-center justify-center gap-1.5 cursor-pointer ${
+                    forecastMetric === 'temp'
+                      ? 'bg-white/15 text-white shadow-sm border border-white/20'
+                      : 'text-neutral-400 hover:text-white border border-transparent'
+                  }`}
+                >
+                  <Thermometer className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Hőmérséklet</span>
+                  <span className="sm:hidden">Hőm.</span>
+                </button>
+                <button
+                  onClick={() => setForecastMetric('wind')}
+                  className={`flex-1 py-1.5 px-2 rounded-xl text-xs font-bold transition-all duration-350 flex items-center justify-center gap-1.5 cursor-pointer ${
+                    forecastMetric === 'wind'
+                      ? 'bg-white/15 text-white shadow-sm border border-white/20'
+                      : 'text-neutral-400 hover:text-white border border-transparent'
+                  }`}
+                >
+                  <Wind className="w-3.5 h-3.5" />
+                  <span>Szél</span>
+                </button>
+                <button
+                  onClick={() => setForecastMetric('rain')}
+                  className={`flex-1 py-1.5 px-2 rounded-xl text-xs font-bold transition-all duration-350 flex items-center justify-center gap-1.5 cursor-pointer ${
+                    forecastMetric === 'rain'
+                      ? 'bg-white/15 text-white shadow-sm border border-white/20'
+                      : 'text-neutral-400 hover:text-white border border-transparent'
+                  }`}
+                >
+                  <CloudRain className="w-3.5 h-3.5" />
+                  <span>Csapadék</span>
+                </button>
+              </div>
+
+              {/* Loading State */}
+              {isForecastLoading && (
+                <div className="my-10 flex flex-col items-center justify-center gap-3">
+                  <Loader2 className="w-7 h-7 text-white animate-spin" />
+                  <p className="text-xs text-neutral-400 font-medium">Előrejelzés betöltése...</p>
                 </div>
               )}
-            </div>
 
-            {/* Legal / Info Text */}
-            <p className="mt-6 text-center text-[11px] text-neutral-500 leading-relaxed max-w-xs mx-auto">
-              A helyadatokat (GPS/IP) kizárólag a pontos időjárás megjelenítéséhez használjuk. Az oldal ingyenes és reklámmentes, adataidat nem tároljuk.
-            </p>
-          </div>
+              {/* Error State */}
+              {forecastError && !isForecastLoading && (
+                <div className="my-8 text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 px-4 py-2.5 rounded-xl">
+                  {forecastError}
+                </div>
+              )}
+
+              {/* Forecast Grid: H, K, SZ, CS, P */}
+              {forecastDays && !isForecastLoading && (
+                <div className="mt-5 w-full grid grid-cols-5 gap-1.5 sm:gap-2">
+                  {forecastDays.map((day) => (
+                    <div
+                      key={day.date}
+                      className={`flex flex-col items-center justify-between p-2 sm:p-2.5 rounded-2xl border transition-all duration-350 ${
+                        day.isToday
+                          ? 'bg-white/[0.08] border-white/30 shadow-[0_0_20px_rgba(255,255,255,0.06)]'
+                          : 'bg-white/[0.03] border-white/10 hover:border-white/20 hover:bg-white/[0.05]'
+                      }`}
+                    >
+                      {/* Day Label & Date */}
+                      <div className="flex flex-col items-center gap-0.5">
+                        <span className="text-xs sm:text-sm font-black text-white">
+                          {day.dayLabel}
+                        </span>
+                        <span className="text-[10px] text-neutral-400 font-medium leading-none">
+                          {day.formattedDate}
+                        </span>
+                      </div>
+
+                      {/* Weather Icon */}
+                      <div className="my-2 text-xl sm:text-2xl transition-transform duration-350 hover:scale-110">
+                        {day.conditionEmoji}
+                      </div>
+
+                      {/* Metric Display */}
+                      {forecastMetric === 'temp' && (
+                        <div className="flex flex-col items-center w-full">
+                          <span className="text-sm sm:text-base font-black text-white">
+                            {day.tempMax}°
+                          </span>
+                          <span className="text-[11px] font-semibold text-neutral-400">
+                            {day.tempMin}°
+                          </span>
+                          <span className="text-[9px] uppercase tracking-wider text-neutral-500 font-medium mt-0.5">
+                            max / min
+                          </span>
+                        </div>
+                      )}
+
+                      {forecastMetric === 'wind' && (
+                        <div className="flex flex-col items-center w-full">
+                          <div className="flex items-baseline gap-0.5">
+                            <span className="text-xs sm:text-sm font-black text-white">
+                              {day.windMax}
+                            </span>
+                            <span className="text-[8px] sm:text-[9px] font-bold text-neutral-400">
+                              KM/H
+                            </span>
+                          </div>
+                          <div className="flex items-baseline gap-0.5">
+                            <span className="text-[10px] font-semibold text-neutral-400">
+                              {day.windMin}
+                            </span>
+                            <span className="text-[7px] sm:text-[8px] font-medium text-neutral-500">
+                              KM/H
+                            </span>
+                          </div>
+                          <span className="text-[9px] uppercase tracking-wider text-neutral-500 font-medium mt-0.5">
+                            max / min
+                          </span>
+                        </div>
+                      )}
+
+                      {forecastMetric === 'rain' && (
+                        <div className="flex flex-col items-center w-full">
+                          <span className="text-xs sm:text-sm font-black text-white">
+                            {day.precipSum} <span className="text-[9px] font-normal text-neutral-400">mm</span>
+                          </span>
+                          <span className="text-[10px] font-semibold text-cyan-400">
+                            {day.precipProbMax}%
+                          </span>
+                          <span className="text-[9px] uppercase tracking-wider text-neutral-500 font-medium mt-0.5">
+                            össz / esély
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Legal / Info Text */}
+              <p className="mt-6 text-center text-[11px] text-neutral-500 leading-relaxed max-w-xs mx-auto">
+                A helyadatokat (GPS/IP) kizárólag a pontos időjárás megjelenítéséhez használjuk. Az oldal ingyenes és reklámmentes, adataidat nem tároljuk.
+              </p>
+            </div>
+          )}
         </SpotlightCard>
       </div>
     );
