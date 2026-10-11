@@ -1,5 +1,13 @@
-// YouTube integration using Invidious API with CORS proxy
-import { fetchVideos, fetchChannelInfo, CHANNELS as SERVICE_CHANNELS, YouTubeVideo, YouTubeChannel } from '@/services/youtubeService';
+import {
+  fetchVideos,
+  fetchChannelInfo,
+  getInitialVideos,
+  CHANNELS as SERVICE_CHANNELS,
+  YouTubeVideo,
+  YouTubeChannel
+} from '@/services/youtubeService';
+
+export { getInitialVideos };
 
 // Channel IDs
 export const CHANNELS = {

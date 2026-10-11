@@ -8,9 +8,11 @@ import {
   YouTubePlaylist,
   fetchRSSVideos,
   fetchRSSPlaylistVideos,
+  getInitialVideos,
 } from '@/lib/youtube';
 
-const REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes
+const STALE_TIME = 10 * 60 * 1000; // 10 minutes cache freshness
+const REFRESH_INTERVAL = 15 * 60 * 1000; // 15 minutes background poll to avoid rate limiting
 
 export const useYouTubeVideos = (channelTag: ChannelTag) => {
   const channel = Object.values(CHANNELS).find(c => c.tag === channelTag);
@@ -27,14 +29,19 @@ export const useYouTubeVideos = (channelTag: ChannelTag) => {
 
       try {
         const videos = await fetchRSSVideos(channel.id);
-        return videos;
+        if (videos && videos.length > 0) {
+          return videos;
+        }
+        return getInitialVideos(channel.id);
       } catch (error) {
-        console.error('Error fetching YouTube videos:', error);
-        return [];
+        console.error('Error fetching YouTube videos, using fallback:', error);
+        return getInitialVideos(channel.id);
       }
     },
-    staleTime: REFRESH_INTERVAL,
+    initialData: () => (channel ? getInitialVideos(channel.id) : []),
+    staleTime: STALE_TIME,
     refetchInterval: REFRESH_INTERVAL,
+    refetchOnWindowFocus: false,
   });
 
   // Track new videos
