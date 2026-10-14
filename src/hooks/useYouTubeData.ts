@@ -11,8 +11,8 @@ import {
   getInitialVideos,
 } from '@/lib/youtube';
 
-const STALE_TIME = 10 * 60 * 1000; // 10 minutes cache freshness
-const REFRESH_INTERVAL = 15 * 60 * 1000; // 15 minutes background poll to avoid rate limiting
+const STALE_TIME = 2 * 60 * 1000; // 2 minutes cache freshness
+const REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes background poll to keep updated
 
 export const useYouTubeVideos = (channelTag: ChannelTag) => {
   const channel = Object.values(CHANNELS).find(c => c.tag === channelTag);
@@ -38,10 +38,10 @@ export const useYouTubeVideos = (channelTag: ChannelTag) => {
         return getInitialVideos(channel.id);
       }
     },
-    initialData: () => (channel ? getInitialVideos(channel.id) : []),
+    placeholderData: () => (channel ? getInitialVideos(channel.id) : []),
     staleTime: STALE_TIME,
     refetchInterval: REFRESH_INTERVAL,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
   });
 
   // Track new videos

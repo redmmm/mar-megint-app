@@ -41,6 +41,14 @@ export const FALLBACK_VIDEOS: Record<string, YouTubeVideo[]> = {
   // Már megint játszunk?
   'UC3IL6CkeCRCmMRd6Pv5OSHg': [
     {
+      id: 'g02_e7IQXME',
+      title: 'Felvittünk egy HULLÁT egy ÉPÍTKEZÉS TETEJÉRE 👷| Shady job',
+      description: 'Fejest ugrottunk a Shady Job nevű kaotikus építkezős friendslop játékba. Egy maffiózó megfenyegetett minket...',
+      thumbnail: 'https://i.ytimg.com/vi/g02_e7IQXME/hqdefault.jpg',
+      publishedAt: '2026-10-13T14:30:24+00:00',
+      channelTitle: 'Már megint játszunk?'
+    },
+    {
       id: 'swpPf8nzt6Q',
       title: 'MEGPRÓBÁLTUNK TÚLÉLNI egy ELÁTKOZOTT KÁRTYAJÁTÉKOT🃏 | The Cabin Game',
       description: 'Fejest ugrottunk a The Cabin Game nevű elátkozott kártyajátékba! Egy sötét erdei faházban próbáltunk túlélni...',
@@ -78,14 +86,6 @@ export const FALLBACK_VIDEOS: Record<string, YouTubeVideo[]> = {
       description: 'Majdnem egy év várakozás után végre megérkezett az új Escape the Backrooms update...',
       thumbnail: 'https://i.ytimg.com/vi/1tVCdYvOf8A/hqdefault.jpg',
       publishedAt: '2026-09-08T14:30:29+00:00',
-      channelTitle: 'Már megint játszunk?'
-    },
-    {
-      id: '81GGeSZwITY',
-      title: '13 órát sétáltunk, hogy neked NE KELLJEN🚶 | Big Walk',
-      description: 'Ebben a videóban óriási fába vágtuk a fejszénket! Közel 13 órányi tömény bolyongást és káoszt sűrítettünk össze...',
-      thumbnail: 'https://i.ytimg.com/vi/81GGeSZwITY/hqdefault.jpg',
-      publishedAt: '2026-09-01T14:30:09+00:00',
       channelTitle: 'Már megint játszunk?'
     }
   ],
@@ -142,19 +142,44 @@ export const FALLBACK_VIDEOS: Record<string, YouTubeVideo[]> = {
   ]
 };
 
-const CACHE_PREFIX = 'mma_yt_cache_';
+const CACHE_PREFIX = 'mma_yt_cache_v2_';
+export const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes cache freshness
+
+interface CachedVideoPayload {
+  timestamp: number;
+  videos: YouTubeVideo[];
+}
 
 /**
  * Retrieve cached videos from localStorage
+ * @param maxAgeMs Maximum allowed age of cache in ms (default 5 min). Pass Infinity to accept any cached data.
  */
-export const getCachedVideos = (channelId: string): YouTubeVideo[] | null => {
+export const getCachedVideos = (channelId: string, maxAgeMs = CACHE_TTL_MS): YouTubeVideo[] | null => {
   try {
     const raw = localStorage.getItem(`${CACHE_PREFIX}${channelId}`);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      return parsed;
+    if (raw) {
+      const parsed: CachedVideoPayload = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.videos) && parsed.videos.length > 0) {
+        if (typeof parsed.timestamp === 'number') {
+          const age = Date.now() - parsed.timestamp;
+          if (age <= maxAgeMs) {
+            return parsed.videos;
+          }
+        } else if (maxAgeMs === Infinity) {
+          return parsed.videos;
+        }
+      }
     }
+
+    // Check legacy v1 cache if allowed
+    const legacyRaw = localStorage.getItem(`mma_yt_cache_${channelId}`);
+    if (legacyRaw && maxAgeMs === Infinity) {
+      const legacyParsed = JSON.parse(legacyRaw);
+      if (Array.isArray(legacyParsed) && legacyParsed.length > 0) {
+        return legacyParsed;
+      }
+    }
+
     return null;
   } catch (err) {
     console.warn('Failed to parse cached YouTube videos:', err);
@@ -163,12 +188,18 @@ export const getCachedVideos = (channelId: string): YouTubeVideo[] | null => {
 };
 
 /**
- * Store fetched videos in localStorage
+ * Store fetched videos in localStorage with a timestamp
  */
 export const setCachedVideos = (channelId: string, videos: YouTubeVideo[]): void => {
   try {
     if (videos && videos.length > 0) {
-      localStorage.setItem(`${CACHE_PREFIX}${channelId}`, JSON.stringify(videos));
+      const payload: CachedVideoPayload = {
+        timestamp: Date.now(),
+        videos,
+      };
+      localStorage.setItem(`${CACHE_PREFIX}${channelId}`, JSON.stringify(payload));
+      // Remove deprecated cache key
+      localStorage.removeItem(`mma_yt_cache_${channelId}`);
     }
   } catch (err) {
     console.warn('Failed to save YouTube videos to cache:', err);
@@ -179,7 +210,7 @@ export const setCachedVideos = (channelId: string, videos: YouTubeVideo[]): void
  * Return initial videos from cache or seed data for instant, non-empty rendering
  */
 export const getInitialVideos = (channelId: string): YouTubeVideo[] => {
-  const cached = getCachedVideos(channelId);
+  const cached = getCachedVideos(channelId, Infinity);
   if (cached && cached.length > 0) {
     return cached;
   }
@@ -197,24 +228,40 @@ export const parseYouTubeXml = (xmlText: string): YouTubeVideo[] => {
 
     return entries.map((entry) => {
       const videoId =
+        entry.getElementsByTagNameNS('*', 'videoId')[0]?.textContent ||
         entry.getElementsByTagName('yt:videoId')[0]?.textContent ||
         entry.getElementsByTagName('videoId')[0]?.textContent ||
-        entry.getElementsByTagName('id')[0]?.textContent?.replace('yt:video:', '') ||
+        entry.getElementsByTagName('id')[0]?.textContent?.replace(/^yt:video:/, '') ||
         '';
 
-      const title = entry.getElementsByTagName('title')[0]?.textContent || 'Untitled Video';
-      const published = entry.getElementsByTagName('published')[0]?.textContent || new Date().toISOString();
-      const author = entry.getElementsByTagName('name')[0]?.textContent || 'Unknown Channel';
+      const title =
+        entry.getElementsByTagName('title')[0]?.textContent ||
+        entry.getElementsByTagNameNS('*', 'title')[0]?.textContent ||
+        'Untitled Video';
+
+      const published =
+        entry.getElementsByTagName('published')[0]?.textContent ||
+        entry.getElementsByTagNameNS('*', 'published')[0]?.textContent ||
+        new Date().toISOString();
+
+      const author =
+        entry.getElementsByTagName('name')[0]?.textContent ||
+        entry.getElementsByTagNameNS('*', 'name')[0]?.textContent ||
+        'Unknown Channel';
+
       const description =
+        entry.getElementsByTagNameNS('*', 'description')[0]?.textContent ||
         entry.getElementsByTagName('media:description')[0]?.textContent ||
         entry.getElementsByTagName('description')[0]?.textContent ||
         '';
 
+      const cleanId = videoId.trim();
+
       return {
-        id: videoId.trim(),
+        id: cleanId,
         title: decodeHtml(title).trim(),
         description: description.trim(),
-        thumbnail: `https://i.ytimg.com/vi/${videoId.trim()}/hqdefault.jpg`,
+        thumbnail: `https://i.ytimg.com/vi/${cleanId}/hqdefault.jpg`,
         publishedAt: published,
         channelTitle: decodeHtml(author).trim(),
       };
@@ -233,6 +280,7 @@ const fetchViaDevProxy = async (channelId: string): Promise<YouTubeVideo[] | nul
     const proxyUrl = `/api/youtube-feed?channel_id=${channelId}`;
     const response = await fetch(proxyUrl, {
       method: 'GET',
+      signal: AbortSignal.timeout(5000),
       headers: {
         Accept: 'application/xml, text/xml',
       },
@@ -253,10 +301,51 @@ const fetchViaDevProxy = async (channelId: string): Promise<YouTubeVideo[] | nul
       return parsed;
     }
     return null;
-  } catch (error) {
-    // If proxy is not available (e.g. production build), silently return null
+  } catch {
     return null;
   }
+};
+
+/**
+ * Fetch videos using public CORS proxies for direct official YouTube Atom feeds (for production)
+ */
+const fetchViaCorsProxy = async (channelId: string): Promise<YouTubeVideo[] | null> => {
+  const rssUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
+  const proxyEndpoints = [
+    `https://cors-anywhere.fly.dev/${rssUrl}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(rssUrl)}`,
+  ];
+
+  for (const endpoint of proxyEndpoints) {
+    try {
+      const response = await fetch(endpoint, {
+        method: 'GET',
+        signal: AbortSignal.timeout(6000),
+        headers: {
+          Accept: 'application/xml, text/xml, */*',
+        },
+      });
+
+      if (!response.ok) {
+        continue;
+      }
+
+      const xmlText = await response.text();
+      if (!xmlText || !xmlText.includes('<entry>')) {
+        continue;
+      }
+
+      const parsed = parseYouTubeXml(xmlText);
+      if (parsed.length > 0) {
+        console.log(`[YouTube] Successfully fetched ${parsed.length} videos via CORS Proxy.`);
+        return parsed;
+      }
+    } catch {
+      // Continue to next proxy candidate
+    }
+  }
+
+  return null;
 };
 
 /**
@@ -269,6 +358,7 @@ const fetchViaRss2Json = async (channelId: string): Promise<YouTubeVideo[] | nul
 
     const response = await fetch(apiUrl, {
       method: 'GET',
+      signal: AbortSignal.timeout(6000),
       headers: {
         Accept: 'application/json',
       },
@@ -300,10 +390,10 @@ const fetchViaRss2Json = async (channelId: string): Promise<YouTubeVideo[] | nul
       }
 
       return {
-        id: videoId,
+        id: videoId.trim(),
         title: decodeHtml(item.title) || 'Untitled Video',
         description: item.description || '',
-        thumbnail: item.thumbnail || `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+        thumbnail: item.thumbnail || `https://i.ytimg.com/vi/${videoId.trim()}/hqdefault.jpg`,
         publishedAt: item.pubDate || new Date().toISOString(),
         channelTitle: item.author || 'Unknown Channel',
       };
@@ -324,11 +414,13 @@ const fetchViaRss2Json = async (channelId: string): Promise<YouTubeVideo[] | nul
 /**
  * Multi-layer fetchVideos:
  * 1. Try local dev proxy (if on localhost / Vite dev server)
- * 2. Try rss2json.com
- * 3. Fallback to localStorage cache
- * 4. Fallback to seed data
+ * 2. Try direct CORS proxies (fetches official YouTube Atom XML feed with latest 15 videos)
+ * 3. Try rss2json.com API
+ * 4. Try local dev proxy fallback
+ * 5. Fallback to localStorage cache
+ * 6. Fallback to seed data
  *
- * Guarantees that valid videos are NEVER wiped out with an empty state.
+ * Guarantees that valid videos are NEVER wiped out with an empty state and new videos are fetched immediately.
  */
 export const fetchVideos = async (channelId: string): Promise<YouTubeVideo[]> => {
   // 1. Try Vite dev proxy first if in development mode
@@ -340,14 +432,21 @@ export const fetchVideos = async (channelId: string): Promise<YouTubeVideo[]> =>
     }
   }
 
-  // 2. Try rss2json API
+  // 2. Try direct CORS proxies (fast, reliable Atom XML parsing from YouTube)
+  const corsVideos = await fetchViaCorsProxy(channelId);
+  if (corsVideos && corsVideos.length > 0) {
+    setCachedVideos(channelId, corsVideos);
+    return corsVideos;
+  }
+
+  // 3. Try rss2json API
   const rss2JsonVideos = await fetchViaRss2Json(channelId);
   if (rss2JsonVideos && rss2JsonVideos.length > 0) {
     setCachedVideos(channelId, rss2JsonVideos);
     return rss2JsonVideos;
   }
 
-  // 3. If running in production but Vite dev proxy wasn't tried, attempt it as secondary fallback (e.g. if served locally)
+  // 4. If running in production but Vite dev proxy wasn't tried, attempt it as secondary fallback (e.g. if served locally or preview)
   if (!import.meta.env.DEV) {
     const devProxyFallback = await fetchViaDevProxy(channelId);
     if (devProxyFallback && devProxyFallback.length > 0) {
@@ -356,14 +455,14 @@ export const fetchVideos = async (channelId: string): Promise<YouTubeVideo[]> =>
     }
   }
 
-  // 4. Network failed or rate-limited: Fallback to persistent localStorage cache
-  const cached = getCachedVideos(channelId);
+  // 5. Network failed or offline: Fallback to persistent localStorage cache
+  const cached = getCachedVideos(channelId, Infinity);
   if (cached && cached.length > 0) {
-    console.info(`[YouTube] Network unavailable or rate-limited. Serving ${cached.length} videos from persistent cache.`);
+    console.info(`[YouTube] Network unavailable. Serving ${cached.length} videos from persistent cache.`);
     return cached;
   }
 
-  // 5. If fresh visit and no cache exists: Fallback to seed videos
+  // 6. If fresh visit and no cache exists: Fallback to seed videos
   const fallback = FALLBACK_VIDEOS[channelId] || [];
   console.info(`[YouTube] Network unavailable and no cache found. Serving ${fallback.length} fallback seed videos.`);
   return fallback;

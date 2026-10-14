@@ -6,7 +6,8 @@ import PremiumBackground from '@/components/PremiumBackground';
 import { useYouTubeVideos } from '@/hooks/useYouTubeData';
 import { CHANNELS, ChannelTag } from '@/lib/youtube';
 import { useSEO } from '@/hooks/useSEO';
-import { Loader2, Video, AlertCircle } from 'lucide-react';
+import { Loader2, Video, AlertCircle, RefreshCw } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const ChannelDashboard = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -30,6 +31,8 @@ const ChannelDashboard = () => {
   const {
     data: videos,
     isLoading: videosLoading,
+    isFetching,
+    refetch,
     error: videosError,
     hasNewVideos,
     markVideosAsSeen,
@@ -53,11 +56,23 @@ const ChannelDashboard = () => {
         <div className="container mx-auto max-w-7xl">
           {/* Section: Latest Videos */}
           <section>
-            <div className="flex items-center gap-3 mb-6 animate-fade-in-up">
-              <div className="premium-glass p-2.5 rounded-full inline-flex items-center justify-center text-white">
-                <Video className="w-5 h-5" />
+            <div className="flex items-center justify-between gap-3 mb-6 animate-fade-in-up">
+              <div className="flex items-center gap-3">
+                <div className="premium-glass p-2.5 rounded-full inline-flex items-center justify-center text-white">
+                  <Video className="w-5 h-5" />
+                </div>
+                <h2 className="text-2xl font-bold text-gradient">Legújabb videók</h2>
               </div>
-              <h2 className="text-2xl font-bold text-gradient">Legújabb videók</h2>
+
+              <button
+                onClick={() => refetch()}
+                disabled={isFetching}
+                className="premium-glass px-3.5 py-1.5 rounded-full text-xs font-medium text-white/80 hover:text-white flex items-center gap-2 transition-all hover:bg-white/10 active:scale-95 disabled:opacity-50 cursor-pointer"
+                title="Videók frissítése"
+              >
+                <RefreshCw className={cn("w-3.5 h-3.5", isFetching && "animate-spin")} />
+                <span className="hidden sm:inline">{isFetching ? "Frissítés..." : "Frissítés"}</span>
+              </button>
             </div>
 
             {videosLoading ? (
