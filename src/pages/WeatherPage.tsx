@@ -18,7 +18,7 @@ const WeatherPage = () => {
           dotSize={3}
           gap={18}
           proximity={110}
-          shockRadius={220}
+          shockRadius={120}
           shockStrength={4}
           returnDuration={1.2}
           colorScheme="white"

@@ -222,12 +222,18 @@ const DotGrid: React.FC<DotGridProps> = ({
       pr.y = e.clientY - rect.top;
 
       for (const dot of dotsRef.current) {
-        const dist = Math.hypot(dot.cx - pr.x, dot.cy - pr.y);
-        if (speed > speedTrigger && dist < proximity && !dot._inertiaApplied) {
+        const dx = dot.cx - pr.x;
+        const dy = dot.cy - pr.y;
+        const dist = Math.hypot(dx, dy);
+        if (speed > speedTrigger && dist < proximity && dist > 0.1 && !dot._inertiaApplied) {
           dot._inertiaApplied = true;
           gsap.killTweensOf(dot);
-          const pushX = (dot.cx - pr.x) * 0.4 + vx * 0.005;
-          const pushY = (dot.cy - pr.y) * 0.4 + vy * 0.005;
+          const t = 1 - dist / proximity;
+          const nx = dx / dist;
+          const ny = dy / dist;
+          const force = t * 12;
+          const pushX = nx * force + vx * 0.004;
+          const pushY = ny * force + vy * 0.004;
           gsap.to(dot, {
             xOffset: pushX,
             yOffset: pushY,
@@ -254,17 +260,25 @@ const DotGrid: React.FC<DotGridProps> = ({
       const cx = e.clientX - rect.left;
       const cy = e.clientY - rect.top;
       for (const dot of dotsRef.current) {
-        const dist = Math.hypot(dot.cx - cx, dot.cy - cy);
-        if (dist < shockRadius && !dot._inertiaApplied) {
+        const dx = dot.cx - cx;
+        const dy = dot.cy - cy;
+        const dist = Math.hypot(dx, dy);
+        if (dist < shockRadius && dist > 0.1 && !dot._inertiaApplied) {
           dot._inertiaApplied = true;
           gsap.killTweensOf(dot);
-          const falloff = Math.max(0, 1 - dist / shockRadius);
-          const pushX = (dot.cx - cx) * shockStrength * falloff;
-          const pushY = (dot.cy - cy) * shockStrength * falloff;
+          // Quadratic falloff for a tight, natural ripple
+          const t = 1 - dist / shockRadius;
+          const falloff = t * t;
+          // Normalize direction and apply capped force
+          const nx = dx / dist;
+          const ny = dy / dist;
+          const maxPush = shockStrength * 8;
+          const pushX = nx * maxPush * falloff;
+          const pushY = ny * maxPush * falloff;
           gsap.to(dot, {
             xOffset: pushX,
             yOffset: pushY,
-            duration: 0.5,
+            duration: 0.4,
             ease: 'power2.out',
             onComplete: () => {
               gsap.to(dot, {

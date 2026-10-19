@@ -45,12 +45,13 @@ export const PlaylistCard = ({ playlist, variant = 'a' }: PlaylistCardProps) => 
           
           {/* Play button */}
           <div className={cn(
-            'inline-flex items-center gap-1.5 mt-3 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300',
+            'inline-flex items-center gap-1.5 mt-3 px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300',
+            'premium-glass border border-white/20 text-white backdrop-blur-md shadow-sm',
             variant === 'a' 
-              ? 'bg-primary/20 text-primary group-hover:bg-primary group-hover:text-primary-foreground' 
-              : 'bg-secondary/20 text-secondary group-hover:bg-secondary group-hover:text-secondary-foreground'
+              ? 'hover:border-[#5c9884]/60 hover:text-emerald-300' 
+              : 'hover:border-[#b0223b]/60 hover:text-rose-300'
           )}>
-            <Play className="w-3 h-3" />
+            <Play className="w-3 h-3 fill-current" />
             <span>Lejátszás</span>
           </div>
         </div>

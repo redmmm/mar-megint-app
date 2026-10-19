@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query';
-import { useState, useEffect, useCallback } from 'react';
 import {
   CHANNELS,
   CONFIGURED_PLAYLISTS,
@@ -11,15 +10,12 @@ import {
   getInitialVideos,
 } from '@/lib/youtube';
 
-const STALE_TIME = 2 * 60 * 1000; // 2 minutes cache freshness
 const REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes background poll to keep updated
 
 export const useYouTubeVideos = (channelTag: ChannelTag) => {
   const channel = Object.values(CHANNELS).find(c => c.tag === channelTag);
-  const [seenVideoIds, setSeenVideoIds] = useState<Set<string>>(new Set());
-  const [hasNewVideos, setHasNewVideos] = useState(false);
 
-  const query = useQuery<YouTubeVideo[]>({
+  return useQuery<YouTubeVideo[]>({
     queryKey: ['youtube-videos', channelTag],
     queryFn: async () => {
       if (!channel) {
@@ -38,43 +34,11 @@ export const useYouTubeVideos = (channelTag: ChannelTag) => {
         return getInitialVideos(channel.id);
       }
     },
-    placeholderData: () => (channel ? getInitialVideos(channel.id) : []),
-    staleTime: STALE_TIME,
+    staleTime: 0,
+    refetchOnMount: 'always',
     refetchInterval: REFRESH_INTERVAL,
     refetchOnWindowFocus: true,
   });
-
-  // Track new videos
-  useEffect(() => {
-    if (query.data && query.data.length > 0) {
-      const currentIds = new Set(query.data.map(v => v.id));
-      
-      if (seenVideoIds.size > 0) {
-        const newVideos = query.data.filter(v => !seenVideoIds.has(v.id));
-        if (newVideos.length > 0) {
-          setHasNewVideos(true);
-        }
-      }
-      
-      // Update seen videos on initial load
-      if (seenVideoIds.size === 0) {
-        setSeenVideoIds(currentIds);
-      }
-    }
-  }, [query.data, seenVideoIds]);
-
-  const markVideosAsSeen = useCallback(() => {
-    if (query.data) {
-      setSeenVideoIds(new Set(query.data.map(v => v.id)));
-      setHasNewVideos(false);
-    }
-  }, [query.data]);
-
-  return {
-    ...query,
-    hasNewVideos,
-    markVideosAsSeen,
-  };
 };
 
 export const useYouTubePlaylists = (channelTag: ChannelTag) => {
