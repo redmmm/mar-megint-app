@@ -33,8 +33,8 @@ export const ChannelCard = ({ name, slug, variant, description }: ChannelCardPro
         }
       }}
       className={cn(
-        'group cursor-pointer select-none w-full h-full min-h-[460px] md:min-h-full',
-        'flex flex-col items-center justify-center p-8 md:p-12 lg:p-14 text-center',
+        'group cursor-pointer select-none w-full h-full min-h-[320px] md:min-h-full',
+        'flex flex-col items-center justify-center p-6 md:p-12 lg:p-14 text-center',
         'rounded-[2rem] border border-white/10',
         'bg-neutral-950/70 backdrop-blur-xl',
         'transition-all duration-500 focus:outline-none focus-visible:ring-2',
@@ -46,12 +46,12 @@ export const ChannelCard = ({ name, slug, variant, description }: ChannelCardPro
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
         {/* Profile Image */}
-        <div className="relative mb-5">
+        <div className="relative mb-3 md:mb-5">
           <img
             src={isA ? marmegintLogo : jatszunkLogo}
             alt={isA ? 'Már megint Logo' : 'Már megint játszunk Logo'}
             className={cn(
-              'w-24 h-24 rounded-full border-2 border-white/20 shadow-2xl object-cover transition-all duration-500',
+              'w-20 h-20 md:w-24 md:h-24 rounded-full border-2 border-white/20 shadow-2xl object-cover transition-all duration-500',
               isA
                 ? 'group-hover:border-[#5c9884] group-hover:shadow-[0_0_30px_rgba(92,152,132,0.5)]'
                 : 'group-hover:border-[#b0223b] group-hover:shadow-[0_0_30px_rgba(176,34,59,0.5)]'
@@ -60,13 +60,13 @@ export const ChannelCard = ({ name, slug, variant, description }: ChannelCardPro
         </div>
 
         {/* Channel indicator badge */}
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wider mb-6 premium-glass text-white transition-all duration-350 group-hover:border-white/20">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wider mb-4 md:mb-6 premium-glass text-white transition-all duration-350 group-hover:border-white/20">
           <span className="text-base">{emoji}</span>
           <span>CSATORNA</span>
         </div>
 
         {/* Title */}
-        <h2 className="text-2xl sm:text-3xl md:text-3xl lg:text-4xl font-black text-center mb-4 tracking-tight text-white drop-shadow-sm">
+        <h2 className="text-2xl sm:text-3xl md:text-3xl lg:text-4xl font-black text-center mb-2 md:mb-4 tracking-tight text-white drop-shadow-sm">
           {name}
         </h2>
 
