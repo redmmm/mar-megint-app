@@ -336,9 +336,7 @@ const SkateMapPage: React.FC = () => {
       });
     }
 
-    toast.success(`🎲 Kiválasztott spot: ${picked.title}`, {
-      description: 'A többi spot elrejtve. Kattints az "Összes"-re a visszaállításhoz.',
-    });
+
   };
   const [isLoading, setIsLoading] = useState(true);
   const [isLocating, setIsLocating] = useState(false);
