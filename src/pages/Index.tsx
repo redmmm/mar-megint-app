@@ -5,10 +5,10 @@ import { useSEO } from '@/hooks/useSEO';
 
 const Index = () => {
   useSEO({
-    title: 'Már Megint Hub & Győr Skate Map | Győri Gördeszkás Térkép és Közösség',
+    title: 'Már Megint Hub & Győr Skate Map',
     description: 'A hivatalos Már Megint Hub és Győr Skate Map. Fedezd fel Győr legjobb gördeszkás helyeit, street spotjait, skateparkjait, a legújabb videókat és gördeszkás időjárást!',
     keywords: 'már megint hub, győr skatemap, győri skate map, skatemap győr, győr gördeszka, győri skatepark, skate spotok győr, már megint, már megint játszunk, marmegint hub',
-    ogTitle: 'Már Megint Hub & Győr Skate Map | Győri Gördeszkás Térkép',
+    ogTitle: 'Már Megint Hub & Győr Skate Map',
   });
 
   return (
@@ -26,7 +26,7 @@ const Index = () => {
       </div>
 
       {/* Visually Hidden SEO Heading for Google Crawlers */}
-      <h1 className="sr-only">Már Megint Hub &amp; Győr Skate Map - Hivatalos Győri Gördeszkás Térkép</h1>
+      <h1 className="sr-only">Már Megint Hub &amp; Győr Skate Map</h1>
 
       {/* Centered Container with Fixed Height */}
       <main className="relative z-10 w-full max-w-6xl px-4">
