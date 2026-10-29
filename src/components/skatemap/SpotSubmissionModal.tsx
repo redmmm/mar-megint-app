@@ -11,8 +11,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Upload, X, MapPin, ShieldCheck, Check, Info } from 'lucide-react';
+import { Loader2, Upload, X, MapPin, ShieldCheck, Check, Info, ShieldAlert } from 'lucide-react';
 import { submitSpot, uploadSpotImage } from '@/services/spotService';
+import { getLockdownStatus } from '@/services/lockdownService';
 import { compressImage, formatBytes } from '@/utils/imageCompressor';
 import { SpotType } from '@/types/spot';
 import { cn } from '@/lib/utils';
@@ -67,6 +68,10 @@ export const SpotSubmissionModal: React.FC<SpotSubmissionModalProps> = ({
   const [numB, setNumB] = useState(4);
   const [mathAnswer, setMathAnswer] = useState('');
 
+  // Lockdown state
+  const [isLockdownActive, setIsLockdownActive] = useState(false);
+  const [isCheckingLockdown, setIsCheckingLockdown] = useState(false);
+
   useEffect(() => {
     if (initialCoords) {
       setLat(initialCoords.lat.toFixed(6));
@@ -83,6 +88,19 @@ export const SpotSubmissionModal: React.FC<SpotSubmissionModalProps> = ({
       setNumB(b);
       setMathAnswer('');
       setErrorMessage(null);
+
+      // Check lockdown status
+      setIsCheckingLockdown(true);
+      getLockdownStatus()
+        .then((status) => {
+          setIsLockdownActive(status.isLocked);
+        })
+        .catch(() => {
+          setIsLockdownActive(false);
+        })
+        .finally(() => {
+          setIsCheckingLockdown(false);
+        });
     }
   }, [isOpen]);
 
@@ -225,9 +243,14 @@ export const SpotSubmissionModal: React.FC<SpotSubmissionModalProps> = ({
       setMathAnswer('');
       onClose();
       if (onSuccess) onSuccess();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Hiba a beküldéskor:', err);
-      setErrorMessage('Hiba történt a spot beküldésekor. Kérjük próbáld újra később!');
+      if (err?.message === 'LOCKDOWN') {
+        setIsLockdownActive(true);
+        setErrorMessage(null);
+      } else {
+        setErrorMessage('Hiba történt a spot beküldésekor. Kérjük próbáld újra később!');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -249,6 +272,36 @@ export const SpotSubmissionModal: React.FC<SpotSubmissionModalProps> = ({
             </div>
           </div>
         </DialogHeader>
+
+        {/* ── Lockdown Overlay ─────────────────────────────────────────── */}
+        {isCheckingLockdown ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-4 animate-in fade-in duration-300">
+            <Loader2 className="w-8 h-8 animate-spin text-white/40" />
+            <p className="text-sm text-neutral-400">Ellenőrzés...</p>
+          </div>
+        ) : isLockdownActive ? (
+          <div className="flex flex-col items-center justify-center py-12 gap-5 animate-in fade-in zoom-in-95 duration-500">
+            <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 shadow-lg shadow-red-500/5">
+              <ShieldAlert className="w-10 h-10 text-red-400" />
+            </div>
+            <div className="text-center space-y-2 max-w-sm">
+              <h3 className="text-lg font-bold text-white">
+                Spot küldés szünetel
+              </h3>
+              <p className="text-sm text-neutral-300 leading-relaxed">
+                Jelenleg rövid ideig nem lehet spotokat küldeni. Nézz vissza később.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="mt-2 h-10 px-6 text-xs font-semibold rounded-xl bg-neutral-900/80 hover:bg-neutral-800/80 text-neutral-300 hover:text-white border border-white/15 backdrop-blur-xl transition-all duration-350 hover:scale-[1.02] active:scale-95 cursor-pointer"
+            >
+              Bezárás
+            </button>
+          </div>
+        ) : (
+        <>
 
         {errorMessage && (
           <Alert variant="destructive" className="py-2 text-sm bg-destructive/10 border-destructive/30">
@@ -501,6 +554,8 @@ export const SpotSubmissionModal: React.FC<SpotSubmissionModalProps> = ({
             </span>
           </div>
         </form>
+        </>
+        )}
       </DialogContent>
     </Dialog>
   );

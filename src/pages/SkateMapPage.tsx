@@ -8,6 +8,7 @@ import { MapSearchOverlay } from '@/components/skatemap/MapSearchOverlay';
 import { LocationPermissionDialog } from '@/components/skatemap/LocationPermissionDialog';
 import { EventNotificationBanner } from '@/components/skatemap/EventNotificationBanner';
 import { getSpots } from '@/services/spotService';
+import { getLockdownStatus } from '@/services/lockdownService';
 import { supabase } from '@/integrations/supabase/client';
 import { Spot } from '@/types/spot';
 import { MapPin, Plus, Compass, Loader2, Info, Locate, ShieldCheck, Dices, X } from 'lucide-react';
@@ -892,7 +893,17 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
     }
   };
 
-  const handleStartAddSpot = () => {
+  const handleStartAddSpot = async () => {
+    try {
+      const status = await getLockdownStatus();
+      if (status.isLocked) {
+        setTempCoords(null);
+        setIsModalOpen(true);
+        return;
+      }
+    } catch {
+      // Fallback
+    }
     setIsAddingPin(true);
     toast.info('Kattints a térképre a kívánt ponton az új spot elhelyezéséhez!');
   };

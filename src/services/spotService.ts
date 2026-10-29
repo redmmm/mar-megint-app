@@ -1,6 +1,12 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Spot, CreateSpotInput, UpdateSpotInput } from '@/types/spot';
 import { compressImage, compressImageToBase64 } from '@/utils/imageCompressor';
+import {
+  getLockdownStatus,
+  recordSubmission,
+  isSubmissionBurstDetected,
+  triggerAutoLockdown,
+} from './lockdownService';
 
 const LOCAL_STORAGE_KEY = 'gyor_skatemap_spots';
 
@@ -264,8 +270,23 @@ export const getSpots = async (status: 'approved' | 'pending' | 'all' = 'approve
 
 /**
  * Anonymous spot submission (enforces status = 'pending')
+ * Now includes lockdown check + burst detection.
  */
 export const submitSpot = async (input: CreateSpotInput): Promise<Spot> => {
+  // ── Lockdown gate ──────────────────────────────────────────────────
+  const lockdown = await getLockdownStatus();
+  if (lockdown.isLocked) {
+    throw new Error('LOCKDOWN');
+  }
+
+  // ── Burst detection ────────────────────────────────────────────────
+  // Record this submission attempt and check if the rate is suspicious
+  recordSubmission();
+  if (isSubmissionBurstDetected()) {
+    triggerAutoLockdown();
+    throw new Error('LOCKDOWN');
+  }
+
   const cleanTitle = input.title.trim();
   const cleanDesc = input.description?.trim() || '';
 

@@ -11,6 +11,12 @@ import {
   syncLocalSpotsToSupabase,
   dismissSpotReport,
 } from '@/services/spotService';
+import {
+  getLockdownStatus,
+  setManualLockdown,
+  clearAutoLockdown,
+  type LockdownStatus,
+} from '@/services/lockdownService';
 import { compressImage } from '@/utils/imageCompressor';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,6 +49,8 @@ import {
   Megaphone,
   Calendar,
   ExternalLink,
+  ShieldAlert,
+  ShieldCheck,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Switch } from '@/components/ui/switch';
@@ -83,6 +91,15 @@ export const AdminSkateMapTab: React.FC = () => {
 
   // Edit dialog state
   const [editingSpot, setEditingSpot] = useState<Spot | null>(null);
+
+  // Lockdown state
+  const [lockdownStatus, setLockdownStatus] = useState<LockdownStatus>({
+    isLocked: false,
+    isAutoLocked: false,
+    isManualLocked: false,
+    lockedUntil: null,
+  });
+  const [isTogglingLockdown, setIsTogglingLockdown] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editFormData, setEditFormData] = useState({
     title: '',
@@ -111,6 +128,53 @@ export const AdminSkateMapTab: React.FC = () => {
     }
   };
 
+  const loadLockdownStatus = async () => {
+    try {
+      const status = await getLockdownStatus();
+      setLockdownStatus(status);
+    } catch (err) {
+      console.error('Error loading lockdown status:', err);
+    }
+  };
+
+  const handleToggleLockdown = async () => {
+    if (!lockdownStatus) return;
+    setIsTogglingLockdown(true);
+    try {
+      const newState = !lockdownStatus.isManualLocked;
+      // If turning off manual lockdown while auto-lockdown is also active, clear auto too
+      if (!newState && lockdownStatus.isAutoLocked) {
+        clearAutoLockdown();
+      }
+      const ok = await setManualLockdown(newState);
+      if (ok) {
+        toast.success(
+          newState
+            ? '🔒 Spot beküldés zárolva! Senki sem tud spotot küldeni.'
+            : '🔓 Spot beküldés feloldva! A felhasználók újra tudnak spotot küldeni.'
+        );
+      } else {
+        toast.warning(
+          newState
+            ? '🔒 Zárolás beállítva (csak helyben — a Supabase mentés nem sikerült).'
+            : '🔓 Feloldás beállítva (csak helyben — a Supabase mentés nem sikerült).'
+        );
+      }
+      await loadLockdownStatus();
+    } catch (err) {
+      console.error('Lockdown toggle error:', err);
+      toast.error('Hiba történt a zárolás módosítása során.');
+    } finally {
+      setIsTogglingLockdown(false);
+    }
+  };
+
+  const handleClearAutoLockdown = async () => {
+    clearAutoLockdown();
+    toast.success('Automatikus zárolás és spam-naplók törölve.');
+    await loadLockdownStatus();
+  };
+
   const loadAllSpots = async () => {
     setIsLoading(true);
     try {
@@ -135,6 +199,7 @@ export const AdminSkateMapTab: React.FC = () => {
   useEffect(() => {
     loadAllSpots();
     loadAllEvents();
+    loadLockdownStatus();
 
     const channel = supabase
       .channel('admin-skatemap-realtime')
@@ -150,6 +215,13 @@ export const AdminSkateMapTab: React.FC = () => {
         { event: '*', schema: 'public', table: 'skatemap_events' },
         () => {
           loadAllEvents();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'site_settings' },
+        () => {
+          loadLockdownStatus();
         }
       )
       .subscribe();
@@ -432,6 +504,7 @@ export const AdminSkateMapTab: React.FC = () => {
           onClick={() => {
             loadAllSpots();
             loadAllEvents();
+            loadLockdownStatus();
           }}
           disabled={isLoading || isLoadingEvents}
           className="gap-1.5 border-white/10 hover:bg-white/5 text-xs text-neutral-300"
@@ -440,6 +513,82 @@ export const AdminSkateMapTab: React.FC = () => {
           Frissítés
         </Button>
       </div>
+
+      {/* ── Lockdown Control Panel ───────────────────────────────────── */}
+      <Card className={cn(
+        "premium-glass overflow-hidden transition-all duration-500",
+        lockdownStatus?.isLocked
+          ? "border-2 border-red-500/50 bg-red-950/20 shadow-[0_0_30px_rgba(239,68,68,0.08)]"
+          : "border-white/10 bg-neutral-900/40"
+      )}>
+        <CardContent className="p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div className={cn(
+                "p-2.5 rounded-xl border transition-all duration-300",
+                lockdownStatus?.isLocked
+                  ? "bg-red-500/15 border-red-500/30 text-red-400"
+                  : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+              )}>
+                {lockdownStatus?.isLocked
+                  ? <ShieldAlert className="w-5 h-5" />
+                  : <ShieldCheck className="w-5 h-5" />
+                }
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  Spot Küldés Zárolás
+                  {lockdownStatus?.isLocked && (
+                    <Badge className="bg-red-500/20 text-red-400 border-red-500/40 text-[10px] font-bold animate-pulse">
+                      ZÁROLVA
+                    </Badge>
+                  )}
+                  {!lockdownStatus?.isLocked && (
+                    <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[10px] font-bold">
+                      AKTÍV
+                    </Badge>
+                  )}
+                </h3>
+                <p className="text-xs text-neutral-400 leading-relaxed max-w-md">
+                  {lockdownStatus?.isLocked
+                    ? lockdownStatus.isAutoLocked && !lockdownStatus.isManualLocked
+                      ? `Automatikus zárolás aktív — Gyanúsan sok spot beküldés érzékelve. Lejár: ${lockdownStatus.lockedUntil ? new Date(lockdownStatus.lockedUntil).toLocaleString('hu-HU') : 'hamarosan'}`
+                      : 'Manuálisan zárolva — Senki sem tud spotot beküldeni, amíg fel nem oldod.'
+                    : 'A spot küldés jelenleg engedélyezve van. Ha gyanús tevékenységet észlelsz, zárolhatod a beküldéseket.'
+                  }
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5 shrink-0">
+              {/* Clear auto-lockdown button (only shown when auto-locked) */}
+              {lockdownStatus?.isAutoLocked && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleClearAutoLockdown}
+                  className="border-amber-500/30 text-amber-400 hover:bg-amber-500/10 text-xs gap-1.5 h-9"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  Auto feloldás
+                </Button>
+              )}
+
+              {/* Manual lockdown toggle */}
+              <div className="flex items-center gap-2.5 p-2 rounded-xl bg-white/[0.03] border border-white/10">
+                <span className="text-[11px] text-neutral-400 font-medium select-none">
+                  {lockdownStatus?.isManualLocked ? 'Zárolva' : 'Nyitva'}
+                </span>
+                <Switch
+                  checked={lockdownStatus?.isManualLocked ?? false}
+                  onCheckedChange={handleToggleLockdown}
+                  disabled={isTogglingLockdown}
+                />
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Tabs for Pending vs Approved vs Events */}
       <Tabs defaultValue="pending" className="w-full">
