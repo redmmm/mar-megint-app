@@ -7,6 +7,7 @@ import { SpotSubmissionModal } from '@/components/skatemap/SpotSubmissionModal';
 import { MapSearchOverlay } from '@/components/skatemap/MapSearchOverlay';
 import { LocationPermissionDialog } from '@/components/skatemap/LocationPermissionDialog';
 import { EventNotificationBanner } from '@/components/skatemap/EventNotificationBanner';
+import { SkateEasterEgg } from '@/components/skatemap/SkateEasterEgg';
 import { getSpots } from '@/services/spotService';
 import { getLockdownStatus } from '@/services/lockdownService';
 import { supabase } from '@/integrations/supabase/client';
@@ -1005,6 +1006,9 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
                     </div>
                   </PopoverContent>
                 </Popover>
+
+                {/* Easter Egg Skateboard */}
+                <SkateEasterEgg />
 
                 {/* Expansion Info Button - ONLY shown when out-of-Győr position was detected */}
                 {isOutsideGyorDetected && (

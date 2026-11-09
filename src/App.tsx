@@ -16,6 +16,7 @@ const SkateMapPage = lazy(() => import("./pages/SkateMapPage"));
 const Login = lazy(() => import("./pages/Login"));
 const Admin = lazy(() => import("./pages/Admin"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const GamePage = lazy(() => import("./pages/GamePage"));
 
 const PageLoader = () => (
   <div className="min-h-screen bg-background flex items-center justify-center">
@@ -45,6 +46,7 @@ const App = () => (
                   <Route path="/login" element={<Login />} />
                   <Route path="/admin" element={<Admin />} />
                   <Route path="/admin/skatemap" element={<Admin defaultTab="skatemap" />} />
+                  <Route path="/game" element={<GamePage />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>

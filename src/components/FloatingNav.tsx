@@ -6,7 +6,7 @@ const FloatingNav = () => {
   const location = useLocation();
 
   // Hide on auth/admin screens
-  const isHidden = location.pathname.startsWith('/login') || location.pathname.startsWith('/admin');
+  const isHidden = location.pathname.startsWith('/login') || location.pathname.startsWith('/admin') || location.pathname.startsWith('/game');
   if (isHidden) {
     return null;
   }

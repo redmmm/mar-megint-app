@@ -545,3 +545,72 @@ input:-webkit-autofill:active {
   transition: background-color 5000s ease-in-out 0s;
 }
 
+/* ============================================================
+   🛹 SKATEBOARD EASTER EGG ANIMATIONS (Pixel Art Choppy Style)
+   ============================================================ */
+
+@keyframes skate-wobble {
+  0%, 100% {
+    transform: rotate(0deg) scale(1);
+  }
+  20% {
+    transform: rotate(-10deg) scale(1.15) translateY(-1px);
+  }
+  40% {
+    transform: rotate(10deg) scale(1.15) translateY(-2px);
+  }
+  60% {
+    transform: rotate(-8deg) scale(1.1);
+  }
+  80% {
+    transform: rotate(6deg) scale(1.05);
+  }
+}
+
+.skate-wobble {
+  animation: skate-wobble 0.45s steps(6) infinite alternate;
+}
+
+/* Choppy pixel art animation across the screen */
+@keyframes skate-glide-center {
+  0% {
+    transform: translate(var(--start-x, 0px), var(--start-y, 0px)) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  15% {
+    transform: translate(calc(var(--start-x, 0px) * 0.8 + 50vw * 0.2), calc(var(--start-y, 0px) * 0.8 + 50vh * 0.2)) scale(1.4) rotate(8deg);
+  }
+  30% {
+    transform: translate(calc(var(--start-x, 0px) * 0.6 + 50vw * 0.4), calc(var(--start-y, 0px) * 0.6 + 50vh * 0.4)) scale(1.9) rotate(-12deg);
+  }
+  50% {
+    transform: translate(calc(var(--start-x, 0px) * 0.4 + 50vw * 0.6), calc(var(--start-y, 0px) * 0.4 + 50vh * 0.6)) scale(2.6) rotate(14deg);
+  }
+  70% {
+    transform: translate(calc(var(--start-x, 0px) * 0.2 + 50vw * 0.8), calc(var(--start-y, 0px) * 0.2 + 50vh * 0.8)) scale(3.5) rotate(-6deg);
+  }
+  85% {
+    transform: translate(50vw, 50vh) scale(4.4) rotate(4deg);
+    opacity: 1;
+  }
+  95% {
+    transform: translate(50vw, 50vh) scale(5.2) rotate(0deg);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translate(50vw, 50vh) scale(6) rotate(0deg);
+    opacity: 0;
+  }
+}
+
+.skate-runaway-portal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 99999;
+  animation: skate-glide-center 1.25s steps(10) forwards;
+  will-change: transform, opacity;
+}
+
+
