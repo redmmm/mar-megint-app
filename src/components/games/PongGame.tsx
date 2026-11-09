@@ -147,6 +147,32 @@ export const PongGame: React.FC<PongGameProps> = ({ onBack }) => {
   const [isPaused, setIsPaused] = useState(false);
   const isMobile = isTouchDevice();
 
+  // ── Mobil Scroll & Gesztus Zárolása Pong alatt ──
+  useEffect(() => {
+    const origBodyOverflow = document.body.style.overflow;
+    const origBodyTouchAction = document.body.style.touchAction;
+    const origBodyOverscroll = document.body.style.overscrollBehavior;
+    const origHtmlOverflow = document.documentElement.style.overflow;
+    const origHtmlTouchAction = document.documentElement.style.touchAction;
+    const origHtmlOverscroll = document.documentElement.style.overscrollBehavior;
+
+    document.body.style.overflow = 'hidden';
+    document.body.style.touchAction = 'none';
+    document.body.style.overscrollBehavior = 'none';
+    document.documentElement.style.overflow = 'hidden';
+    document.documentElement.style.touchAction = 'none';
+    document.documentElement.style.overscrollBehavior = 'none';
+
+    return () => {
+      document.body.style.overflow = origBodyOverflow;
+      document.body.style.touchAction = origBodyTouchAction;
+      document.body.style.overscrollBehavior = origBodyOverscroll;
+      document.documentElement.style.overflow = origHtmlOverflow;
+      document.documentElement.style.touchAction = origHtmlTouchAction;
+      document.documentElement.style.overscrollBehavior = origHtmlOverscroll;
+    };
+  }, []);
+
   const keys = useRef<Record<string, boolean>>({});
 
   const state = useRef({
@@ -316,19 +342,40 @@ export const PongGame: React.FC<PongGameProps> = ({ onBack }) => {
     return () => document.removeEventListener('mousemove', onGlobalMouseMove);
   }, [isMobile]);
 
-  const handleTouchMove = useCallback((e: React.TouchEvent<HTMLCanvasElement>) => {
-    if (state.current.paused || !state.current.hasStarted) return;
-    e.preventDefault();
+  // ── Natív nem-passzív érintésfigyelő mobilon (megakadályozza az oldal görgetését) ──
+  useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || e.touches.length === 0) return;
-    const rect = canvas.getBoundingClientRect();
-    const scaleY = CANVAS_HEIGHT / rect.height;
-    const touchY = (e.touches[0].clientY - rect.top) * scaleY;
-    state.current.playerY = Math.max(
-      8,
-      Math.min(CANVAS_HEIGHT - PADDLE_HEIGHT - 8, touchY - PADDLE_HEIGHT / 2)
-    );
-  }, []);
+    if (!canvas) return;
+
+    const onNativeTouchMove = (e: TouchEvent) => {
+      e.preventDefault();
+      if (state.current.paused || !state.current.hasStarted) return;
+      if (e.touches.length === 0) return;
+      const rect = canvas.getBoundingClientRect();
+      const scaleY = CANVAS_HEIGHT / rect.height;
+      const touchY = (e.touches[0].clientY - rect.top) * scaleY;
+      state.current.playerY = Math.max(
+        8,
+        Math.min(CANVAS_HEIGHT - PADDLE_HEIGHT - 8, touchY - PADDLE_HEIGHT / 2)
+      );
+    };
+
+    const onNativeTouchStart = (e: TouchEvent) => {
+      e.preventDefault();
+      if (state.current.paused || !state.current.hasStarted) return;
+      if (state.current.status === 'waiting') {
+        startPlaying();
+      }
+    };
+
+    canvas.addEventListener('touchmove', onNativeTouchMove, { passive: false });
+    canvas.addEventListener('touchstart', onNativeTouchStart, { passive: false });
+
+    return () => {
+      canvas.removeEventListener('touchmove', onNativeTouchMove);
+      canvas.removeEventListener('touchstart', onNativeTouchStart);
+    };
+  }, [startPlaying]);
 
   const handleActivate = useCallback(() => {
     if (state.current.paused || !state.current.hasStarted) return;
@@ -394,48 +441,8 @@ export const PongGame: React.FC<PongGameProps> = ({ onBack }) => {
       }
     };
 
-    const loop = () => {
-      const s = state.current;
-
-      drawBackground();
-
-      // Ha még a kezdőmenüben vagyunk, csak az alapállapotot (pálya + ütők + labda) rajzoljuk
-      if (!s.hasStarted) {
-        drawPaddlesBallAndScores(s);
-        frameRef.current = requestAnimationFrame(loop);
-        return;
-      }
-
-      if (s.status === 'idle') {
-        drawPaddlesBallAndScores(s);
-        frameRef.current = requestAnimationFrame(loop);
-        return;
-      }
-
-      if (s.status === 'waiting') {
-        drawPaddlesBallAndScores(s);
-        const pulse = Math.sin(Date.now() / 350) * 0.4 + 0.6;
-        ctx.globalAlpha = pulse;
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 13px monospace';
-        ctx.textAlign = 'center';
-        ctx.fillText('KATTINTS / KOPPINTS / SZÓKÖZ → FOLYTATÁS', CANVAS_WIDTH / 2, CANVAS_HEIGHT - 22);
-        ctx.globalAlpha = 1;
-        frameRef.current = requestAnimationFrame(loop);
-        return;
-      }
-
-      // ── PAUSE: csak rajzol, nem frissít ──
-      if (s.paused) {
-        drawPaddlesBallAndScores(s);
-        // Halvány blur-effekt szimulálása a vásznon
-        ctx.fillStyle = 'rgba(0,0,0,0.5)';
-        ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-        frameRef.current = requestAnimationFrame(loop);
-        return;
-      }
-
-      // ── FRISSÍTÉSI LOGIKA ──
+    // ── Fizika frissítése (Fix 144Hz lépésköz, mobilon és asztali gépen azonos tempó) ──
+    const updatePongPhysics = (s: typeof state.current) => {
       if (keys.current['ArrowUp'] || keys.current['KeyW']) {
         s.playerY = Math.max(8, s.playerY - PADDLE_MOVE_SPEED);
       }
@@ -531,6 +538,64 @@ export const PongGame: React.FC<PongGameProps> = ({ onBack }) => {
         sounds.scorePoint(true);
         resetBall(-1);
       }
+    };
+
+    let lastTime = performance.now();
+    let accumulator = 0;
+    const STEP = 1000 / 144; // 6.944 ms
+
+    const loop = (timestamp: number) => {
+      const s = state.current;
+      const now = timestamp || performance.now();
+      let elapsed = now - lastTime;
+      if (elapsed > 100) elapsed = 100;
+      lastTime = now;
+
+      drawBackground();
+
+      // Ha még a kezdőmenüben vagyunk, csak az alapállapotot (pálya + ütők + labda) rajzoljuk
+      if (!s.hasStarted) {
+        drawPaddlesBallAndScores(s);
+        frameRef.current = requestAnimationFrame(loop);
+        return;
+      }
+
+      if (s.status === 'idle') {
+        drawPaddlesBallAndScores(s);
+        frameRef.current = requestAnimationFrame(loop);
+        return;
+      }
+
+      if (s.status === 'waiting') {
+        drawPaddlesBallAndScores(s);
+        const pulse = Math.sin(Date.now() / 350) * 0.4 + 0.6;
+        ctx.globalAlpha = pulse;
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 13px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('KATTINTS / KOPPINTS / SZÓKÖZ → FOLYTATÁS', CANVAS_WIDTH / 2, CANVAS_HEIGHT - 22);
+        ctx.globalAlpha = 1;
+        frameRef.current = requestAnimationFrame(loop);
+        return;
+      }
+
+      // ── PAUSE: csak rajzol, nem frissít ──
+      if (s.paused) {
+        drawPaddlesBallAndScores(s);
+        // Halvány blur-effekt szimulálása a vásznon
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        frameRef.current = requestAnimationFrame(loop);
+        return;
+      }
+
+      // ── FRISSÍTÉSI LOGIKA FIX TIMESTEPPEL ──
+      accumulator += elapsed;
+      while (accumulator >= STEP) {
+        updatePongPhysics(s);
+        accumulator -= STEP;
+        if (s.status !== 'playing' || s.paused) break;
+      }
 
       drawPaddlesBallAndScores(s);
 
@@ -555,7 +620,7 @@ export const PongGame: React.FC<PongGameProps> = ({ onBack }) => {
   }, [resetBall]);
 
   return (
-    <div className="flex flex-col items-center gap-4 w-full max-w-4xl px-3 animate-in fade-in duration-300">
+    <div className="flex flex-col items-center gap-4 w-full max-w-4xl px-2 sm:px-3 animate-in fade-in duration-300">
       {/* Felső vezérlősáv */}
       <div className="w-full flex items-center justify-between">
         <button
@@ -592,17 +657,16 @@ export const PongGame: React.FC<PongGameProps> = ({ onBack }) => {
       {/* Pong vászon + Menü / ESC pause overlay */}
       <div
         ref={containerRef}
-        className="w-full relative rounded-2xl overflow-hidden border border-white/15 bg-neutral-950 shadow-2xl select-none"
+        className="w-full relative rounded-2xl overflow-hidden border border-white/15 bg-neutral-950 shadow-2xl select-none touch-none"
+        style={{ touchAction: 'none' }}
       >
         <canvas
           ref={canvasRef}
           width={CANVAS_WIDTH}
           height={CANVAS_HEIGHT}
           onMouseDown={handleActivate}
-          onTouchMove={handleTouchMove}
-          onTouchStart={handleActivate}
-          className="w-full block"
-          style={{ imageRendering: 'pixelated', maxHeight: '55vh', objectFit: 'contain' }}
+          className="w-full block touch-none"
+          style={{ imageRendering: 'pixelated', maxHeight: '55vh', objectFit: 'contain', touchAction: 'none' }}
         />
 
         {/* Kezdőképernyő / Játék kezdése overlay – hasonlóan az ESC menühöz */}

@@ -300,7 +300,15 @@ const GamePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen min-h-[100dvh] bg-neutral-950 flex flex-col items-center justify-center p-4">
+    <div
+      className={`min-h-screen min-h-[100dvh] bg-neutral-950 flex flex-col items-center ${
+        selectedGame === 'pong'
+          ? 'overflow-hidden touch-none justify-center p-2 sm:p-4'
+          : selectedGame === 'dino'
+          ? 'justify-start sm:justify-center pt-14 sm:pt-4 px-2 py-3 sm:p-4'
+          : 'justify-center p-4'
+      }`}
+    >
       {/* Pixel hangerő szabályzó – jobb felső sarok, mindig látható */}
       <div className="fixed top-4 right-4 z-50 flex flex-col items-end gap-1 select-none pointer-events-auto">
         <PixelVolumeControl

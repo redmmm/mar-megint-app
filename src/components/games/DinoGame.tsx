@@ -83,10 +83,14 @@ class SoundSynth {
 
 const sounds = new SoundSynth();
 
-// ── Játék Konstansok ──
-const CANVAS_WIDTH = 800;
-const CANVAS_HEIGHT = 260;
-const GROUND_Y = 215;
+// ── Játék Konstansok Alapértékek (Asztali géphez, mobilon dinamikusan méretezve) ──
+const DESKTOP_CANVAS_WIDTH = 800;
+const DESKTOP_CANVAS_HEIGHT = 260;
+const DESKTOP_GROUND_Y = 215;
+const MOBILE_CANVAS_WIDTH = 560;
+const MOBILE_CANVAS_HEIGHT = 300;
+const MOBILE_GROUND_Y = 245;
+
 const GRAVITY = 0.32;
 const JUMP_FORCE = -8.8;
 
@@ -96,6 +100,25 @@ const PLAYER_STAND_H = 47;
 const PLAYER_DUCK_W = 66;
 const PLAYER_DUCK_H = 30;
 const PLAYER_X = 55;
+
+const getInitialDimensions = () => {
+  if (typeof window !== 'undefined' && window.innerWidth < 640) {
+    return {
+      width: MOBILE_CANVAS_WIDTH,
+      height: MOBILE_CANVAS_HEIGHT,
+      groundY: MOBILE_GROUND_Y,
+      playerX: 42,
+      isMobile: true,
+    };
+  }
+  return {
+    width: DESKTOP_CANVAS_WIDTH,
+    height: DESKTOP_CANVAS_HEIGHT,
+    groundY: DESKTOP_GROUND_Y,
+    playerX: PLAYER_X,
+    isMobile: false,
+  };
+};
 
 // Pontos sebességi szakaszok (Nyugodt indulás, 1000-nél a 2. szint, a MAX sokkal később és nehezebb)
 const SPEED_STAGES = [
@@ -273,6 +296,24 @@ export const DinoGame: React.FC<DinoGameProps> = ({ onBack }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef<number>(0);
 
+  // Képernyőméret és dinamikus vászonméret (mobilon magasabb vászon, hogy jól látható legyen)
+  const [dims, setDims] = useState(getInitialDimensions);
+  const isMobileRef = useRef(dims.isMobile);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const next = getInitialDimensions();
+      isMobileRef.current = next.isMobile;
+      setDims(next);
+      state.current.canvasWidth = next.width;
+      state.current.canvasHeight = next.height;
+      state.current.groundY = next.groundY;
+      state.current.playerX = next.playerX;
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Képek betöltése
   const playerImgRef = useRef<HTMLImageElement | null>(null);
   const playerDuckImgRef = useRef<HTMLImageElement | null>(null);
@@ -292,7 +333,11 @@ export const DinoGame: React.FC<DinoGameProps> = ({ onBack }) => {
   const [stageFlashMessage, setStageFlashMessage] = useState<string | null>(null);
 
   const state = useRef({
-    playerY: GROUND_Y - PLAYER_STAND_H,
+    canvasWidth: dims.width,
+    canvasHeight: dims.height,
+    groundY: dims.groundY,
+    playerX: dims.playerX,
+    playerY: dims.groundY - PLAYER_STAND_H,
     velocity: 0,
     isJumping: false,
     isDucking: false,
@@ -337,17 +382,19 @@ export const DinoGame: React.FC<DinoGameProps> = ({ onBack }) => {
   }, []);
 
   // Háttérelemek inicializálása
-  const initScenery = useCallback(() => {
+  const initScenery = useCallback((width?: number, groundY?: number) => {
+    const w = width ?? state.current.canvasWidth;
+    const g = groundY ?? state.current.groundY;
     state.current.clouds = [
-      { x: 160, y: 40, w: 50 },
-      { x: 440, y: 65, w: 42 },
-      { x: 690, y: 35, w: 55 },
+      { x: w * 0.2, y: 40, w: 50 },
+      { x: w * 0.55, y: 65, w: 42 },
+      { x: w * 0.85, y: 35, w: 55 },
     ];
     state.current.horizonDots = [];
-    for (let i = 0; i < 45; i++) {
+    for (let i = 0; i < 40; i++) {
       state.current.horizonDots.push({
-        x: Math.random() * CANVAS_WIDTH,
-        y: GROUND_Y + 2 + Math.random() * 32,
+        x: Math.random() * w,
+        y: g + 2 + Math.random() * 32,
         size: Math.random() > 0.6 ? 2 : 1,
       });
     }
@@ -356,9 +403,9 @@ export const DinoGame: React.FC<DinoGameProps> = ({ onBack }) => {
   // Játék indítása / újraindítása
   const startGame = useCallback(() => {
     sounds.jump();
-    initScenery();
     const s = state.current;
-    s.playerY = GROUND_Y - PLAYER_STAND_H;
+    initScenery(s.canvasWidth, s.groundY);
+    s.playerY = s.groundY - PLAYER_STAND_H;
     s.velocity = 0;
     s.isJumping = false;
     s.isDucking = false;
@@ -370,7 +417,7 @@ export const DinoGame: React.FC<DinoGameProps> = ({ onBack }) => {
     s.obstacles = [];
     s.status = 'playing';
     s.tick = 0;
-    s.minSpawnDistance = 280;
+    s.minSpawnDistance = isMobileRef.current ? 240 : 280;
 
     setCurrentScore(0);
     setCurrentStageName(SPEED_STAGES[0].name);
@@ -401,6 +448,22 @@ export const DinoGame: React.FC<DinoGameProps> = ({ onBack }) => {
     }
   }, []);
 
+  // Natív nem-passzív érintés figyelő a vásznon (azonnali ugrás késleltetés és scroll nélkül)
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const onNativeTouchStart = (e: TouchEvent) => {
+      e.preventDefault();
+      triggerJump();
+    };
+
+    canvas.addEventListener('touchstart', onNativeTouchStart, { passive: false });
+    return () => {
+      canvas.removeEventListener('touchstart', onNativeTouchStart);
+    };
+  }, [triggerJump]);
+
   // Billentyűzetkezelés
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -427,193 +490,223 @@ export const DinoGame: React.FC<DinoGameProps> = ({ onBack }) => {
     };
   }, [triggerJump, setDucking]);
 
-  // Játék főciklusa
+  // Játék főciklusa – Fix 144Hz lépésközzel, hogy 60Hz mobilon és 144Hz PC-n hajszálpontosan ugyanúgy haladjon!
   useEffect(() => {
-    initScenery();
+    initScenery(state.current.canvasWidth, state.current.groundY);
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const loop = () => {
+    const updatePhysics = (s: typeof state.current, currentW: number, currentH: number) => {
+      s.tick++;
+      s.distance += s.speed;
+      s.score = Math.floor(s.distance / 10);
+      if (s.score > s.highScore) {
+        s.highScore = s.score;
+        setHighScore(s.score);
+        try {
+          localStorage.setItem('mm_dino_hi', String(s.score));
+        } catch {}
+      }
+      setCurrentScore(s.score);
+
+      // ── Sebességi szakaszok ellenőrzése ──
+      let newStageIndex = 0;
+      for (let i = SPEED_STAGES.length - 1; i >= 0; i--) {
+        if (s.score >= SPEED_STAGES[i].minScore) {
+          newStageIndex = i;
+          break;
+        }
+      }
+
+      if (newStageIndex !== s.currentStageIndex) {
+        s.currentStageIndex = newStageIndex;
+        s.speed = SPEED_STAGES[newStageIndex].speed;
+        setCurrentStageName(SPEED_STAGES[newStageIndex].name);
+        s.stageFlashTimer = 85;
+        s.stageFlashText = `${SPEED_STAGES[newStageIndex].name} ELÉRVE!`;
+        setStageFlashMessage(s.stageFlashText);
+        sounds.speedUp();
+      }
+
+      if (s.stageFlashTimer > 0) {
+        s.stageFlashTimer--;
+        if (s.stageFlashTimer === 0) {
+          setStageFlashMessage(null);
+        }
+      }
+
+      // Gravitáció és ugrás
+      s.velocity += GRAVITY;
+      s.playerY += s.velocity;
+      if (s.playerY >= s.groundY - currentH) {
+        s.playerY = s.groundY - currentH;
+        s.velocity = 0;
+        s.isJumping = false;
+      }
+
+      // Akadályok generálása
+      const rightmostX = s.obstacles.length > 0 ? Math.max(...s.obstacles.map((o) => o.x)) : 0;
+      const currentMinDist = isMobileRef.current
+        ? Math.max(160, 240 - s.currentStageIndex * 20)
+        : Math.max(190, s.minSpawnDistance - s.currentStageIndex * 25);
+
+      if (s.obstacles.length === 0 || rightmostX < s.canvasWidth - currentMinDist) {
+        if (Math.random() < 0.045) {
+          const roll = Math.random();
+          let obsType: ObstacleType;
+          let w = 20;
+          let h = 14;
+
+          if (roll < 0.38) {
+            const isLarge = Math.random() > 0.55;
+            obsType = isLarge ? 'stone_large' : 'stone_small';
+            w = isLarge ? 30 : 20;
+            h = isLarge ? 19 : 14;
+          } else if (roll < 0.72) {
+            const isDouble = Math.random() > 0.55;
+            obsType = isDouble ? 'stick_double' : 'stick_single';
+            w = isDouble ? 34 : 26;
+            h = isDouble ? 18 : 13;
+          } else {
+            const isStanding = Math.random() > 0.45;
+            obsType = isStanding ? 'scooter_standing' : 'scooter_lying';
+            w = isStanding ? 28 : 38;
+            h = isStanding ? 34 : 16;
+          }
+
+          s.obstacles.push({
+            x: s.canvasWidth + 20,
+            y: s.groundY - h,
+            w,
+            h,
+            type: obsType,
+          });
+        }
+      }
+
+      // Mozgás
+      s.obstacles.forEach((obs) => {
+        obs.x -= s.speed;
+      });
+      s.obstacles = s.obstacles.filter((obs) => obs.x + obs.w > -50);
+
+      s.clouds.forEach((cloud) => {
+        cloud.x -= s.speed * 0.12;
+        if (cloud.x + cloud.w < 0) {
+          cloud.x = s.canvasWidth + Math.random() * 80;
+          cloud.y = 25 + Math.random() * 45;
+          cloud.w = 35 + Math.random() * 30;
+        }
+      });
+
+      s.horizonDots.forEach((dot) => {
+        dot.x -= s.speed;
+        if (dot.x < 0) {
+          dot.x = s.canvasWidth;
+          dot.y = s.groundY + 2 + Math.random() * 32;
+        }
+      });
+
+      // Ütközésvizsgálat
+      const pLeft = s.playerX + 12;
+      const pRight = s.playerX + currentW - 14;
+      const pTop = s.playerY + 8;
+      const pBottom = s.playerY + currentH - 5;
+
+      for (const obs of s.obstacles) {
+        const obsLeft = obs.x + 6;
+        const obsRight = obs.x + obs.w - 6;
+        const obsTop = obs.y + 5;
+        const obsBottom = obs.y + obs.h - 1;
+
+        if (pRight > obsLeft && pLeft < obsRight && pBottom > obsTop && pTop < obsBottom) {
+          sounds.hit();
+          s.status = 'gameover';
+          if (s.score > s.highScore) {
+            setHighScore(s.score);
+            try {
+              localStorage.setItem('mm_dino_hi', String(s.score));
+            } catch {}
+          }
+          break;
+        }
+      }
+    };
+
+    let lastTime = performance.now();
+    let accumulator = 0;
+    const STEP = 1000 / 144; // ~6.944 ms
+
+    const loop = (timestamp: number) => {
       const s = state.current;
-      ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+      const now = timestamp || performance.now();
+      let elapsed = now - lastTime;
+      if (elapsed > 100) elapsed = 100;
+      lastTime = now;
 
       // Háttér
+      ctx.clearRect(0, 0, s.canvasWidth, s.canvasHeight);
       ctx.fillStyle = '#0a0a0a';
-      ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+      ctx.fillRect(0, 0, s.canvasWidth, s.canvasHeight);
 
-      // Felhők lassú mozgással
+      // Felhők
       s.clouds.forEach((cloud) => {
         pFill(ctx, cloud.x, cloud.y, cloud.w, 7, '#262626');
         pFill(ctx, cloud.x + 8, cloud.y - 5, cloud.w - 16, 7, '#262626');
-        if (s.status === 'playing') {
-          cloud.x -= s.speed * 0.12;
-          if (cloud.x + cloud.w < 0) {
-            cloud.x = CANVAS_WIDTH + Math.random() * 80;
-            cloud.y = 25 + Math.random() * 45;
-            cloud.w = 35 + Math.random() * 30;
-          }
-        }
       });
 
       // Talajvonal
       ctx.fillStyle = '#404040';
-      ctx.fillRect(0, GROUND_Y, CANVAS_WIDTH, 2);
+      ctx.fillRect(0, s.groundY, s.canvasWidth, 2);
 
       // Talaj textúra pontjai
       s.horizonDots.forEach((dot) => {
         pFill(ctx, dot.x, dot.y, dot.size, 1, '#262626');
-        if (s.status === 'playing') {
-          dot.x -= s.speed;
-          if (dot.x < 0) {
-            dot.x = CANVAS_WIDTH;
-            dot.y = GROUND_Y + 2 + Math.random() * 32;
-          }
-        }
       });
 
-      // ── IDLE ÁLLAPOT (Kezdés előtt) ──
+      // ── IDLE ÁLLAPOT ──
       if (s.status === 'idle') {
         if (playerImgRef.current && playerImgRef.current.complete && playerImgRef.current.naturalWidth > 0) {
-          ctx.drawImage(playerImgRef.current, PLAYER_X, s.playerY, PLAYER_STAND_W, PLAYER_STAND_H);
+          ctx.drawImage(playerImgRef.current, s.playerX, s.playerY, PLAYER_STAND_W, PLAYER_STAND_H);
         } else {
-          pFill(ctx, PLAYER_X, s.playerY, PLAYER_STAND_W, PLAYER_STAND_H, '#34d399');
+          pFill(ctx, s.playerX, s.playerY, PLAYER_STAND_W, PLAYER_STAND_H, '#34d399');
         }
 
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 15px monospace';
+        ctx.font = isMobileRef.current ? 'bold 13px monospace' : 'bold 15px monospace';
         ctx.textAlign = 'center';
-        ctx.fillText('NYOMJ SZÓKÖZT VAGY KOPPINTS AZ INDÍTÁSHOZ', CANVAS_WIDTH / 2, 110);
-        ctx.font = '12px monospace';
+        ctx.fillText(
+          isMobileRef.current ? 'KOPPINTS AZ INDÍTÁSHOZ' : 'NYOMJ SZÓKÖZT VAGY KOPPINTS AZ INDÍTÁSHOZ',
+          s.canvasWidth / 2,
+          110
+        );
+        ctx.font = '11px monospace';
         ctx.fillStyle = '#737373';
-        ctx.fillText('SZÓKÖZ / ↑ / W = Ugrás   ·   ↓ / S = Lehajolás', CANVAS_WIDTH / 2, 135);
+        ctx.fillText(
+          isMobileRef.current ? 'Gombok alul: Ugrás és Lehajolás' : 'SZÓKÖZ / ↑ / W = Ugrás   ·   ↓ / S = Lehajolás',
+          s.canvasWidth / 2,
+          135
+        );
 
         frameRef.current = requestAnimationFrame(loop);
         return;
       }
 
-      // ── JÁTÉK FOLYAMATBAN ──
+      // ── JÁTÉK FOLYAMATBAN (Fix 144Hz fizika) ──
       if (s.status === 'playing') {
-        s.tick++;
-        s.distance += s.speed;
-        s.score = Math.floor(s.distance / 10);
-        if (s.score > s.highScore) {
-          s.highScore = s.score;
-          setHighScore(s.score);
-          try {
-            localStorage.setItem('mm_dino_hi', String(s.score));
-          } catch {}
-        }
-        setCurrentScore(s.score);
-
-        // ── 3 SEBESSÉGI SZAKASZ ELLENŐRZÉSE ──
-        let newStageIndex = 0;
-        for (let i = SPEED_STAGES.length - 1; i >= 0; i--) {
-          if (s.score >= SPEED_STAGES[i].minScore) {
-            newStageIndex = i;
-            break;
-          }
-        }
-
-        // Ha új sebességi szakaszba léptünk:
-        if (newStageIndex !== s.currentStageIndex) {
-          s.currentStageIndex = newStageIndex;
-          s.speed = SPEED_STAGES[newStageIndex].speed;
-          setCurrentStageName(SPEED_STAGES[newStageIndex].name);
-          s.stageFlashTimer = 85;
-          s.stageFlashText = `${SPEED_STAGES[newStageIndex].name} ELÉRVE!`;
-          setStageFlashMessage(s.stageFlashText);
-          sounds.speedUp();
-        }
-
-        if (s.stageFlashTimer > 0) {
-          s.stageFlashTimer--;
-          if (s.stageFlashTimer === 0) {
-            setStageFlashMessage(null);
-          }
-        }
-
-        // Játékos Fizika (ugrás & lebegő gravitáció)
-        s.velocity += GRAVITY;
-        s.playerY += s.velocity;
+        accumulator += elapsed;
         const currentH = s.isDucking ? PLAYER_DUCK_H : PLAYER_STAND_H;
-        if (s.playerY >= GROUND_Y - currentH) {
-          s.playerY = GROUND_Y - currentH;
-          s.velocity = 0;
-          s.isJumping = false;
+        const currentW = s.isDucking ? PLAYER_DUCK_W : PLAYER_STAND_W;
+
+        while (accumulator >= STEP) {
+          updatePhysics(s, currentW, currentH);
+          accumulator -= STEP;
+          if (s.status !== 'playing') break;
         }
-
-        // Akadályok Létrehozása (Szürke kövek, barna botok, rollerek)
-        const rightmostX = s.obstacles.length > 0 ? Math.max(...s.obstacles.map((o) => o.x)) : 0;
-        const currentMinDist = Math.max(190, s.minSpawnDistance - s.currentStageIndex * 25);
-
-        if (s.obstacles.length === 0 || rightmostX < CANVAS_WIDTH - currentMinDist) {
-          if (Math.random() < 0.045) {
-            const roll = Math.random();
-            let obsType: ObstacleType;
-            let w = 20;
-            let h = 14;
-
-            if (roll < 0.38) {
-              const isLarge = Math.random() > 0.55;
-              obsType = isLarge ? 'stone_large' : 'stone_small';
-              w = isLarge ? 30 : 20;
-              h = isLarge ? 19 : 14;
-            } else if (roll < 0.72) {
-              const isDouble = Math.random() > 0.55;
-              obsType = isDouble ? 'stick_double' : 'stick_single';
-              w = isDouble ? 34 : 26;
-              h = isDouble ? 18 : 13;
-            } else {
-              const isStanding = Math.random() > 0.45;
-              obsType = isStanding ? 'scooter_standing' : 'scooter_lying';
-              w = isStanding ? 28 : 38;
-              h = isStanding ? 34 : 16;
-            }
-
-            s.obstacles.push({
-              x: CANVAS_WIDTH + 20,
-              y: GROUND_Y - h,
-              w,
-              h,
-              type: obsType,
-            });
-          }
-        }
-
-        // Akadályok mozgatása
-        s.obstacles.forEach((obs) => {
-          obs.x -= s.speed;
-        });
-        s.obstacles = s.obstacles.filter((obs) => obs.x + obs.w > -50);
-
-        // Ütközésvizsgálat (Hitbox kíméletes belső ráhagyással a fair játékmenetért)
-        const playerW = s.isDucking ? PLAYER_DUCK_W : PLAYER_STAND_W;
-        const pLeft = PLAYER_X + 12;
-        const pRight = PLAYER_X + playerW - 14;
-        const pTop = s.playerY + 8;
-        const pBottom = s.playerY + currentH - 5;
-
-        for (const obs of s.obstacles) {
-          const obsLeft = obs.x + 6;
-          const obsRight = obs.x + obs.w - 6;
-          const obsTop = obs.y + 5;
-          const obsBottom = obs.y + obs.h - 1;
-
-          if (pRight > obsLeft && pLeft < obsRight && pBottom > obsTop && pTop < obsBottom) {
-            sounds.hit();
-            s.status = 'gameover';
-
-            if (s.score > s.highScore) {
-              setHighScore(s.score);
-              try {
-                localStorage.setItem('mm_dino_hi', String(s.score));
-              } catch {}
-            }
-            break;
-          }
-        }
+      } else {
+        accumulator = 0;
       }
 
       // ── AKADÁLYOK KIRAJZOLÁSA ──
@@ -631,67 +724,65 @@ export const DinoGame: React.FC<DinoGameProps> = ({ onBack }) => {
       const currentH = s.isDucking ? PLAYER_DUCK_H : PLAYER_STAND_H;
       const currentW = s.isDucking ? PLAYER_DUCK_W : PLAYER_STAND_W;
 
-      // Talajárnyék ugrás közben a térhatásért
       if (s.isJumping) {
-        const shadowW = Math.max(20, currentW - (GROUND_Y - s.playerY - currentH) * 0.4);
-        pFill(ctx, PLAYER_X + (currentW - shadowW) / 2, GROUND_Y - 1, shadowW, 2, 'rgba(255,255,255,0.18)');
+        const shadowW = Math.max(20, currentW - (s.groundY - s.playerY - currentH) * 0.4);
+        pFill(ctx, s.playerX + (currentW - shadowW) / 2, s.groundY - 1, shadowW, 2, 'rgba(255,255,255,0.18)');
       }
 
       ctx.save();
       if (s.isJumping) {
-        ctx.translate(PLAYER_X + currentW / 2, s.playerY + currentH / 2);
+        ctx.translate(s.playerX + currentW / 2, s.playerY + currentH / 2);
         const tilt = Math.max(-0.15, Math.min(0.15, s.velocity * 0.015));
         ctx.rotate(tilt);
-        ctx.translate(-(PLAYER_X + currentW / 2), -(s.playerY + currentH / 2));
+        ctx.translate(-(s.playerX + currentW / 2), -(s.playerY + currentH / 2));
       }
 
       const activeImg = s.isDucking ? playerDuckImgRef.current : playerImgRef.current;
       if (activeImg && activeImg.complete && activeImg.naturalWidth > 0) {
-        ctx.drawImage(activeImg, PLAYER_X, s.playerY, currentW, currentH);
+        ctx.drawImage(activeImg, s.playerX, s.playerY, currentW, currentH);
       } else {
-        pFill(ctx, PLAYER_X, s.playerY, currentW, currentH, s.status === 'gameover' ? '#ef4444' : '#ffffff');
+        pFill(ctx, s.playerX, s.playerY, currentW, currentH, s.status === 'gameover' ? '#ef4444' : '#ffffff');
       }
       ctx.restore();
 
-      // ── PONTJELZŐ ÉS INFORMÁCIÓK A SCREEN-EN BELÜL (Retro Pixel Monospace) ──
+      // ── PONTJELZŐ ÉS INFORMÁCIÓK ──
       ctx.textAlign = 'right';
       ctx.font = 'bold 14px monospace';
-
-      // Rekord (fehér színnel a kérés szerint)
       ctx.fillStyle = '#ffffff';
-      ctx.fillText(`REKORD ${String(s.highScore).padStart(5, '0')}`, CANVAS_WIDTH - 110, 28);
+      ctx.fillText(`REKORD ${String(s.highScore).padStart(5, '0')}`, s.canvasWidth - 110, 28);
+      ctx.fillText(String(s.score).padStart(5, '0'), s.canvasWidth - 20, 28);
 
-      // Aktuális pontszám
-      ctx.fillStyle = '#ffffff';
-      ctx.fillText(String(s.score).padStart(5, '0'), CANVAS_WIDTH - 20, 28);
-
-      // Sebességi szakasz jelző bal felül
+      // Sebességi szakasz jelző
       ctx.textAlign = 'left';
       ctx.font = 'bold 12px monospace';
       ctx.fillStyle = s.currentStageIndex === 3 ? '#fbbf24' : '#34d399';
       ctx.fillText(SPEED_STAGES[s.currentStageIndex].name, 20, 28);
 
-      // Gyorsulás felvillanó értesítés a képernyő közepén
+      // Gyorsulás felvillanó értesítés
       if (s.stageFlashTimer > 0) {
         ctx.textAlign = 'center';
         ctx.font = 'bold 18px monospace';
         ctx.fillStyle = '#34d399';
-        ctx.fillText(s.stageFlashText, CANVAS_WIDTH / 2, 75);
+        ctx.fillText(s.stageFlashText, s.canvasWidth / 2, 75);
       }
 
-      // ── JÁTÉK VÉGE KÉPERNYŐ (Magyarul) ──
+      // ── JÁTÉK VÉGE KÉPERNYŐ ──
       if (s.status === 'gameover') {
         ctx.fillStyle = 'rgba(0,0,0,0.5)';
-        ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        ctx.fillRect(0, 0, s.canvasWidth, s.canvasHeight);
 
         ctx.fillStyle = '#ef4444';
         ctx.font = 'bold 22px monospace';
         ctx.textAlign = 'center';
-        ctx.fillText('J Á T É K   V É G E', CANVAS_WIDTH / 2, 105);
+        ctx.fillText('J Á T É K   V É G E', s.canvasWidth / 2, 105);
 
         ctx.fillStyle = '#e5e5e5';
         ctx.font = '13px monospace';
-        ctx.fillText('NYOMJ SZÓKÖZT VAGY KOPPINTS AZ ÚJRAINDÍTÁSHOZ', CANVAS_WIDTH / 2, 140);
+        ctx.fillText(
+          isMobileRef.current ? 'KOPPINTS AZ ÚJRAINDÍTÁSHOZ' : 'NYOMJ SZÓKÖZT VAGY KOPPINTS AZ ÚJRAINDÍTÁSHOZ',
+          s.canvasWidth / 2,
+          140
+        );
       }
 
       frameRef.current = requestAnimationFrame(loop);
@@ -704,7 +795,7 @@ export const DinoGame: React.FC<DinoGameProps> = ({ onBack }) => {
   }, [initScenery]);
 
   return (
-    <div className="flex flex-col items-center gap-3.5 w-full max-w-4xl px-3 animate-in fade-in duration-300">
+    <div className="flex flex-col items-center gap-2 sm:gap-3.5 w-full max-w-4xl px-1 sm:px-3 animate-in fade-in duration-300">
       {/* Vissza gomb - háttér nélkül, csak szöveg nyíllal */}
       <div className="w-full flex items-center justify-start">
         <button
@@ -716,22 +807,23 @@ export const DinoGame: React.FC<DinoGameProps> = ({ onBack }) => {
         </button>
       </div>
 
-      {/* Játékvászon konténer */}
+      {/* Játékvászon konténer – mobilon kitölti a szélességet, nagy felület */}
       <div
         onClick={triggerJump}
-        className="w-full relative rounded-2xl overflow-hidden border border-white/15 bg-neutral-950 shadow-2xl cursor-pointer select-none"
+        className="w-full relative rounded-2xl overflow-hidden border border-white/15 bg-neutral-950 shadow-2xl cursor-pointer select-none touch-none"
+        style={{ touchAction: 'none' }}
       >
         <canvas
           ref={canvasRef}
-          width={CANVAS_WIDTH}
-          height={CANVAS_HEIGHT}
-          className="w-full block"
-          style={{ imageRendering: 'pixelated', maxHeight: '55vh', objectFit: 'contain' }}
+          width={dims.width}
+          height={dims.height}
+          className="w-full block touch-none"
+          style={{ imageRendering: 'pixelated', maxHeight: 'none', objectFit: 'contain', touchAction: 'none' }}
         />
       </div>
 
-      {/* Mobil érintéses vezérlőgombok */}
-      <div className="flex sm:hidden w-full items-center justify-center gap-3 pt-0.5">
+      {/* Mobil érintéses vezérlőgombok (kényelmes, nagy gombok azonnali reagálással) */}
+      <div className="flex sm:hidden w-full items-center justify-center gap-2.5 pt-0.5 touch-none">
         <button
           type="button"
           onTouchStart={(e) => {
@@ -739,7 +831,8 @@ export const DinoGame: React.FC<DinoGameProps> = ({ onBack }) => {
             triggerJump();
           }}
           onClick={triggerJump}
-          className="flex-1 py-3 bg-neutral-900 border border-white/20 rounded-xl text-sm font-bold font-mono text-white active:bg-neutral-800"
+          className="flex-1 py-3.5 bg-neutral-900 border border-white/20 rounded-xl text-sm font-bold font-mono text-white active:bg-neutral-800 touch-none select-none active:scale-[0.98] transition-transform"
+          style={{ touchAction: 'manipulation' }}
         >
           UGRÁS ⤒
         </button>
@@ -753,19 +846,18 @@ export const DinoGame: React.FC<DinoGameProps> = ({ onBack }) => {
             e.preventDefault();
             setDucking(false);
           }}
-          className="flex-1 py-3 bg-neutral-900 border border-white/20 rounded-xl text-sm font-bold font-mono text-white active:bg-neutral-800"
+          className="flex-1 py-3.5 bg-neutral-900 border border-white/20 rounded-xl text-sm font-bold font-mono text-white active:bg-neutral-800 touch-none select-none active:scale-[0.98] transition-transform"
+          style={{ touchAction: 'manipulation' }}
         >
           LEHAJOLÁS ⤓
         </button>
       </div>
 
-      {/* Akadályok listája egymás alá - háttérdoboz nélkül a retro hatásért */}
-      <div className="flex flex-col items-center gap-1.5 pt-1 select-none">
-        <div className="flex flex-col gap-1">
-          <ObstacleLegendItem type="stone" label="Kő" />
-          <ObstacleLegendItem type="stick" label="Bot" />
-          <ObstacleLegendItem type="scooter" label="Roller" />
-        </div>
+      {/* Akadályok listája – kompakt vízszintes elrendezés helytakarékosan */}
+      <div className="flex items-center justify-center gap-4 sm:gap-6 pt-0.5 select-none flex-wrap">
+        <ObstacleLegendItem type="stone" label="Kő" />
+        <ObstacleLegendItem type="stick" label="Bot" />
+        <ObstacleLegendItem type="scooter" label="Roller" />
       </div>
 
       {/* Billentyűzet tippek lábléc */}
