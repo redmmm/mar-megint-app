@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom';
 import { useSEO } from '@/hooks/useSEO';
 
 const DinoGame = lazy(() => import('@/components/games/DinoGame'));
+const DinoGame2P = lazy(() => import('@/components/games/DinoGame2P'));
 const PongGame = lazy(() => import('@/components/games/PongGame'));
+const PongGame2P = lazy(() => import('@/components/games/PongGame2P'));
 
-type GameChoice = 'select' | 'dino' | 'pong';
+type GameChoice = 'select' | 'dino' | 'dino2p' | 'pong' | 'pong2p';
 
 const GameLoader = () => (
   <div className="flex items-center justify-center p-12">
@@ -157,39 +159,81 @@ const GameSelector: React.FC<{ onSelect: (game: GameChoice) => void }> = ({ onSe
 
     {/* Játékválasztó kártyák */}
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
-      <button
-        type="button"
-        onClick={() => onSelect('dino')}
-        className="group relative p-6 rounded-2xl bg-neutral-900/80 border border-white/10 hover:border-white/30 backdrop-blur-xl shadow-2xl transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer flex flex-col items-center gap-3 text-center"
-      >
-        <img
-          src="/mar-megint-player.png"
-          alt="Már Megint Run"
-          className="w-14 h-12 object-contain"
-          style={{ imageRendering: 'pixelated' }}
-        />
-        <div className="space-y-1">
-          <h2 className="text-base font-black text-white tracking-wider font-mono">MÁR MEGINT RUN</h2>
-          <p className="text-[11px] text-neutral-400">Ugorj át a köveken, ágakon és rollereken</p>
+      {/* MÁR MEGINT RUN KÁRTYA */}
+      <div className="group relative rounded-2xl bg-neutral-900/80 border border-white/10 hover:border-white/25 backdrop-blur-xl shadow-2xl transition-all duration-200 flex flex-col overflow-hidden">
+        {/* Felső információs rész */}
+        <div className="p-6 pb-5 flex flex-col items-center gap-3 text-center flex-1">
+          <img
+            src="/mar-megint-player.png"
+            alt="Már Megint Run"
+            className="w-14 h-12 object-contain"
+            style={{ imageRendering: 'pixelated' }}
+          />
+          <div className="space-y-1">
+            <h2 className="text-base font-black text-white tracking-wider font-mono">MÁR MEGINT RUN</h2>
+            <p className="text-[11px] text-neutral-400">Ugorj át a köveken, ágakon és rollereken</p>
+          </div>
         </div>
-      </button>
 
-      <button
-        type="button"
-        onClick={() => onSelect('pong')}
-        className="group relative p-6 rounded-2xl bg-neutral-900/80 border border-white/10 hover:border-white/30 backdrop-blur-xl shadow-2xl transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer flex flex-col items-center gap-3 text-center"
-      >
-        <img
-          src="/mar-megint-pong.png"
-          alt="Már Megint Pong"
-          className="w-14 h-14 object-contain"
-          style={{ imageRendering: 'pixelated' }}
-        />
-        <div className="space-y-1">
-          <h2 className="text-base font-black text-white tracking-wider font-mono">MÁR MEGINT PONG</h2>
-          <p className="text-[11px] text-neutral-400">1:1 klasszikus arcade asztalitenisz a gép ellen</p>
+        {/* Egyenes vízszintes elválasztó vonal */}
+        <div className="w-full h-px bg-white/10" />
+
+        {/* Alsó sáv függőlegesen kettéosztva: 1 Játékos és 2 Játékos */}
+        <div className="grid grid-cols-2 divide-x divide-white/10 w-full text-xs font-mono font-bold">
+          <button
+            type="button"
+            onClick={() => onSelect('dino')}
+            className="py-3 px-2 text-center text-neutral-300 hover:text-white hover:bg-white/10 active:bg-white/15 transition-colors cursor-pointer flex items-center justify-center gap-1.5 select-none"
+          >
+            <span>1 JÁTÉKOS</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => onSelect('dino2p')}
+            className="py-3 px-2 text-center text-neutral-300 hover:text-white hover:bg-white/10 active:bg-white/15 transition-colors cursor-pointer flex items-center justify-center gap-1.5 select-none"
+          >
+            <span>2 JÁTÉKOS</span>
+          </button>
         </div>
-      </button>
+      </div>
+
+      {/* MÁR MEGINT PONG KÁRTYA */}
+      <div className="group relative rounded-2xl bg-neutral-900/80 border border-white/10 hover:border-white/25 backdrop-blur-xl shadow-2xl transition-all duration-200 flex flex-col overflow-hidden">
+        {/* Felső információs rész */}
+        <div className="p-6 pb-5 flex flex-col items-center gap-3 text-center flex-1">
+          <img
+            src="/mar-megint-pong.png"
+            alt="Már Megint Pong"
+            className="w-14 h-14 object-contain"
+            style={{ imageRendering: 'pixelated' }}
+          />
+          <div className="space-y-1">
+            <h2 className="text-base font-black text-white tracking-wider font-mono">MÁR MEGINT PONG</h2>
+            <p className="text-[11px] text-neutral-400">1:1 klasszikus arcade asztalitenisz</p>
+          </div>
+        </div>
+
+        {/* Egyenes vízszintes elválasztó vonal */}
+        <div className="w-full h-px bg-white/10" />
+
+        {/* Alsó sáv függőlegesen kettéosztva: 1 Játékos és 2 Játékos */}
+        <div className="grid grid-cols-2 divide-x divide-white/10 w-full text-xs font-mono font-bold">
+          <button
+            type="button"
+            onClick={() => onSelect('pong')}
+            className="py-3 px-2 text-center text-neutral-300 hover:text-white hover:bg-white/10 active:bg-white/15 transition-colors cursor-pointer flex items-center justify-center gap-1.5 select-none"
+          >
+            <span>1 JÁTÉKOS</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => onSelect('pong2p')}
+            className="py-3 px-2 text-center text-neutral-300 hover:text-white hover:bg-white/10 active:bg-white/15 transition-colors cursor-pointer flex items-center justify-center gap-1.5 select-none"
+          >
+            <span>2 JÁTÉKOS</span>
+          </button>
+        </div>
+      </div>
     </div>
 
     {/* Vissza */}
@@ -299,18 +343,21 @@ const GamePage: React.FC = () => {
     }
   };
 
+  const isPong = selectedGame === 'pong' || selectedGame === 'pong2p';
+  const isDino = selectedGame === 'dino' || selectedGame === 'dino2p';
+
   return (
     <div
       className={`min-h-screen min-h-[100dvh] bg-neutral-950 flex flex-col items-center ${
-        selectedGame === 'pong'
+        isPong
           ? 'overflow-hidden touch-none justify-center p-2 sm:p-4'
-          : selectedGame === 'dino'
+          : isDino
           ? 'justify-start sm:justify-center pt-14 sm:pt-4 px-2 py-3 sm:p-4'
           : 'justify-center p-4'
       }`}
     >
-      {/* Pixel hangerő szabályzó – jobb felső sarok, mindig látható */}
-      <div className="fixed top-4 right-4 z-50 flex flex-col items-end gap-1 select-none pointer-events-auto">
+      {/* Pixel hangerő szabályzó – mobilon elrejtve, asztali nézetben a jobb felső sarokban */}
+      <div className="hidden sm:flex fixed top-4 right-4 z-50 flex-col items-end gap-1 select-none pointer-events-auto">
         <PixelVolumeControl
           volume={volume}
           muted={muted}
@@ -328,9 +375,19 @@ const GamePage: React.FC = () => {
           <DinoGame onBack={() => setSelectedGame('select')} />
         </Suspense>
       )}
+      {selectedGame === 'dino2p' && (
+        <Suspense fallback={<GameLoader />}>
+          <DinoGame2P onBack={() => setSelectedGame('select')} />
+        </Suspense>
+      )}
       {selectedGame === 'pong' && (
         <Suspense fallback={<GameLoader />}>
           <PongGame onBack={() => setSelectedGame('select')} />
+        </Suspense>
+      )}
+      {selectedGame === 'pong2p' && (
+        <Suspense fallback={<GameLoader />}>
+          <PongGame2P onBack={() => setSelectedGame('select')} />
         </Suspense>
       )}
     </div>
