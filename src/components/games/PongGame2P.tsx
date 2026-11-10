@@ -288,11 +288,55 @@ export const PongGame2P: React.FC<PongGame2PProps> = ({ onBack }) => {
     };
   }, [startPlaying, handleStartGame, onBack]);
 
-  const handleActivate = useCallback(() => {
-    if (state.current.paused || !state.current.hasStarted) return;
-    if (state.current.status === 'waiting') {
-      startPlaying();
-    }
+  // ── Mobilos többujjas csúsztatás (Multi-touch slide bal és jobb oldalon) ──
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleTouches = (e: TouchEvent) => {
+      e.preventDefault();
+      if (state.current.paused) return;
+
+      if (!state.current.hasStarted) {
+        state.current.hasStarted = true;
+        setHasStarted(true);
+        startPlaying();
+        return;
+      }
+
+      if (state.current.status === 'waiting') {
+        startPlaying();
+      }
+
+      const rect = container.getBoundingClientRect();
+      const scaleY = CANVAS_HEIGHT / rect.height;
+
+      for (let i = 0; i < e.touches.length; i++) {
+        const touch = e.touches[i];
+        const touchX = touch.clientX - rect.left;
+        const touchY = touch.clientY - rect.top;
+        const clampedY = Math.max(
+          8,
+          Math.min(CANVAS_HEIGHT - PADDLE_HEIGHT - 8, touchY * scaleY - PADDLE_HEIGHT / 2)
+        );
+
+        if (touchX < rect.width / 2) {
+          // Bal oldal: Player 1 (Emerald)
+          state.current.p1Y = clampedY;
+        } else {
+          // Jobb oldal: Player 2 (Sky)
+          state.current.p2Y = clampedY;
+        }
+      }
+    };
+
+    container.addEventListener('touchstart', handleTouches, { passive: false });
+    container.addEventListener('touchmove', handleTouches, { passive: false });
+
+    return () => {
+      container.removeEventListener('touchstart', handleTouches);
+      container.removeEventListener('touchmove', handleTouches);
+    };
   }, [startPlaying]);
 
   const pFill = (
@@ -533,7 +577,7 @@ export const PongGame2P: React.FC<PongGame2PProps> = ({ onBack }) => {
   }, [resetBall]);
 
   return (
-    <div className="flex flex-col items-center gap-4 w-full max-w-4xl px-2 sm:px-3 animate-in fade-in duration-300">
+    <div className="flex flex-col items-center justify-center gap-2 sm:gap-4 w-full max-w-4xl px-2 sm:px-3 landscape:gap-1 landscape:py-0.5 animate-in fade-in duration-300">
       {/* Felső vezérlősáv */}
       <div className="w-full flex items-center justify-between">
         <button
@@ -577,9 +621,13 @@ export const PongGame2P: React.FC<PongGame2PProps> = ({ onBack }) => {
           ref={canvasRef}
           width={CANVAS_WIDTH}
           height={CANVAS_HEIGHT}
-          onMouseDown={handleActivate}
           className="w-full block touch-none"
-          style={{ imageRendering: 'pixelated', maxHeight: '55vh', objectFit: 'contain', touchAction: 'none' }}
+          style={{
+            imageRendering: 'pixelated',
+            maxHeight: isMobile ? '78vh' : '55vh',
+            objectFit: 'contain',
+            touchAction: 'none'
+          }}
         />
 
         {/* Kezdőképernyő overlay */}
@@ -598,12 +646,12 @@ export const PongGame2P: React.FC<PongGame2PProps> = ({ onBack }) => {
             <div className="flex flex-wrap items-center justify-center gap-4 text-xs font-mono text-neutral-300 bg-neutral-900/80 border border-white/15 px-4 py-2 rounded-xl shadow-lg">
               <span className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-                P1 (Bal): <strong className="text-white">W / S</strong>
+                P1 (Bal): <strong className="text-white">W / S vagy Csúsztatás</strong>
               </span>
               <span className="text-neutral-600">vs</span>
               <span className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-sky-400" />
-                P2 (Jobb): <strong className="text-white">U / J vagy Nyilak (↑ / ↓)</strong>
+                P2 (Jobb): <strong className="text-white">Nyilak vagy Csúsztatás</strong>
               </span>
             </div>
 
@@ -616,7 +664,7 @@ export const PongGame2P: React.FC<PongGame2PProps> = ({ onBack }) => {
               ▶ MÉRKŐZÉS INDÍTÁSA
             </button>
             <p className="text-neutral-400 text-[11px] font-mono">
-              nyomj Szóközt vagy kattints az indításhoz
+              koppints vagy nyomj Szóközt az indításhoz
             </p>
           </div>
         )}
@@ -656,80 +704,26 @@ export const PongGame2P: React.FC<PongGame2PProps> = ({ onBack }) => {
         )}
       </div>
 
-      {/* Mobilos érintésvezérlők */}
-      <div className="flex sm:hidden w-full items-center justify-between gap-3 pt-1 touch-none">
-        {/* P1 Bal oldali gombok */}
-        <div className="flex-1 flex gap-1.5">
-          <button
-            type="button"
-            onTouchStart={(e) => {
-              e.preventDefault();
-              keys.current['KeyW'] = true;
-            }}
-            onTouchEnd={(e) => {
-              e.preventDefault();
-              keys.current['KeyW'] = false;
-            }}
-            className="flex-1 py-3 bg-emerald-950/70 border border-emerald-500/30 rounded-xl text-xs font-bold font-mono text-emerald-300 active:bg-emerald-900 select-none active:scale-95 transition-transform"
-          >
-            P1 ⤒
-          </button>
-          <button
-            type="button"
-            onTouchStart={(e) => {
-              e.preventDefault();
-              keys.current['KeyS'] = true;
-            }}
-            onTouchEnd={(e) => {
-              e.preventDefault();
-              keys.current['KeyS'] = false;
-            }}
-            className="flex-1 py-3 bg-emerald-950/70 border border-emerald-500/30 rounded-xl text-xs font-bold font-mono text-emerald-300 active:bg-emerald-900 select-none active:scale-95 transition-transform"
-          >
-            P1 ⤓
-          </button>
-        </div>
-
-        {/* P2 Jobb oldali gombok */}
-        <div className="flex-1 flex gap-1.5">
-          <button
-            type="button"
-            onTouchStart={(e) => {
-              e.preventDefault();
-              keys.current['KeyU'] = true;
-            }}
-            onTouchEnd={(e) => {
-              e.preventDefault();
-              keys.current['KeyU'] = false;
-            }}
-            className="flex-1 py-3 bg-sky-950/70 border border-sky-500/30 rounded-xl text-xs font-bold font-mono text-sky-300 active:bg-sky-900 select-none active:scale-95 transition-transform"
-          >
-            P2 ⤒
-          </button>
-          <button
-            type="button"
-            onTouchStart={(e) => {
-              e.preventDefault();
-              keys.current['KeyJ'] = true;
-            }}
-            onTouchEnd={(e) => {
-              e.preventDefault();
-              keys.current['KeyJ'] = false;
-            }}
-            className="flex-1 py-3 bg-sky-950/70 border border-sky-500/30 rounded-xl text-xs font-bold font-mono text-sky-300 active:bg-sky-900 select-none active:scale-95 transition-transform"
-          >
-            P2 ⤓
-          </button>
-        </div>
+      {/* Mobilos érintésvezérlő sáv (Csúsztasd az ujjad fel-le a bal és jobb oldalon) */}
+      <div className="flex sm:hidden w-full items-center justify-between px-3 py-2 text-xs font-mono select-none bg-neutral-900/80 rounded-xl border border-white/10 shadow-lg landscape:hidden">
+        <span className="text-emerald-400 font-bold flex items-center gap-1.5">
+          ↕ Bal oldal: P1 csúsztatás
+        </span>
+        <span className="text-neutral-500 text-[10px]">
+          Multi-touch
+        </span>
+        <span className="text-sky-400 font-bold flex items-center gap-1.5">
+          P2 csúsztatás :Jobb oldal ↕
+        </span>
       </div>
 
       {/* Lábléc */}
-      <div className="text-neutral-400 text-[11px] font-mono text-center flex flex-wrap justify-center gap-x-4 gap-y-1">
+      <div className="text-neutral-400 text-[11px] font-mono text-center flex flex-wrap justify-center gap-x-4 gap-y-1 landscape:hidden">
         <span>
-          <strong className="text-emerald-400">P1 (Bal ütő):</strong> W = Fel, S = Le
+          <strong className="text-emerald-400">P1 (Bal oldal):</strong> W / S vagy Húzd az ujjad fel-le
         </span>
         <span>
-          <strong className="text-sky-400">P2 (Jobb ütő):</strong> U / ↑ = Fel, J / ↓ = Le
+          <strong className="text-sky-400">P2 (Jobb oldal):</strong> Nyilak vagy Húzd az ujjad fel-le
         </span>
         {!isMobile && <span className="text-neutral-500">• ESC = szünet</span>}
       </div>

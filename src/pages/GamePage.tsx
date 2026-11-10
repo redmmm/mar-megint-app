@@ -350,9 +350,9 @@ const GamePage: React.FC = () => {
     <div
       className={`min-h-screen min-h-[100dvh] bg-neutral-950 flex flex-col items-center ${
         isPong
-          ? 'overflow-hidden touch-none justify-center p-2 sm:p-4'
+          ? 'overflow-hidden touch-none justify-center p-2 sm:p-4 landscape:p-1'
           : isDino
-          ? 'justify-start sm:justify-center pt-14 sm:pt-4 px-2 py-3 sm:p-4'
+          ? 'justify-start sm:justify-center pt-8 sm:pt-4 px-2 py-2 sm:p-4 landscape:pt-1 landscape:py-1'
           : 'justify-center p-4'
       }`}
     >

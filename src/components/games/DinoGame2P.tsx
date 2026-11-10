@@ -988,8 +988,8 @@ export const DinoGame2P: React.FC<DinoGame2PProps> = ({ onBack }) => {
   }, [initScenery]);
 
   return (
-    <div className="flex flex-col items-center gap-2 sm:gap-3.5 w-full max-w-5xl px-1 sm:px-3 animate-in fade-in duration-300">
-      {/* Vissza gomb */}
+    <div className="flex flex-col items-center justify-between w-full max-w-5xl px-1 sm:px-3 min-h-[calc(100dvh-5.5rem)] sm:min-h-0 landscape:min-h-0 animate-in fade-in duration-300 gap-2 sm:gap-3.5 landscape:gap-1.5">
+      {/* Vissza gomb és indikátorok */}
       <div className="w-full flex items-center justify-between">
         <button
           onClick={onBack}
@@ -1017,22 +1017,22 @@ export const DinoGame2P: React.FC<DinoGame2PProps> = ({ onBack }) => {
             startGame();
           }
         }}
-        className="w-full relative rounded-2xl overflow-hidden border border-white/15 bg-neutral-950 shadow-2xl select-none touch-none"
+        className="w-full relative rounded-2xl overflow-hidden border border-white/15 bg-neutral-950 shadow-2xl select-none touch-none flex items-center justify-center"
         style={{ touchAction: 'none' }}
       >
         <canvas
           ref={canvasRef}
           width={dims.width}
           height={dims.height}
-          className="w-full block touch-none"
-          style={{ imageRendering: 'pixelated', maxHeight: 'none', objectFit: 'contain', touchAction: 'none' }}
+          className="w-full block touch-none max-h-[44vh] landscape:max-h-[58vh] sm:max-h-none object-contain"
+          style={{ imageRendering: 'pixelated', touchAction: 'none' }}
         />
       </div>
 
-      {/* Mobil vezérlők (P1 a bal oldalon, P2 a jobb oldalon) */}
-      <div className="flex sm:hidden w-full items-center justify-between gap-3 pt-1 touch-none">
-        {/* P1 Gombok */}
-        <div className="flex-1 flex gap-1.5">
+      {/* Mobil vezérlők – Lent elhelyezve, nagy fel/le nyilakkal */}
+      <div className="flex sm:hidden w-full items-stretch justify-between gap-2.5 pt-2 pb-1 mt-auto landscape:mt-0 landscape:pt-1 landscape:pb-0 touch-none">
+        {/* P1 Gombok (Zöld / Emerald) */}
+        <div className="flex-1 flex gap-2">
           <button
             type="button"
             onTouchStart={(e) => {
@@ -1040,9 +1040,11 @@ export const DinoGame2P: React.FC<DinoGame2PProps> = ({ onBack }) => {
               p1Jump();
             }}
             onClick={p1Jump}
-            className="flex-1 py-3 bg-emerald-950/70 border border-emerald-500/30 rounded-xl text-xs font-bold font-mono text-emerald-300 active:bg-emerald-900 select-none active:scale-95 transition-transform"
+            className="flex-1 min-h-[72px] landscape:min-h-[44px] py-3.5 landscape:py-1 bg-emerald-950/85 border-2 border-emerald-500/40 active:border-emerald-400 active:bg-emerald-900 rounded-2xl flex flex-col items-center justify-center gap-0.5 shadow-lg active:scale-95 transition-all touch-none select-none cursor-pointer"
+            aria-label="P1 Ugrás"
           >
-            P1 ⤒
+            <span className="text-3xl landscape:text-xl font-black text-emerald-300 leading-none">▲</span>
+            <span className="text-[11px] landscape:text-[8px] font-mono font-bold tracking-wider text-emerald-200 uppercase">P1 Ugrás</span>
           </button>
           <button
             type="button"
@@ -1054,14 +1056,16 @@ export const DinoGame2P: React.FC<DinoGame2PProps> = ({ onBack }) => {
               e.preventDefault();
               p1Duck(false);
             }}
-            className="flex-1 py-3 bg-emerald-950/70 border border-emerald-500/30 rounded-xl text-xs font-bold font-mono text-emerald-300 active:bg-emerald-900 select-none active:scale-95 transition-transform"
+            className="flex-1 min-h-[72px] landscape:min-h-[44px] py-3.5 landscape:py-1 bg-emerald-950/85 border-2 border-emerald-500/40 active:border-emerald-400 active:bg-emerald-900 rounded-2xl flex flex-col items-center justify-center gap-0.5 shadow-lg active:scale-95 transition-all touch-none select-none cursor-pointer"
+            aria-label="P1 Lehajolás"
           >
-            P1 ⤓
+            <span className="text-3xl landscape:text-xl font-black text-emerald-300 leading-none">▼</span>
+            <span className="text-[11px] landscape:text-[8px] font-mono font-bold tracking-wider text-emerald-200 uppercase">P1 Le</span>
           </button>
         </div>
 
-        {/* P2 Gombok */}
-        <div className="flex-1 flex gap-1.5">
+        {/* P2 Gombok (Kék / Sky) */}
+        <div className="flex-1 flex gap-2">
           <button
             type="button"
             onTouchStart={(e) => {
@@ -1069,9 +1073,11 @@ export const DinoGame2P: React.FC<DinoGame2PProps> = ({ onBack }) => {
               p2Jump();
             }}
             onClick={p2Jump}
-            className="flex-1 py-3 bg-sky-950/70 border border-sky-500/30 rounded-xl text-xs font-bold font-mono text-sky-300 active:bg-sky-900 select-none active:scale-95 transition-transform"
+            className="flex-1 min-h-[72px] landscape:min-h-[44px] py-3.5 landscape:py-1 bg-sky-950/85 border-2 border-sky-500/40 active:border-sky-400 active:bg-sky-900 rounded-2xl flex flex-col items-center justify-center gap-0.5 shadow-lg active:scale-95 transition-all touch-none select-none cursor-pointer"
+            aria-label="P2 Ugrás"
           >
-            P2 ⤒
+            <span className="text-3xl landscape:text-xl font-black text-sky-300 leading-none">▲</span>
+            <span className="text-[11px] landscape:text-[8px] font-mono font-bold tracking-wider text-sky-200 uppercase">P2 Ugrás</span>
           </button>
           <button
             type="button"
@@ -1083,15 +1089,17 @@ export const DinoGame2P: React.FC<DinoGame2PProps> = ({ onBack }) => {
               e.preventDefault();
               p2Duck(false);
             }}
-            className="flex-1 py-3 bg-sky-950/70 border border-sky-500/30 rounded-xl text-xs font-bold font-mono text-sky-300 active:bg-sky-900 select-none active:scale-95 transition-transform"
+            className="flex-1 min-h-[72px] landscape:min-h-[44px] py-3.5 landscape:py-1 bg-sky-950/85 border-2 border-sky-500/40 active:border-sky-400 active:bg-sky-900 rounded-2xl flex flex-col items-center justify-center gap-0.5 shadow-lg active:scale-95 transition-all touch-none select-none cursor-pointer"
+            aria-label="P2 Lehajolás"
           >
-            P2 ⤓
+            <span className="text-3xl landscape:text-xl font-black text-sky-300 leading-none">▼</span>
+            <span className="text-[11px] landscape:text-[8px] font-mono font-bold tracking-wider text-sky-200 uppercase">P2 Le</span>
           </button>
         </div>
       </div>
 
       {/* Lábléc útmutató */}
-      <div className="text-neutral-400 text-[11px] font-mono text-center flex flex-wrap justify-center gap-x-4 gap-y-1">
+      <div className="text-neutral-400 text-[11px] font-mono text-center flex flex-wrap justify-center gap-x-4 gap-y-1 landscape:hidden">
         <span>
           <strong className="text-emerald-400">1. Játékos (Elöl):</strong> W = Ugrás, S = Lehajolás
         </span>
