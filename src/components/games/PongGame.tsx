@@ -97,6 +97,38 @@ const isTouchDevice = () =>
   typeof window !== 'undefined' &&
   ('ontouchstart' in window || navigator.maxTouchPoints > 0);
 
+// ── Pixeles Szünet és Folytatás ikonok mobilos nézethez ──
+const PixelPauseIcon: React.FC<{ className?: string }> = ({ className = 'w-3.5 h-3.5' }) => (
+  <svg
+    viewBox="0 0 10 10"
+    className={`${className} select-none shrink-0`}
+    fill="currentColor"
+    style={{ shapeRendering: 'crispEdges' }}
+  >
+    <rect x="1" y="1" width="3" height="8" />
+    <rect x="6" y="1" width="3" height="8" />
+  </svg>
+);
+
+const PixelPlayIcon: React.FC<{ className?: string }> = ({ className = 'w-3.5 h-3.5' }) => (
+  <svg
+    viewBox="0 0 10 10"
+    className={`${className} select-none shrink-0`}
+    fill="currentColor"
+    style={{ shapeRendering: 'crispEdges' }}
+  >
+    <rect x="2" y="1" width="2" height="8" />
+    <rect x="4" y="2" width="2" height="6" />
+    <rect x="6" y="3" width="2" height="4" />
+    <rect x="8" y="4" width="2" height="2" />
+  </svg>
+);
+
+const PixelPauseButtonIcon: React.FC<{ isPaused: boolean; className?: string }> = ({
+  isPaused,
+  className = 'w-3.5 h-3.5',
+}) => (isPaused ? <PixelPlayIcon className={className} /> : <PixelPauseIcon className={className} />);
+
 export const PongGame: React.FC<PongGameProps> = ({ onBack }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -118,8 +150,8 @@ export const PongGame: React.FC<PongGameProps> = ({ onBack }) => {
     ballImgRef.current = img;
   }, []);
 
-  const [playerScore, setPlayerScore] = useState(0);
-  const [aiScore, setAiScore] = useState(0);
+  const [, setPlayerScore] = useState(0);
+  const [, setAiScore] = useState(0);
   const [gameStatus, setGameStatus] = useState<'idle' | 'waiting' | 'playing'>('idle');
 
   // Rekordok betöltése localStorage-ből
@@ -630,26 +662,25 @@ export const PongGame: React.FC<PongGameProps> = ({ onBack }) => {
         >
           <span>← Vissza a választáshoz</span>
         </button>
-        <div className="text-xs font-mono text-neutral-400 flex items-center gap-3 sm:gap-4">
-          <span>TE: <strong className="text-emerald-400">{playerScore}</strong></span>
-          <span>GÉP: <strong className="text-rose-400">{aiScore}</strong></span>
+        <div className="text-xs font-mono text-neutral-400 flex items-center gap-2.5 sm:gap-4">
           {bestRally > 0 && (
             <span className="hidden sm:inline text-neutral-400 text-[11px] bg-neutral-900 border border-white/10 px-2 py-0.5 rounded">
               REKORD MENET: <strong className="text-white">{bestRally}x</strong>
             </span>
           )}
           {hasStarted && (
-            isMobile ? (
+            <>
               <button
                 type="button"
                 onClick={() => setIsPaused((p) => !p)}
-                className="cursor-pointer text-[10px] font-mono px-2 py-0.5 rounded bg-neutral-800 text-neutral-300 border border-white/10 active:scale-95 transition-transform"
+                className="sm:hidden cursor-pointer p-1.5 rounded-md bg-neutral-900 border border-white/20 text-neutral-200 hover:text-white hover:border-white/40 active:scale-90 transition-transform flex items-center justify-center shadow"
+                aria-label={isPaused ? 'Folytatás' : 'Szünet'}
+                title={isPaused ? 'Folytatás' : 'Szünet'}
               >
-                {isPaused ? '▶ Folytatás' : '⏸ Szünet'}
+                <PixelPauseButtonIcon isPaused={isPaused} className="w-3.5 h-3.5" />
               </button>
-            ) : (
-              <span className="text-neutral-600 text-[10px]">ESC = szünet</span>
-            )
+              <span className="hidden sm:inline text-neutral-600 text-[10px]">ESC = szünet</span>
+            </>
           )}
         </div>
       </div>

@@ -813,17 +813,11 @@ export const DinoGame2P: React.FC<DinoGame2PProps> = ({ onBack }) => {
         );
 
         ctx.font = '11px monospace';
-        ctx.fillStyle = '#a3a3a3';
-        ctx.fillText(
-          '1. Játékos: W (ugrás) / S (lehajolás)   ·   2. Játékos: U / ↑ (ugrás) / J / ↓ (lehajolás)',
-          s.canvasWidth / 2,
-          135
-        );
         ctx.fillStyle = '#737373';
         ctx.fillText(
           'Ha az egyik kiesik, a másik tovább küzdhet!',
           s.canvasWidth / 2,
-          155
+          135
         );
 
         frameRef.current = requestAnimationFrame(loop);
@@ -988,7 +982,7 @@ export const DinoGame2P: React.FC<DinoGame2PProps> = ({ onBack }) => {
   }, [initScenery]);
 
   return (
-    <div className="flex flex-col items-center justify-between w-full max-w-5xl px-1 sm:px-3 min-h-[calc(100dvh-5.5rem)] sm:min-h-0 landscape:min-h-0 animate-in fade-in duration-300 gap-2 sm:gap-3.5 landscape:gap-1.5">
+    <div className="flex flex-col items-center w-full max-w-5xl px-1 sm:px-3 animate-in fade-in duration-300 gap-2 sm:gap-3.5 landscape:gap-1.5">
       {/* Vissza gomb és indikátorok */}
       <div className="w-full flex items-center justify-between">
         <button
@@ -998,7 +992,8 @@ export const DinoGame2P: React.FC<DinoGame2PProps> = ({ onBack }) => {
         >
           <span>← Vissza a választáshoz</span>
         </button>
-        <div className="text-[11px] font-mono text-neutral-400 flex items-center gap-3">
+        {/* Irányítás indikátorok - Desktop nézetben PC irányítás */}
+        <div className="hidden sm:flex text-[11px] font-mono text-neutral-400 items-center gap-3">
           <span className="flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-emerald-400" />
             P1: WASD
@@ -1006,6 +1001,17 @@ export const DinoGame2P: React.FC<DinoGame2PProps> = ({ onBack }) => {
           <span className="flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-sky-400" />
             P2: HJKU / Nyilak
+          </span>
+        </div>
+        {/* Irányítás indikátorok - Mobil nézetben kiegészítve mobilos irányítással */}
+        <div className="flex sm:hidden text-[10px] font-mono text-neutral-400 items-center gap-2.5">
+          <span className="flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            P1: Gombok / WASD
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
+            P2: Gombok / Nyilak
           </span>
         </div>
       </div>
@@ -1029,8 +1035,8 @@ export const DinoGame2P: React.FC<DinoGame2PProps> = ({ onBack }) => {
         />
       </div>
 
-      {/* Mobil vezérlők – Lent elhelyezve, nagy fel/le nyilakkal */}
-      <div className="flex sm:hidden w-full items-stretch justify-between gap-2.5 pt-2 pb-1 mt-auto landscape:mt-0 landscape:pt-1 landscape:pb-0 touch-none">
+      {/* Mobil vezérlők – Feljebb hozva a vászon alá, nagy fel/le nyilakkal */}
+      <div className="flex sm:hidden w-full items-stretch justify-between gap-2.5 pt-1.5 pb-1 touch-none">
         {/* P1 Gombok (Zöld / Emerald) */}
         <div className="flex-1 flex gap-2">
           <button
@@ -1098,8 +1104,18 @@ export const DinoGame2P: React.FC<DinoGame2PProps> = ({ onBack }) => {
         </div>
       </div>
 
-      {/* Lábléc útmutató */}
-      <div className="text-neutral-400 text-[11px] font-mono text-center flex flex-wrap justify-center gap-x-4 gap-y-1 landscape:hidden">
+      {/* Lábléc útmutató – Mobilon feljebb hozva és kiegészítve mobilos érintőgombokkal */}
+      <div className="flex sm:hidden text-neutral-400 text-[11px] font-mono text-center flex-wrap justify-center gap-x-3 gap-y-1 landscape:hidden">
+        <span>
+          <strong className="text-emerald-400">P1 (Elöl):</strong> Zöld nyilak (▲/▼) vagy W / S
+        </span>
+        <span>
+          <strong className="text-sky-400">P2 (Hátul):</strong> Kék nyilak (▲/▼) vagy Nyilak / U / J
+        </span>
+      </div>
+
+      {/* Lábléc útmutató – Asztali nézetben csak billentyűzet */}
+      <div className="hidden sm:flex text-neutral-400 text-[11px] font-mono text-center justify-center gap-x-6 gap-y-1">
         <span>
           <strong className="text-emerald-400">1. Játékos (Elöl):</strong> W = Ugrás, S = Lehajolás
         </span>

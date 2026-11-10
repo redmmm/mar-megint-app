@@ -96,6 +96,38 @@ const isTouchDevice = () =>
   typeof window !== 'undefined' &&
   ('ontouchstart' in window || navigator.maxTouchPoints > 0);
 
+// ── Pixeles Szünet és Folytatás ikonok mobilos nézethez ──
+const PixelPauseIcon: React.FC<{ className?: string }> = ({ className = 'w-3.5 h-3.5' }) => (
+  <svg
+    viewBox="0 0 10 10"
+    className={`${className} select-none shrink-0`}
+    fill="currentColor"
+    style={{ shapeRendering: 'crispEdges' }}
+  >
+    <rect x="1" y="1" width="3" height="8" />
+    <rect x="6" y="1" width="3" height="8" />
+  </svg>
+);
+
+const PixelPlayIcon: React.FC<{ className?: string }> = ({ className = 'w-3.5 h-3.5' }) => (
+  <svg
+    viewBox="0 0 10 10"
+    className={`${className} select-none shrink-0`}
+    fill="currentColor"
+    style={{ shapeRendering: 'crispEdges' }}
+  >
+    <rect x="2" y="1" width="2" height="8" />
+    <rect x="4" y="2" width="2" height="6" />
+    <rect x="6" y="3" width="2" height="4" />
+    <rect x="8" y="4" width="2" height="2" />
+  </svg>
+);
+
+const PixelPauseButtonIcon: React.FC<{ isPaused: boolean; className?: string }> = ({
+  isPaused,
+  className = 'w-3.5 h-3.5',
+}) => (isPaused ? <PixelPlayIcon className={className} /> : <PixelPauseIcon className={className} />);
+
 export const PongGame2P: React.FC<PongGame2PProps> = ({ onBack }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -117,8 +149,8 @@ export const PongGame2P: React.FC<PongGame2PProps> = ({ onBack }) => {
     ballImgRef.current = img;
   }, []);
 
-  const [p1Score, setP1Score] = useState(0);
-  const [p2Score, setP2Score] = useState(0);
+  const [, setP1Score] = useState(0);
+  const [, setP2Score] = useState(0);
   const [, setGameStatus] = useState<'idle' | 'waiting' | 'playing'>('idle');
 
   // Rekordok betöltése localStorage-ből
@@ -587,26 +619,25 @@ export const PongGame2P: React.FC<PongGame2PProps> = ({ onBack }) => {
         >
           <span>← Vissza a választáshoz</span>
         </button>
-        <div className="text-xs font-mono text-neutral-400 flex items-center gap-3 sm:gap-4">
-          <span>P1: <strong className="text-emerald-400">{p1Score}</strong></span>
-          <span>P2: <strong className="text-sky-400">{p2Score}</strong></span>
+        <div className="text-xs font-mono text-neutral-400 flex items-center gap-2.5 sm:gap-4">
           {bestRally > 0 && (
             <span className="hidden sm:inline text-neutral-400 text-[11px] bg-neutral-900 border border-white/10 px-2 py-0.5 rounded">
               REKORD MENET: <strong className="text-white">{bestRally}x</strong>
             </span>
           )}
           {hasStarted && (
-            isMobile ? (
+            <>
               <button
                 type="button"
                 onClick={() => setIsPaused((p) => !p)}
-                className="cursor-pointer text-[10px] font-mono px-2 py-0.5 rounded bg-neutral-800 text-neutral-300 border border-white/10 active:scale-95 transition-transform"
+                className="sm:hidden cursor-pointer p-1.5 rounded-md bg-neutral-900 border border-white/20 text-neutral-200 hover:text-white hover:border-white/40 active:scale-90 transition-transform flex items-center justify-center shadow"
+                aria-label={isPaused ? 'Folytatás' : 'Szünet'}
+                title={isPaused ? 'Folytatás' : 'Szünet'}
               >
-                {isPaused ? '▶ Folytatás' : '⏸ Szünet'}
+                <PixelPauseButtonIcon isPaused={isPaused} className="w-3.5 h-3.5" />
               </button>
-            ) : (
-              <span className="text-neutral-600 text-[10px]">ESC = szünet</span>
-            )
+              <span className="hidden sm:inline text-neutral-600 text-[10px]">ESC = szünet</span>
+            </>
           )}
         </div>
       </div>
@@ -626,14 +657,14 @@ export const PongGame2P: React.FC<PongGame2PProps> = ({ onBack }) => {
             imageRendering: 'pixelated',
             maxHeight: isMobile ? '78vh' : '55vh',
             objectFit: 'contain',
-            touchAction: 'none'
+            touchAction: 'none',
           }}
         />
 
-        {/* Kezdőképernyő overlay */}
+        {/* Kezdőképernyő overlay - tiszta, nem zsúfolt kezdő UI */}
         {!hasStarted && (
           <div
-            className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-4 text-center z-10"
+            className="absolute inset-0 flex flex-col items-center justify-center gap-3.5 sm:gap-4 p-4 text-center z-10"
             style={{ backdropFilter: 'blur(6px)', backgroundColor: 'rgba(0,0,0,0.6)' }}
           >
             <p
@@ -642,18 +673,6 @@ export const PongGame2P: React.FC<PongGame2PProps> = ({ onBack }) => {
             >
               [ 2 JÁTÉKOS PONG ]
             </p>
-
-            <div className="flex flex-wrap items-center justify-center gap-4 text-xs font-mono text-neutral-300 bg-neutral-900/80 border border-white/15 px-4 py-2 rounded-xl shadow-lg">
-              <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-                P1 (Bal): <strong className="text-white">W / S vagy Csúsztatás</strong>
-              </span>
-              <span className="text-neutral-600">vs</span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-sky-400" />
-                P2 (Jobb): <strong className="text-white">Nyilak vagy Csúsztatás</strong>
-              </span>
-            </div>
 
             <button
               type="button"
@@ -717,15 +736,17 @@ export const PongGame2P: React.FC<PongGame2PProps> = ({ onBack }) => {
         </span>
       </div>
 
-      {/* Lábléc */}
-      <div className="text-neutral-400 text-[11px] font-mono text-center flex flex-wrap justify-center gap-x-4 gap-y-1 landscape:hidden">
+      {/* Desktop nézetben alul kiírt irányítás */}
+      <div className="hidden sm:flex text-neutral-400 text-xs font-mono text-center items-center justify-center gap-x-6 gap-y-1">
         <span>
-          <strong className="text-emerald-400">P1 (Bal oldal):</strong> W / S vagy Húzd az ujjad fel-le
+          <strong className="text-emerald-400">P1 (Bal oldal):</strong> W / S
         </span>
         <span>
-          <strong className="text-sky-400">P2 (Jobb oldal):</strong> Nyilak vagy Húzd az ujjad fel-le
+          <strong className="text-sky-400">P2 (Jobb oldal):</strong> Nyilak (↑ / ↓)
         </span>
-        {!isMobile && <span className="text-neutral-500">• ESC = szünet</span>}
+        <span>
+          <span className="text-neutral-500">•</span> <strong className="text-neutral-300">ESC:</strong> szünet
+        </span>
       </div>
     </div>
   );
