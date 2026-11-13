@@ -1,0 +1,20 @@
+.crt-warp-container {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 50;
+  /* Subtle phosphor halation/afterglow on bright underlying elements without altering hues */
+  backdrop-filter: contrast(1.04) brightness(1.02);
+}
+
+.crt-warp-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}

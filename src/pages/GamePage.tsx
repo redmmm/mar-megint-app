@@ -1,6 +1,7 @@
 import React, { useState, lazy, Suspense, useRef, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useSEO } from '@/hooks/useSEO';
+import CRTWarp from '@/components/CRTWarp';
 
 const DinoGame = lazy(() => import('@/components/games/DinoGame'));
 const DinoGame2P = lazy(() => import('@/components/games/DinoGame2P'));
@@ -131,6 +132,29 @@ const PixelVolumeControl: React.FC<{
   );
 };
 
+// ── Monokróm CRT képernyő effekt ki/be kapcsoló gomb (magyar felirat, középre igazítva, fehér pont nélkül) ──
+const CrtToggleButton: React.FC<{
+  enabled: boolean;
+  onToggle: () => void;
+}> = ({ enabled, onToggle }) => (
+  <button
+    type="button"
+    onClick={onToggle}
+    className={`flex items-center justify-center text-center min-w-[5.25rem] px-3 py-1.5 rounded-xl border font-mono text-xs font-bold transition-all backdrop-blur-md shadow-2xl cursor-pointer select-none active:scale-95 ${
+      enabled
+        ? 'bg-neutral-900/90 border-white/30 text-white shadow-[0_0_12px_rgba(255,255,255,0.06)]'
+        : 'bg-neutral-900/80 border-white/10 text-neutral-400 hover:text-white hover:border-white/20'
+    }`}
+    title={enabled ? 'CRT képernyő effekt kikapcsolása' : 'CRT képernyő effekt bekapcsolása'}
+    aria-label={enabled ? 'CRT: BE' : 'CRT: KI'}
+  >
+    <span className="text-neutral-400">CRT:</span>
+    <span className={`ml-1.5 ${enabled ? 'text-white font-black' : 'text-neutral-500 font-normal'}`}>
+      {enabled ? 'BE' : 'KI'}
+    </span>
+  </button>
+);
+
 const GameSelector: React.FC<{ onSelect: (game: GameChoice) => void }> = ({ onSelect }) => (
   <div className="flex flex-col items-center gap-8 px-4 max-w-xl mx-auto animate-in fade-in duration-300">
     {/* Titkos Már Megint Gördeszkás Kabala & Cím */}
@@ -254,6 +278,49 @@ const GamePage: React.FC = () => {
 
   const [selectedGame, setSelectedGame] = useState<GameChoice>('select');
 
+  // ── Desktop nézet észlelése (min-width: 1024px) a WebGL CRT effekthez ──
+  const [isDesktop, setIsDesktop] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia('(min-width: 1024px)').matches;
+  });
+
+  // ── CRT effekt toggle állapot (alapértelmezetten desktopon BE, mobilon KI; a választást localStorage őrzi) ──
+  const [crtEnabled, setCrtEnabled] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('game_page_crt_enabled');
+      if (saved !== null) {
+        return saved === 'true';
+      }
+      // Ha még nincs tárolt beállítás: asztalin automatikusan BE, mobilon automatikusan KI
+      if (typeof window !== 'undefined') {
+        return window.matchMedia('(min-width: 1024px)').matches;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mql = window.matchMedia('(min-width: 1024px)');
+    const onChange = (e: MediaQueryListEvent) => {
+      setIsDesktop(e.matches);
+    };
+    mql.addEventListener('change', onChange);
+    return () => mql.removeEventListener('change', onChange);
+  }, []);
+
+  const handleToggleCrt = useCallback(() => {
+    setCrtEnabled((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('game_page_crt_enabled', String(next));
+      } catch {}
+      return next;
+    });
+  }, []);
+
   // ── Háttérzene ──
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [volume, setVolume] = useState<number>(() => {
@@ -356,15 +423,23 @@ const GamePage: React.FC = () => {
           : 'justify-center p-4'
       }`}
     >
-      {/* Pixel hangerő szabályzó – mobilon elrejtve, asztali nézetben a jobb felső sarokban */}
-      <div className="hidden sm:flex fixed top-4 right-4 z-50 flex-col items-end gap-1 select-none pointer-events-auto">
-        <PixelVolumeControl
-          volume={volume}
-          muted={muted}
-          onChange={handleVolumeChange}
-          onToggleMute={handleToggleMute}
-        />
-        <span className="text-[10px] font-mono text-neutral-400/80 pr-1 tracking-wider drop-shadow select-none pointer-events-none">
+      {/* Fejléc vezérlők – mobilon és asztali nézetben is elérhető CRT kapcsoló, asztalin hangerővel */}
+      <div className="fixed top-3 right-3 sm:top-4 sm:right-4 z-[60] flex flex-col items-end gap-1 select-none pointer-events-auto">
+        <div className="flex items-center gap-2">
+          <CrtToggleButton
+            enabled={crtEnabled}
+            onToggle={handleToggleCrt}
+          />
+          <div className="hidden sm:block">
+            <PixelVolumeControl
+              volume={volume}
+              muted={muted}
+              onChange={handleVolumeChange}
+              onToggleMute={handleToggleMute}
+            />
+          </div>
+        </div>
+        <span className="hidden sm:block text-[10px] font-mono text-neutral-400/80 pr-1 tracking-wider drop-shadow select-none pointer-events-none">
           zene: made by cefi
         </span>
       </div>
@@ -389,6 +464,22 @@ const GamePage: React.FC = () => {
         <Suspense fallback={<GameLoader />}>
           <PongGame2P onBack={() => setSelectedGame('select')} />
         </Suspense>
+      )}
+
+      {/* WebGL2 CRT optikai overlay – a CRT toggle állapota szerint (desktopon alapértelmezetten BE, mobilon KI) */}
+      {crtEnabled && (
+        <CRTWarp
+          bloom={1.2}
+          flicker={0.12}
+          interference={0.15}
+          mask="aperture"
+          maskStrength={0.28}
+          noise={0.08}
+          persistence={0.65}
+          scanlineFrequency={260}
+          scanlineStrength={0.55}
+          vignette={0.25}
+        />
       )}
     </div>
   );
