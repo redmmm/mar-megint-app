@@ -8,6 +8,7 @@ import { MapSearchOverlay } from '@/components/skatemap/MapSearchOverlay';
 import { LocationPermissionDialog } from '@/components/skatemap/LocationPermissionDialog';
 import { EventNotificationBanner } from '@/components/skatemap/EventNotificationBanner';
 import { SkateEasterEgg } from '@/components/skatemap/SkateEasterEgg';
+import { PrivacyNoticePopover } from '@/components/skatemap/PrivacyNoticePopover';
 import { getSpots } from '@/services/spotService';
 import { getLockdownStatus } from '@/services/lockdownService';
 import { supabase } from '@/integrations/supabase/client';
@@ -975,40 +976,13 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
                   </PopoverContent>
                 </Popover>
 
-                {/* Info popover */}
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button
-                      type="button"
-                      className="cursor-pointer inline-flex items-center justify-center w-5 h-5 rounded-full text-neutral-400 hover:text-white hover:bg-white/10 active:scale-95 transition-colors focus:outline-none"
-                      aria-label="Adatfelhasználási tájékoztató"
-                    >
-                      <Info className="w-3.5 h-3.5" />
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent
-                    side="bottom"
-                    align="start"
-                    sideOffset={8}
-                    className="max-w-[290px] bg-neutral-900/95 border border-white/15 text-neutral-200 text-xs p-3.5 backdrop-blur-xl shadow-2xl rounded-2xl space-y-2 z-50"
-                  >
-                    <p className="font-bold text-white flex items-center gap-1.5 text-xs">
-                      <ShieldCheck className="w-3.5 h-3.5 text-white" />
-                      Adatfelhasználási tájékoztató
-                    </p>
-                    <p className="text-[11px] text-neutral-300 leading-relaxed">
-                      A helyzetedet (GPS / IP koordinátáidat) kizárólag a böngésződben használjuk a térképen való megjelenítéshez.
-                    </p>
-                    <div className="pt-1.5 border-t border-white/10 text-[10px] text-neutral-400 space-y-1">
-                      <p>✓ Semmilyen személyes vagy helyadatot nem mentünk el.</p>
-                      <p>✓ Az adatokat nem használjuk fel semmire és nem továbbítjuk.</p>
-                      <p>✓ Az oldalon egyáltalán nincs reklám vagy hirdetés.</p>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-
-                {/* Easter Egg Skateboard */}
+                {/* Easter Egg Skateboard (kicsit balrább csúsztatva közvetlenül a BETA mellé) */}
                 <SkateEasterEgg />
+
+                {/* Mobilon megjelenő Adatkezelési tájékoztató pill (a 2. ábra alapján a gördeszka mellett) */}
+                <div className="sm:hidden">
+                  <PrivacyNoticePopover side="bottom" align="start" />
+                </div>
 
                 {/* Expansion Info Button - ONLY shown when out-of-Győr position was detected */}
                 {isOutsideGyorDetected && (
@@ -1275,6 +1249,11 @@ const fetchIpLocation = async (): Promise<{ lat: number; lng: number } | null> =
           <Plus className="w-5 h-5 text-white" />
           <span className="text-sm font-bold">Új Spot</span>
         </button>
+      </div>
+
+      {/* Desktop Adatkezelési tájékoztató: Jobb alsó sarok, közvetlenül az OpenStreetMap fölé */}
+      <div className="hidden sm:block absolute bottom-6 right-2 sm:right-3 z-20 pointer-events-auto">
+        <PrivacyNoticePopover side="top" align="end" />
       </div>
 
       {/* Leaflet Map Canvas */}
