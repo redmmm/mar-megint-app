@@ -16,7 +16,6 @@ import {
 } from '@/components/ui/carousel';
 import { MapPin, Navigation, Copy, Check, ExternalLink, Image as ImageIcon, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
 import { SpotReportModal } from './SpotReportModal';
 
 interface SpotDetailDrawerProps {

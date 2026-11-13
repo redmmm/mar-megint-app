@@ -13,7 +13,7 @@ import { getSpots } from '@/services/spotService';
 import { getLockdownStatus } from '@/services/lockdownService';
 import { supabase } from '@/integrations/supabase/client';
 import { Spot } from '@/types/spot';
-import { MapPin, Plus, Compass, Loader2, Info, Locate, ShieldCheck, Dices, X } from 'lucide-react';
+import { MapPin, Plus, Compass, Loader2, Info, Locate, Dices, X } from 'lucide-react';
 import {
   Popover,
   PopoverContent,

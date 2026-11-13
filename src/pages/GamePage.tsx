@@ -163,6 +163,7 @@ const GameSelector: React.FC<{ onSelect: (game: GameChoice) => void }> = ({ onSe
         <img
           src="/mar-megint-player.png"
           alt="Már Megint Pixel"
+          fetchPriority="high"
           className="w-20 h-16 object-contain"
           style={{ imageRendering: 'pixelated' }}
         />
@@ -190,6 +191,7 @@ const GameSelector: React.FC<{ onSelect: (game: GameChoice) => void }> = ({ onSe
           <img
             src="/mar-megint-player.png"
             alt="Már Megint Run"
+            fetchPriority="high"
             className="w-14 h-12 object-contain"
             style={{ imageRendering: 'pixelated' }}
           />
@@ -228,6 +230,7 @@ const GameSelector: React.FC<{ onSelect: (game: GameChoice) => void }> = ({ onSe
           <img
             src="/mar-megint-pong.png"
             alt="Már Megint Pong"
+            fetchPriority="high"
             className="w-14 h-14 object-contain"
             style={{ imageRendering: 'pixelated' }}
           />
@@ -341,7 +344,9 @@ const GamePage: React.FC = () => {
 
   // Létrehozzuk az Audio elemet egyszer, és loopoljuk
   useEffect(() => {
-    const audio = new Audio('/game-music.mp3');
+    const audio = new Audio();
+    audio.preload = 'none';
+    audio.src = '/game-music.mp3';
     audio.loop = true;
     audio.volume = muted ? 0 : volume;
     audioRef.current = audio;
